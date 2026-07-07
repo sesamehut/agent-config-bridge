@@ -24,6 +24,8 @@ This file is the docs entry point and inventory.
 - `research/` - Supporting research; externally sourced, non-decisional, each
   entry carries its collection date
   - `ecosystem.md` - Research on existing Claude/Codex config sync tools
+  - `host-context-loading.md` - Verified host behavior for entry files and
+    project context loading
 - `phases/` - Phase planning and milestone tracking
   - `roadmap.md` - Milestone roadmap and phase planning
 

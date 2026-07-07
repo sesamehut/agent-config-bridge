@@ -25,7 +25,7 @@ Bridge 的主要产物是 skill 和知识库，代码只承担入口和辅助检
 
 这种分发形态带来几个直接收益：
 
-- 用户安装插件后即可获得投射 / 对账 skill，具体流程由目标工具中的智能体执行，git 提供变更依据。
+- 用户安装插件后即可获得快路径 / 哨兵 / 仲裁 skill，具体流程由目标工具中的智能体执行，git 提供变更依据。
 - Claude Code 插件与 Codex 插件可以分别适配各自入口。
 - 薄包装脚本便于做产物允许清单、密钥扫描、版本锁定和离线 doctor。
 
@@ -40,7 +40,7 @@ Bridge 的主要产物是 skill 和知识库，代码只承担入口和辅助检
 node "${CLAUDE_PLUGIN_ROOT}/scripts/bridge.mjs" status
 ```
 
-这里的 `bridge.mjs` 是薄包装脚本。投射 / 对账判断仍由 skill 正文和工具映射知识完成。
+这里的 `bridge.mjs` 是薄包装脚本。投射 / 仲裁判断仍由 skill 正文和工具映射知识完成。
 定位自带文件有两个锚点：`${CLAUDE_PLUGIN_ROOT}` 指插件根目录，`${CLAUDE_SKILL_DIR}` 指
 技能自身子目录（官方推荐用于“随技能打包”的文件，例如工具映射知识片段）。
 
@@ -65,7 +65,7 @@ Codex 侧入口以技能本地包装脚本为默认设计。包装脚本放在�
 未来产物至少需要包含：
 
 - 目标工具清单：Claude Code 与 Codex 各自需要的插件元数据。
-- 技能：触发 Bridge 投射 / 对账工作流的目标工具 skill。
+- 技能：触发 Bridge 投射 / 哨兵 / 仲裁工作流的目标工具 skill。
 - 工具映射知识：Claude Code / Codex 语义差异的自然语言知识，带采集日期。
 - 薄包装脚本：交付 skill、定位自带文件、执行 doctor 的可选 `bridge.mjs`。
 - README / 智能体指引：说明前置要求（git，必要时 Node）、安装方式、doctor、安全边界，
