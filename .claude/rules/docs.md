@@ -26,6 +26,8 @@ This file is the docs entry point and inventory.
   - `ecosystem.md` - Research on existing Claude/Codex config sync tools
   - `host-context-loading.md` - Verified host behavior for entry files and
     project context loading
+  - `codex-capability-surface.md` - Verified Codex-side mechanisms: hooks,
+    skills, rules, and the project-level config surface
 - `phases/` - Phase planning and milestone tracking
   - `roadmap.md` - Milestone roadmap and phase planning
 

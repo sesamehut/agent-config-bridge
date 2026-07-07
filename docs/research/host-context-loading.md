@@ -41,4 +41,6 @@ GitHub issue 追踪。进入实现前需按本文档日期重新核验。
 
 - Claude Code 是否新增了 `AGENTS.md` 原生支持（issue #34235 状态）。
 - HTML 注释剥离行为是否仍然成立（标记成本判断依赖它）。
-- Codex 对 `AGENTS.md`、技能目录、自动化 / 类钩子机制的当前支持边界。
+- Codex 侧机制（hooks、技能目录、rules、项目级配置面）已由
+  [codex-capability-surface.md](codex-capability-surface.md) 单独核验
+  （2026-07-07），按该文档的复核清单跟进。

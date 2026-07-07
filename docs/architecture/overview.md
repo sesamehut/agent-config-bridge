@@ -3,8 +3,9 @@
 ## 总体设计
 
 Agent Config Bridge 使用声明式单一源树模型：项目中一棵 Claude 形态的配置树被声明为
-唯一源（下称源树），其余所有 host 可见的配置——Codex 的 `AGENTS.md` 与技能目录、
-Claude 自身 `settings.json` 中的 hooks 字段——都是从源树投射出来的结果。
+唯一源（下称源树），其余所有 host 可见的配置——Codex 的 `AGENTS.md`、技能目录
+与 hooks 配置、Claude 自身 `settings.json` 中的 hooks 字段——都是从源树投射
+出来的结果。
 
 两点前提约束全部设计：
 
@@ -63,9 +64,10 @@ git 回滚——失败代价被 git 封顶。
   [同步模型](../implementation/sync-model.md)的项目引导一节）。
 
 选 Claude 形态当超集容器的结构理由：`.claude/rules/` 支持多文件分片、递归发现和
-path-scoped frontmatter；技能目录以 `SKILL.md` 为核心，两个工具都能消费；hooks 有
-真实的配置面。Codex 的原生组织（单文件 `AGENTS.md` 加技能目录）在结构上接近其
-子集，反向不成立：把结构化超集塞进单文件容器必然有损。
+path-scoped frontmatter；技能目录以 `SKILL.md` 为核心，两个工具都能消费；hooks
+在两侧都有真实的配置面。结构差异集中在指令组织：Codex 原生是单文件
+`AGENTS.md`，在结构上接近 Claude 形态的子集，反向不成立——把结构化超集塞进
+单文件容器必然有损。
 
 源树身兼双重角色：它同时是 Claude 的运行态配置，因此源树内容必须满足"被 Claude
 读取时无害或有益"。钩子意图文档以规则片段的形式存在（Claude 读到的是意图说明，
@@ -82,12 +84,13 @@ path-scoped frontmatter；技能目录以 `SKILL.md` 为核心，两个工具都
     skills/<name>/         # 源：技能母本（SKILL.md + 脚本 / 资源）
     settings.json          # 投射面：hooks 等声明键由意图文档投射（Claude 侧）
   AGENTS.md                # 投射面：受管区块承载投射内容，区块外为人工区（Codex 侧）
-  <codex 技能目录>/         # 投射面：技能受管副本（Codex 侧）
-  <codex config.toml 等>    # Codex 所有：审批 / 沙盒规则，声明不同步
+  .agents/skills/<name>/   # 投射面：技能受管副本（Codex 侧）
+  .codex/hooks.json        # 投射面：hooks 声明键由意图文档投射（Codex 侧）
+  .codex/config.toml 等     # Codex 所有：审批 / 沙盒 / rules，声明不同步
 ```
 
-投射面在两个 host 侧都存在：`AGENTS.md` 和 Codex 技能目录承接面向 Codex 的投射，
-`settings.json` 的 hooks 键承接面向 Claude 的投射。"源树取 Claude 形态"不等于
+投射面在两个 host 侧都存在：`AGENTS.md`、`.agents/skills/` 与 `.codex/hooks.json`
+承接面向 Codex 的投射，`settings.json` 的 hooks 键承接面向 Claude 的投射。"源树取 Claude 形态"不等于
 "只向 Codex 投射"。投射面也不是只读的：直接落在投射面上的改动会被反向采纳回
 源树后重投射（见[同步模型](../implementation/sync-model.md)）。
 
@@ -100,8 +103,8 @@ path-scoped frontmatter；技能目录以 `SKILL.md` 为核心，两个工具都
 2. **结构降级**：对方缺组织机制但内容可完整表达，换承载面注入。`.claude/rules/`
    分片投射进 `AGENTS.md` 受管区块，按分片保留小节与来源标注。
 3. **语义降级**：对方缺特性但语义可用自然语言复现。path-scoped 规则渲染成显式
-   适用性前言（"以下规则仅在处理 `docs/` 下文件时适用"）；没有 Codex 机制承载的
-   钩子意图降级成常驻指令。机械限定变成注意力限定，降级但生效。
+   适用性前言（"以下规则仅在处理 `docs/` 下文件时适用"）；超出对方 hooks 事件
+   模型的钩子意图降级成常驻指令。机械限定变成注意力限定，降级但生效。
 4. **声明不同步**：语义没有对应物，且散文模拟会制造执行假象。判据：执行点在
    host 运行时而不在模型上的内容（审批 / 沙盒）不许散文模拟。
 
@@ -135,7 +138,8 @@ skill 流程约束，后者由 host 自带工具、声明式所有权和 git 保
 
 - **按文件集声明**：源树文件归用户与快路径共同维护；技能受管副本整体归 Bridge。
 - **按区块声明**：`AGENTS.md` 中只有受管区块归 Bridge，区块外人工区逐字节保留。
-- **按键声明**：`settings.json` 中只有声明过的 hooks 键归 Bridge，其余键不触碰。
+- **按键声明**：`settings.json` 与 `.codex/hooks.json` 中只有声明过的 hooks 键
+  归 Bridge，其余键不触碰。
 
 写入护栏：
 
@@ -154,8 +158,8 @@ skill 流程约束，后者由 host 自带工具、声明式所有权和 git 保
 
 - Claude Code：技能、入口指令、规则分片，以及 `settings.json` 中可表达的项目级
   hooks 字段。
-- Codex：技能、`AGENTS.md` 项目指令，以及当前公开机制能表达的自动化
-  （automation）/ 类钩子配置。
+- Codex：技能（`.agents/skills/`）、`AGENTS.md` 项目指令，以及项目级 hooks
+  （`.codex/hooks.json`）。
 
 工具映射知识必须如实暴露工具差异。同步计划里的"已同步"必须建立在保真档位可解释
 的基础上；提示词引导、命令审批规则、权限和执行时机按各自语义处理。

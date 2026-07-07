@@ -34,7 +34,8 @@ Bridge 不建同步引擎。同步由三条路径组成：
 收尾；用户也可能直接手改投射面，或经 `git pull` 带入外部改动。哨兵负责发现：
 
 - **检查内容**：投射面与源树的一致性——技能副本逐字节比对，`AGENTS.md` 受管
-  区块与源内容比对，`settings.json` 声明键与钩子意图比对。
+  区块与源内容比对，`settings.json` 与 `.codex/hooks.json` 的声明键与钩子意图
+  比对。
 - **触发位置**：Claude 侧可挂 hook（提交前、会话事件），Codex 侧由常驻指令要求
   收尾自查；两侧都可由用户显式调用。
 - **行为边界**：哨兵只报告，不修复。
@@ -71,7 +72,7 @@ git 封顶。这是敢于信任概率性约定的原因。
 ### 技能：原生等价
 
 两个工具都消费以 `SKILL.md` 为核心的技能目录。`.claude/skills/<name>/` 是母本，
-整体复制到 Codex 技能目录。选 copy 而非 symlink，出于 Windows 权限、插件打包和
+整体复制到 Codex 的项目级技能目录 `.agents/skills/<name>/`。选 copy 而非 symlink，出于 Windows 权限、插件打包和
 git diff 稳定性考虑。副本整体归 Bridge 所有（按文件集声明），哨兵做逐字节比对；
 落在副本上的直接改动经仲裁确认归属后逐字节回写母本。
 
@@ -100,8 +101,14 @@ git diff 稳定性考虑。副本整体归 Bridge 所有（按文件集声明）
 要求和失败策略。它投射到两侧的承载面：
 
 - Claude 侧：`settings.json` 中声明过的 hooks 键（按键声明所有权）。
-- Codex 侧：当前公开机制能表达的自动化配置；缺机制的意图降级为 `AGENTS.md`
-  常驻指令（语义降级），并在同步计划里如实标注档位。
+- Codex 侧：项目级 `.codex/hooks.json` 中声明过的键（同为按键声明）。Codex
+  hooks 与 Claude hooks 是同族 schema（生命周期事件 + matcher + command），
+  大部分意图两侧都能原生承载；超出对方事件模型或字段能力的意图才降级为
+  `AGENTS.md` 常驻指令（语义降级），并在同步计划里如实标注档位。
+
+Codex 只在项目被信任后加载 `.codex/` 层，且改动过的 hook 需要用户重新信任。
+投射写入后的生效以 host 的信任机制为准；同步计划把"已写入、待 host 信任"如实
+呈现，这不是漂移（见 [Codex 能力面核验](../research/codex-capability-surface.md)）。
 
 意图文档以规则片段形式存在，Claude 会把它读进上下文——读到的是意图说明，满足
 源树"被 Claude 读取时无害或有益"的双重角色约束。高副作用钩子默认要求显式启用，
@@ -109,9 +116,10 @@ git diff 稳定性考虑。副本整体归 Bridge 所有（按文件集声明）
 
 ### 执行语义：声明不同步
 
-Codex 审批 / 沙盒规则的执行点在 host 运行时，不在模型上；用常驻指令复述会伪装成
-安全边界。这类语义声明为 Codex 所有、不投射（第 4 档）。Claude 权限规则与 Codex
-审批规则的映射语义上存在对应物，属于未来映射知识的立项候选，MVP 不做。
+Codex 审批 / 沙盒规则（`approval_policy`、`.codex/rules/` execpolicy）的执行点
+在 host 运行时，不在模型上；用常驻指令复述会伪装成安全边界。这类语义声明为
+Codex 所有、不投射（第 4 档）。Claude 权限规则与 Codex execpolicy 规则语义上
+存在对应物，且两侧都是文件化配置面，属于未来映射知识的立项候选，MVP 不做。
 
 ## 所有权声明
 
@@ -126,8 +134,8 @@ Codex 审批 / 沙盒规则的执行点在 host 运行时，不在模型上；�
   <!-- bridge:managed:end -->
   ```
 
-- **键**：`settings.json` 只有声明过的 hooks 键归 Bridge。JSON 无法内嵌注释标记
-  的问题在按键声明下不存在。
+- **键**：`settings.json` 与 `.codex/hooks.json` 只有声明过的 hooks 键归
+  Bridge。JSON 无法内嵌注释标记的问题在按键声明下不存在。
 
 ## 同步计划与报告分类
 
