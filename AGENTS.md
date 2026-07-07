@@ -13,9 +13,11 @@ and the docs inventory is maintained in
 
 ## Scope boundaries
 
-Do not add a CLI implementation, npm package files, generated plugin manifests,
-bundled JavaScript, generated skills, or distribution payloads unless the user
-explicitly requests implementation work.
+Implementation is open, but packaging stays milestone-gated: do not add a CLI
+implementation, npm package files, plugin manifests, bundled JavaScript, or
+distribution payloads before the roadmap's packaging milestone.
+Product artifacts land only in the directories declared in
+[`docs/implementation/distribution-model.md`](docs/implementation/distribution-model.md).
 
 ## Communication
 
@@ -46,8 +48,9 @@ both; shared conventions belong here, not in a private agent memory.
   in-model, such as byte-level comparison or lookups of already-settled host
   mappings. Require no global npm dependencies.
 - Lean on git as the deterministic substrate (`git diff` for changes, history
-  for the last-synced baseline, `git restore` for rollback) instead of bespoke
-  content hashing or attribution metadata.
+  as arbitration evidence, `git restore` for rollback) instead of bespoke
+  content hashing, attribution metadata, or an independently maintained sync
+  baseline.
 - Keep the Claude entrypoint and Codex entrypoint separate. Claude interpolates
   `${CLAUDE_PLUGIN_ROOT}` in skill content; Codex documents plugin-root env vars
   for plugin hook processes only, so Codex skill entrypoints go through a
@@ -62,8 +65,8 @@ both; shared conventions belong here, not in a private agent memory.
   product / architecture / implementation claims aligned.
 - **Research claims**: record the collection date and re-check official host
   docs before turning research into implementation.
-- **Code changes**: once implementation starts, define the check command in the
-  roadmap and keep it aligned with CI.
+- **Code and product-artifact changes**: run the check procedure defined in the
+  roadmap and keep it aligned with CI as milestones open.
 
 ## Debug output
 

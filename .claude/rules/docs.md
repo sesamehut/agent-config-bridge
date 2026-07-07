@@ -45,12 +45,15 @@ This file is the docs entry point and inventory.
   `architecture/`; technical implementation notes -> `implementation/`;
   supporting research -> `research/`; phase plans and roadmap -> `phases/`.
 - **Docs depth** - docs should focus on problem analysis, goals, design logic,
-  module responsibilities, architecture, and implementation strategy. Do not
-  include runnable code, exact generated payloads, full type definitions, or
-  low-level configuration dumps while the repo is in the design/bootstrap phase.
-- **Generated artifacts** - plugin manifests, bundled CLIs, generated skills,
-  package lockfiles, and distribution payloads should not be introduced until
-  the roadmap explicitly opens implementation or packaging work.
+  module responsibilities, architecture, and implementation strategy -
+  conclusions, not payloads. Exact product texts (skill bodies, covenant text
+  templates, report schemas, mapping-knowledge entries) live in the product
+  directories (`skills/`, `knowledge/`, `fixtures/`); design docs link to them
+  instead of inlining them. Mechanism enumerations and host-behavior specifics
+  live in `research/` entries; design docs state the conclusion and link.
+- **Generated artifacts** - plugin manifests, bundled CLIs, package lockfiles,
+  and distribution payloads should not be introduced until the roadmap reaches
+  the packaging milestone.
 - **Research freshness** - Claude Code and Codex plugin / skill behavior is
   time-sensitive. Preserve collection dates in research notes and re-check
   official host docs before turning stale research into implementation.

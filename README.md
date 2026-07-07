@@ -5,9 +5,10 @@ Code / Codex bridge that will let a project maintain one canonical source for
 agent skills, hooks, and rules, then project that source into host-native
 layouts.
 
-The repository is currently in the design phase. It should contain project
-guidance and design documents only until the roadmap explicitly opens an
-implementation phase.
+The repository is in the implementation phase: the roadmap has opened M1
+(source-tree declaration and a read-only sentinel). Product artifacts land
+milestone by milestone; the [roadmap](docs/phases/roadmap.md) says what each
+milestone introduces.
 
 Start with:
 
@@ -22,13 +23,22 @@ Start with:
 
 This is a single repository, modeled on `appstore-connect-skill` and
 `sesamehut-auth`: it is the upstream design/development home **and** carries the
-installable plugin payload. Once implementation opens, the layout layers by role:
+installable plugin payload. The layout layers by role:
 
-- `src/` — TypeScript sources for the thin wrapper script (tracked).
-- `dist/` — build/bundle intermediates for the wrapper (gitignored).
-- `plugin/` — the installable payload committed as a checked-in boundary
-  artifact: plugin manifest, agent-facing skills, the host-mapping knowledge
-  base, a thin wrapper, and README. It is assembled from audited upstream
+- `skills/` — agent-facing skill sources: `SKILL.md` plus per-skill assets such
+  as covenant text templates (tracked).
+- `knowledge/` — the host-mapping knowledge base, with collection dates
+  (tracked).
+- `fixtures/` — fixture projects with known states and expected reports, used
+  to validate the skills (tracked).
+- `src/` — TypeScript sources for the thin wrapper script (tracked; arrives
+  with the packaging milestone).
+- `dist/` — build/bundle intermediates for the wrapper (gitignored; arrives
+  with the packaging milestone).
+- `plugin/` — the installable payload, assembled at the packaging milestone
+  and committed as a checked-in boundary artifact: plugin manifest,
+  agent-facing skills, the host-mapping knowledge base, a thin wrapper, and
+  README. It is assembled from audited upstream
   sources and keeps its generated-output nature — edit upstream and regenerate,
   never hand-edit `plugin/`.
 
