@@ -29,13 +29,26 @@ GitHub issue 追踪。进入实现前需按本文档日期重新核验。
   这与"hook 与常驻指令同为提示词注入、差别在投递确定性与事件邻近性"的分层判断
   一致。
 
+## Codex 端对照（与标记成本直接相关）
+
+Codex 侧机制细节见 [codex-capability-surface.md](codex-capability-surface.md)
+（2026-07-07），此处只记影响本文档结论的差异：
+
+- **Codex 不剥离 HTML 注释**：`AGENTS.md` 按原始字节拼进 prompt，
+  `<!-- bridge:managed:* -->` 受管标记在 Codex 侧进入模型上下文，并与投射内容
+  一同占用 `project_doc_max_bytes` 总预算（默认 32 KiB，超出截断）。标记成本
+  按 host 分列：Claude 侧零运行时成本，Codex 侧标记应保持精简。
+- **`AGENTS.md` 不解析 frontmatter / `paths` 作用域**：作用域只能靠目录放置，
+  嵌套文件仅在 cwd 位于对应目录之下时加载、不随编辑位置动态选取——
+  path-scoped 分片仍以显式适用性前言投射。
+
 ## 对设计的影响
 
 - `AGENTS.md` 不被 Claude 读取，因此可以安全地作为面向 Codex 的投射面，承载规则
   分片的结构降级注入，不会造成 Claude 侧内容重复。
-- 曾评估过的替代方案——`AGENTS.md` 作共享入口、`CLAUDE.md` 写 `@AGENTS.md`
-  垫片——在"规则分片必须注入 `AGENTS.md`"的前提下，会让 Claude 经 import 与
-  `.claude/rules/` 原生发现重复读取分片内容，被否决。
+- 替代方案"`AGENTS.md` 作共享入口、`CLAUDE.md` 写 `@AGENTS.md` 垫片"不采用：
+  在"规则分片必须注入 `AGENTS.md`"的前提下，它会让 Claude 经 import 与
+  `.claude/rules/` 原生发现重复读取分片内容。
 
 ## 实现前需要复核
 

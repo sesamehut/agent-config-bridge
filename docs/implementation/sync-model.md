@@ -17,8 +17,9 @@ Bridge 不建同步引擎。同步由三条路径组成：
 
 ### 快路径：编辑即传播
 
-行为约定注入到两个 host——Claude 侧是常驻规则加 hook 提醒，Codex 侧是
-`AGENTS.md` 常驻指令。约定内容：凡涉及项目级智能体配置的改动，
+行为约定注入到两个 host，两侧同构：常驻指令加 hook 提醒。Claude 侧是常驻规则加
+`settings.json` hooks，Codex 侧是 `AGENTS.md` 常驻指令加 `.codex/hooks.json`
+hooks。约定内容：凡涉及项目级智能体配置的改动，
 
 1. 落进源树对应位置（入口指令、规则分片、技能母本、钩子意图文档），同时在条目
    frontmatter 里记下改动动机与日期（意图记录，供未来仲裁作证据）。
@@ -36,8 +37,8 @@ Bridge 不建同步引擎。同步由三条路径组成：
 - **检查内容**：投射面与源树的一致性——技能副本逐字节比对，`AGENTS.md` 受管
   区块与源内容比对，`settings.json` 与 `.codex/hooks.json` 的声明键与钩子意图
   比对。
-- **触发位置**：Claude 侧可挂 hook（提交前、会话事件），Codex 侧由常驻指令要求
-  收尾自查；两侧都可由用户显式调用。
+- **触发位置**：两侧都可挂 hook（`Stop` / `SessionStart` 等会话事件、提交前），
+  常驻指令的收尾自查作为补充；两侧都可由用户显式调用。
 - **行为边界**：哨兵只报告，不修复。
 
 ### 仲裁：语义修复
@@ -103,8 +104,9 @@ git diff 稳定性考虑。副本整体归 Bridge 所有（按文件集声明）
 - Claude 侧：`settings.json` 中声明过的 hooks 键（按键声明所有权）。
 - Codex 侧：项目级 `.codex/hooks.json` 中声明过的键（同为按键声明）。Codex
   hooks 与 Claude hooks 是同族 schema（生命周期事件 + matcher + command），
-  大部分意图两侧都能原生承载；超出对方事件模型或字段能力的意图才降级为
-  `AGENTS.md` 常驻指令（语义降级），并在同步计划里如实标注档位。
+  大部分意图两侧都能原生承载；超出对方事件覆盖或执行能力（非 command 处理器、
+  async 钩子等）的意图才降级为 `AGENTS.md` 常驻指令（语义降级），并在同步
+  计划里如实标注档位。
 
 Codex 只在项目被信任后加载 `.codex/` 层，且改动过的 hook 需要用户重新信任。
 投射写入后的生效以 host 的信任机制为准；同步计划把"已写入、待 host 信任"如实
@@ -133,6 +135,9 @@ Codex 所有、不投射（第 4 档）。Claude 权限规则与 Codex execpolic
   （投射内容）
   <!-- bridge:managed:end -->
   ```
+
+  Codex 不剥离 HTML 注释，受管标记会进入模型上下文并占用项目指令预算，标记
+  保持精简（见 [host 行为核验](../research/host-context-loading.md)）。
 
 - **键**：`settings.json` 与 `.codex/hooks.json` 只有声明过的 hooks 键归
   Bridge。JSON 无法内嵌注释标记的问题在按键声明下不存在。
@@ -164,9 +169,10 @@ Codex 所有、不投射（第 4 档）。Claude 权限规则与 Codex execpolic
 
 ## 已知代价
 
-- **Codex 侧上下文变贵**：Claude 按需加载的 path-scoped 规则在 Codex 全量常驻。
-  这是缺机制的固有价格；投射时可对长分片做保义压缩，默认保持接近逐字以保
-  可审计性。
+- **Codex 侧上下文成本**：Claude 按需加载的 path-scoped 规则在 Codex 以
+  `AGENTS.md` 常驻方式全量加载，且整条项目指令链共享 `project_doc_max_bytes`
+  总预算（默认 32 KiB，超出截断）。投射时可对长分片做保义压缩，默认保持接近
+  逐字以保可审计性。
 - **注意力限定弱于加载器限定**：scoped 规则在 Codex 可能被误用于无关文件。失败
   是行为噪音而非数据损坏，被 git 封顶原则覆盖。
 - **约定遵从与语义映射是概率性的**：正向投射与反向采纳都依赖 LLM 判断，靠哨兵

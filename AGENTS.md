@@ -48,9 +48,10 @@ both; shared conventions belong here, not in a private agent memory.
 - Lean on git as the deterministic substrate (`git diff` for changes, history
   for the last-synced baseline, `git restore` for rollback) instead of bespoke
   content hashing or attribution metadata.
-- Keep the Claude entrypoint and Codex entrypoint separate. Claude can rely on
-  `CLAUDE_PLUGIN_ROOT`; Codex should use a skill-local wrapper rather than
-  assuming an equivalent plugin-root environment variable.
+- Keep the Claude entrypoint and Codex entrypoint separate. Claude interpolates
+  `${CLAUDE_PLUGIN_ROOT}` in skill content; Codex documents plugin-root env vars
+  for plugin hook processes only, so Codex skill entrypoints go through a
+  skill-local wrapper.
 - Do not overwrite unmanaged or hand-written host-native files. Confirm a plan
   first, write only inside managed regions, and ask for an adoption or
   replacement decision.
