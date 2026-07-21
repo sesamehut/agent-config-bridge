@@ -37,6 +37,18 @@ hooks。约定内容：凡涉及项目级智能体配置的改动，
 - **检查内容**：投射面与源树的一致性——技能副本逐字节比对，`AGENTS.md` 受管
   区块与源内容比对，`settings.json` 与 `.codex/hooks.json` 的声明键与钩子意图
   比对。
+- **判定口径**：一致 / 漂移是（源字节，投射字节）的确定性纯函数——按固定模板
+  重渲染源内容，应用固定的归一化集（行尾统一、去行尾空白、单个末尾换行），再
+  逐字节比对。渲染管线与归一化集的规范定义见
+  [source-tree-spec](../../skills/bridge-sentinel/references/source-tree-spec.md)，
+  状态判定规则见
+  [report-spec](../../skills/bridge-sentinel/references/report-spec.md)。
+  LLM 只执行检查清单并撰写报告的自由文本部分，从不判定一致与否；语义等价的
+  判断属于仲裁，不属于哨兵。
+- **建议去向表驱动**：漂移行的建议去向由差异形状决定——仅新增 → 采纳回源，
+  仅删减 → 按源重投射，两者兼有 → 冲突（形状定义见
+  [report-spec](../../skills/bridge-sentinel/references/report-spec.md)）。
+  意图记录与 git 证据只充实证据链，从不改变状态与建议去向两列。
 - **触发位置**：两侧都可挂 hook（`Stop` / `SessionStart` 等会话事件、提交前），
   常驻指令的收尾自查作为补充；两侧都可由用户显式调用。
 - **行为边界**：哨兵只报告，不修复。
@@ -47,8 +59,9 @@ hooks。约定内容：凡涉及项目级智能体配置的改动，
 
 1. 用 `git log` / `git blame` 收集证据：改动来自哪个方向、何时发生、动机为何
    （源树条目的意图记录也是证据）。
-2. 判断每处漂移的性质：投射面上的新意图（采纳回源树后重投射）、约定遗漏
-   （直接按源重投射）、外部引入（按内容归入前两类，归属不清时报 `conflict`）。
+2. 核实每处漂移的语义性质：投射面上的新意图、约定遗漏、还是外部引入。哨兵
+   报告中的状态与建议去向（采纳回源 / 按源重投射 / 冲突）已由差异形状表驱动
+   给出，证据只影响采纳时的回写落点与执行叙述，不改动这两列。
 3. 无歧义的修复自动执行，修复计划作为报告产出并随写入入 git；`conflict` 与收编
    决策不自动处理，由用户选择。
 
@@ -79,25 +92,30 @@ git diff 稳定性考虑。副本整体归 Bridge 所有（按文件集声明）
 ### 入口指令与规则：结构降级加语义降级
 
 - `CLAUDE.md` 是人工维护的源入口。其中共享内容由 skill 投射进 `AGENTS.md` 受管
-  区块。投射是 LLM 语义映射而非逐字复制：host 自指内容（如提及 Claude 特有机制
-  的段落）在投射时改写或剔除。仅面向 Claude 的段落可用注释标记圈出、排除出投射
-  （Claude 在注入上下文前会剥离 HTML 注释，标记零运行时成本，见
-  [host 行为核验](../research/host-context-loading.md)）。
+  区块。默认投射是固定管线的逐字渲染（管线定义见
+  [source-tree-spec](../../skills/bridge-sentinel/references/source-tree-spec.md)）。
+  host 自指内容的唯一规范排除路径是源侧的 claude-only 标记减除：仅面向 Claude
+  的段落（如提及 Claude 特有机制的段落）用注释标记圈出，渲染时整段剔除
+  （Claude 在注入上下文前会剥离块级 HTML 注释，标记零运行时成本，见
+  [host 行为核验](../research/host-context-loading.md)）。LLM 改写式投射不是
+  渲染模式：任何被改写过的投射与逐字渲染结果比对必然呈现为漂移，由仲裁处理
+  （M2+）。声明了非默认渲染模式的受管区块获得独立状态"语义映射区块（逐字校验
+  不适用）"——不做字节比对，也不由 LLM 现场判定代替，留待仲裁按需核验。
 - `.claude/rules/*.md` 每个分片投射为 `AGENTS.md` 受管区块内的独立小节，带来源
   标注：身份不丢，反向归因有据。
-- path-scoped 分片（frontmatter `paths`）投射时渲染显式适用性前言，例如"以下
-  规则仅在处理 `docs/` 下文件时适用"。Claude 靠加载器机械限定作用域，Codex 靠
-  模型注意力限定——语义降级但生效。
+- path-scoped 分片（frontmatter `paths`）投射时渲染显式适用性前言，大意是
+  "以下规则仅在处理匹配文件时适用"（固定句式模板与版本标记见
+  [source-tree-spec](../../skills/bridge-sentinel/references/source-tree-spec.md)）。
+  Claude 靠加载器机械限定作用域，Codex 靠模型注意力限定——语义降级但生效。
 - 受管区块内的直接改动是常规输入而非错误：来源标注给出回写目标分片，反向采纳
-  做逆向语义映射——适用性前言还原为 `paths` frontmatter，Codex 语境的自指表述
-  改写回中性表述；没有明确目标分片的新增内容由 LLM 判断落点（入口、既有分片或
-  新建分片）。
+  做逆向语义映射——适用性前言还原为 `paths` frontmatter；没有明确目标分片的
+  新增内容由 LLM 判断落点（入口、既有分片或新建分片）。
 - `AGENTS.md` 受管区块外是人工区，放真正只给 Codex 的内容；人工区不参与自动
   回源。用户想让 Claude 也遵守某段人工区内容时，动作是把它挪进源树。
 
 ### 钩子：意图为源，双侧投射
 
-钩子意图文档（如 `.claude/rules/hooks.md`）是源，写清触发点、目的、命令、环境
+钩子意图文档（`.claude/rules/hooks.md`）是源，写清触发点、目的、命令、环境
 要求和失败策略。它投射到两侧的承载面：
 
 - Claude 侧：`settings.json` 中声明过的 hooks 键（按键声明所有权）。
@@ -105,9 +123,19 @@ git diff 稳定性考虑。副本整体归 Bridge 所有（按文件集声明）
   hooks 是同族 schema，大部分意图都能原生承载；超出对方 hooks 能力面的意图
   才降级为 `AGENTS.md` 常驻指令（语义降级），并在同步计划里如实标注档位。
 
+声明键的登记处就是意图文档本身：某 host 上归 Bridge 所有的键集合，从意图文档中
+面向该 host 的模式有效条目直接推导，不另设清单文件（条目格式与推导规则见
+[source-tree-spec](../../skills/bridge-sentinel/references/source-tree-spec.md)）。
+投射出的 handler 可以附带一个 `[bridge:<id>]` 前缀的 `statusMessage` 标记，
+只作人类可读的所有权强化，从不承担归属判定（标记语法与孤儿键的归因规则见
+spec 文件）。
+
 Codex 只在项目被信任后加载 `.codex/` 层，且改动过的 hook 需要用户重新信任。
-投射写入后的生效以 host 的信任机制为准；同步计划把"已写入、待 host 信任"如实
-呈现，这不是漂移（见 [Codex 能力面核验](../research/codex-capability-surface.md)）。
+投射写入后的生效以 host 的信任机制为准。信任状态无法从仓库字节观察，因此
+"已写入、待 host 信任"永远不是一个可由夹具检测的状态，而是 Codex 侧报告行上的
+常驻注记，配合报告级的说明句如实呈现——这不是漂移（注记规则见
+[report-spec](../../skills/bridge-sentinel/references/report-spec.md)；host
+事实见 [Codex 能力面核验](../research/codex-capability-surface.md)）。
 
 意图文档以规则片段形式存在，Claude 会把它读进上下文——读到的是意图说明，满足
 源树"被 Claude 读取时无害或有益"的双重角色约束。高副作用钩子默认要求显式启用，
@@ -143,11 +171,18 @@ Codex 所有、不投射（第 4 档）。Claude 权限规则与 Codex execpolic
 
 每次传播（正向投射或反向采纳）都产出同步计划，逐单元报告：
 
-- `create` / `update` / `unchanged`：常规投射状态。
+- `create` / `update` / `unchanged`：常规投射状态。`create` 的适用有前提——
+  项目级接入判定（已接入 / 未接入）每次扫描整体计算一次（判定条件见
+  [source-tree-spec](../../skills/bridge-sentinel/references/source-tree-spec.md)）：
+  已接入项目缺失的投射是漂移，建议去向为按源重投射（对应 `create`）；未接入
+  项目缺失的投射是"未投射（待引导）"，不是漂移，建议动作是走项目引导流程——
+  哨兵仍只报告，不执行引导。
 - `adopt`：投射面上的新意图采纳回源树，反向传播的常规状态。
 - 保真档位：原生等价 / 结构降级 / 语义降级 / 声明不同步。
 - `conflict`：源树与投射面同时携带不同新意图，需用户选择。
 - 收编或保留：目标位置已有看似人工维护、不在声明范围内的内容，先问用户。
+- 无源单元：显式的空面行。某检查面没有任何源单元时，报告仍为该面输出一行，
+  空面不静默。
 
 无歧义单元自动执行，计划即报告；`conflict` 与收编单元必须等用户决定。
 `unsupported` 只能来自"声明不同步"档的显式声明，不允许来自静默遗漏。
