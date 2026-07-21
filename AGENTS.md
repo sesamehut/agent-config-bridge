@@ -58,6 +58,8 @@ both; shared conventions belong here, not in a private agent memory.
 - Do not overwrite unmanaged or hand-written host-native files. Confirm a plan
   first, write only inside managed regions, and ask for an adoption or
   replacement decision.
+- Never start a work session with cwd inside `fixtures/`; fixture authoring
+  rules live in [`.claude/rules/fixtures.md`](.claude/rules/fixtures.md).
 
 ## Verification
 

@@ -37,5 +37,6 @@
     "code-simplifier@claude-plugins-official": true,
     "context7@claude-plugins-official": true
   },
-  "plansDirectory": ".claude/plans"
+  "plansDirectory": ".claude/plans",
+  "claudeMdExcludes": ["**/fixtures/**"]
 }
