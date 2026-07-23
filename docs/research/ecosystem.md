@@ -35,8 +35,7 @@
 更偏工具配置目录树同步。`sync-skills` 和 `skillshare` 在技能管理上很接近；本项目把规则 /
 钩子、采纳和插件分发放在同一个模型里。
 
-因此 Agent Config Bridge 可以吸收这些项目的经验，同时保持自己的产品边界：规范源是
-长期维护对象；投射负责生成目标工具配置文件；采纳只处理来自某个工具的人工修改。
+Agent Config Bridge 吸收这些项目的经验，产品边界与定位见 [scope.md](../product/scope.md)。
 
 ## 实现前需要复核
 
@@ -45,5 +44,3 @@
 - Claude Code 插件、技能、钩子与 `CLAUDE_PLUGIN_ROOT` 的最新行为。
 - Codex 插件清单、`skills` 目录、技能本地 `scripts` / `resources` 的最新行为。
 - Codex 对规则、项目指令、命令审批或类钩子自动化的当前支持边界。
-
-这份调研的采集日期说明当时的判断依据；实现前仍以官方文档复核为准。

@@ -3,10 +3,8 @@
 ## 当前状态
 
 实现阶段已开启，当前里程碑是 M1（源树声明与只读哨兵）。产品产物按
-[分发模型](../implementation/distribution-model.md)声明的目录落地：skill 源进
-`skills/`，安装模板进 `templates/`，工具映射知识进 `knowledge/`，验证夹具进
-`fixtures/`；薄包装脚本、插件清单和制品产物仍按里程碑门控，最早在 M5
-打包阶段引入。
+[分发模型](../implementation/distribution-model.md)声明的目录落地；薄包装脚本、
+插件清单和制品产物仍按里程碑门控，最早在 M5 打包阶段引入。
 
 ### 检查命令
 
@@ -20,10 +18,9 @@
   满足界面字段约束，Claude / Codex 的调用说明与运行时依赖均在正文中显式声明。
 - **哨兵检查**：对每个 `fixtures/<name>/` 夹具就地运行哨兵 skill——扫描根与
   范围排除取自夹具自带 `expected-report.md` 的声明头；再按
-  `fixtures/dogfood/expected-report.md` 对本仓库自身运行一次（扫描根为仓库根、
-  范围排除 `fixtures/**`）。产出报告与期望文件按
-  [report-spec](../../skills/bridge-sentinel/references/report-spec.md) 定义的
-  确定性比对规则比对，全部通过即 PASS；状态口径与源树条目约定见
+  `fixtures/dogfood/expected-report.md` 对本仓库自身运行一次。产出报告与期望
+  文件按 [report-spec](../../skills/bridge-sentinel/references/report-spec.md)
+  定义的确定性比对规则比对，全部通过即 PASS；状态口径与源树条目约定见
   [source-tree-spec](../../skills/bridge-sentinel/references/source-tree-spec.md)。
 
 进入 M5 / M6 后，这份清单固化为发布前验证命令与 CI 门禁。
@@ -47,11 +44,8 @@ M1 是只读阶段。目标是确定源树形状、行为约定文本和报告�
 完成标准：
 
 - 能扫描一个示例项目，报告源树与各投射面的一致性状态。
-- 报告能区分的状态集是封闭的：一致、漂移（含建议去向：采纳回源 / 按源重投射 /
-  冲突）、收编候选（既有人工内容）、声明不同步、未投射（待引导；非漂移，仅
-  出现在未接入项目）、无源单元（显式空面行）、语义映射区块（逐字校验不适用，
-  M1 夹具显式演练），并给出项目级的已接入 / 未接入标志——夹具比对按这套口径与
-  验收表述逐一对应。
+- 报告状态集封闭，与 [report-spec](../../skills/bridge-sentinel/references/report-spec.md)
+  的口径一一对应，夹具比对按该口径逐一验收。
 - 没有落盘能力；所有结果只停留在报告与同步计划。
 
 ## M2：技能投射与采纳（原生等价档）
@@ -78,13 +72,13 @@ M1 是只读阶段。目标是确定源树形状、行为约定文本和报告�
 
 要完成：
 
-- `CLAUDE.md` 共享内容与 `.claude/rules/` 分片投射进 `AGENTS.md` 受管区块，
-  按分片保留小节与来源标注。
-- 受管区块直接改动的反向采纳：按来源标注回写目标分片，适用性前言还原为
-  `paths` frontmatter。
+- `CLAUDE.md` 共享内容与 `.claude/rules/` 分片投射进 `AGENTS.md` 受管区块。
+- 受管区块直接改动的反向采纳。
 - path-scoped 分片的适用性前言渲染。
 - host 自指内容的投射改写约定；Claude-only 段落的注释标记。
 - 三种起点的引导流程，重点是 Codex 起点：既有 `AGENTS.md` 收编为源树。
+
+投射与反向采纳的机制细节见[同步模型](../implementation/sync-model.md)。
 
 完成标准：
 
@@ -100,7 +94,7 @@ M1 是只读阶段。目标是确定源树形状、行为约定文本和报告�
 
 要完成：
 
-- 定稿钩子意图文档模型（触发点 / 目的 / 命令 / 环境要求 / 失败策略）。
+- 定稿钩子意图文档模型，见[同步模型](../implementation/sync-model.md)钩子一节。
 - Claude 侧投射到 `settings.json` 声明键；Codex 侧投射到 `.codex/hooks.json`
   声明键，超出目标侧 hooks 能力面的意图降级为 `AGENTS.md` 常驻指令。
 - 实测项目级 `.codex/hooks.json` 的信任加载与逐 hook 重新信任流程，把实测
@@ -122,9 +116,8 @@ M1 是只读阶段。目标是确定源树形状、行为约定文本和报告�
 要完成：
 
 - 把 skill、工具映射知识和薄包装脚本组装成 Claude / Codex 插件。
-- Claude 技能使用 `CLAUDE_PLUGIN_ROOT` 定位自带文件与薄包装脚本。
-- Codex 技能使用技能本地包装脚本。
-- 在单仓库内生成插件产物到入库的 `plugin/` 边界目录。
+- 两侧技能入口与入库的 `plugin/` 边界目录产物，机制按
+  [分发模型](../implementation/distribution-model.md)落地。
 
 完成标准：
 
