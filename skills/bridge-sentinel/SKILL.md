@@ -12,8 +12,8 @@ state from the normative decision tables and return the prescribed report.
 
 - Requires a Git worktree, Git on `PATH`, and Python 3.9+.
 - Resolve support files relative to this `SKILL.md`.
-- Put any intermediate render in a unique OS-temporary directory outside the
-  scan root.
+- Put renders, normalized copies, and produced expectation reports in a
+  unique OS-temporary directory outside the scan root.
 
 Use the helper for all deterministic comparisons:
 
@@ -35,11 +35,11 @@ before applying it:
 
 | Scan phase | Source-tree sections | Report sections |
 |---|---|---|
-| Scope and onboarding | Unit model; Onboarding predicate; Marker grammar | Input set; States and decision tables |
-| Skills | Skill portability requirements; Skill intent supporting file | Skills decision table; Diff shape; Skill portability lints |
-| AGENTS.md | Marker grammar; Rendering pipeline; Normalization set N | Agents-md decision table; Observations; Fidelity tiers |
-| Hooks | Hook intent document; ownership derivation; projected handler shape | Hooks decision table; Observations; Fidelity tiers |
-| Output | — | Report format; Expectation comparison; Codex activation hedge |
+| Scope and onboarding | Unit model; Onboarding predicate; Marker grammar | Input set; The states |
+| Skills | Skill intent supporting file; Skill portability requirements | Per-surface decision tables > Skills; Diff shape; Skill portability lint list |
+| AGENTS.md | Marker grammar; Applicability preamble and rendering pipeline; Normalization set N | Per-surface decision tables > Agents-md; Closed observation vocabulary; Fidelity tiers |
+| Hooks | Hook intent document; Declared keys and ownership derivation; Projected handler shape | Per-surface decision tables > Hooks; Closed observation vocabulary; Fidelity tiers |
+| Output | — | Report document format; Expectation files and the deterministic comparison rule; Codex activation hedge |
 
 Versions: `references/source-tree-spec.md` = `source-tree/v2`;
 `references/report-spec.md` = `report/v2`. Read the defining rule before
@@ -84,7 +84,6 @@ emitting any normative token.
 
 ## Hard boundary
 
-The sentinel MUST NOT create, modify, or delete any file under the scanned
-project; scratch files for rendering and diff mechanics go OUTSIDE the project
-(the session scratchpad). The report is session output. The product writes
-nothing to disk.
+Keep the scanned project unchanged. Temporary helper and comparison files stay
+outside it. Return the report as session output and leave no persistent product
+artifact.

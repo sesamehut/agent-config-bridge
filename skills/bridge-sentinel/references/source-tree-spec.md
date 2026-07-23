@@ -2,24 +2,11 @@
 
 Spec version: source-tree/v2.
 
-This file is the durable normative home of the bridge's source-tree
-conventions: the unit model and unit-id derivation, the onboarding
-predicate, the managed-region marker grammar, the applicability preamble and
-rendering pipeline, the normalization set N, the frontmatter schemas and the
-intent-record format, the hook-intent entry format and ownership derivation,
-and the skill portability requirements. Its companion,
-[`report-spec.md`](report-spec.md), owns the report contract: the closed
-state vocabulary and detection rules, the per-surface decision tables, the
-diff shape, the observation vocabulary, the fidelity tier rules, the
-portability lint list, the report document format, and the deterministic
-expectation-comparison rule. Together these two files are complete: an
-implementer or sentinel-executing agent needs nothing else.
-
-Every rule in this file is a pure function of **repo bytes** — the tracked
-files of the scan root, filtered by any scope excludes. The pinned input-set
-definition (repo mode, fixture mode, untracked-file handling, and the
-exclude glob dialect) lives in `report-spec.md`, as does the registry growth
-rule binding every closed token set defined here.
+This file defines source units, onboarding, markers, rendering, intent
+records, hook ownership, and skill portability. Its companion,
+[`report-spec.md`](report-spec.md), defines inputs, findings, observations,
+and report comparison. All rules consume the filtered tracked files called
+**repo bytes** in that companion.
 
 ## Contents
 
@@ -29,124 +16,69 @@ rule binding every closed token set defined here.
 - [Applicability preamble and rendering pipeline](#applicability-preamble-and-rendering-pipeline)
 - [Normalization set N](#normalization-set-n-exact-closed)
 - [Frontmatter schemas and entry formats](#frontmatter-schemas-and-entry-formats)
+- [Skill intent supporting file](#skill-intent-supporting-file)
+- [Hook intent document](#hook-intent-document)
 - [Hook ownership](#declared-keys-and-ownership-derivation)
 - [Projected handler shape](#projected-handler-shape)
 - [Skill portability requirements](#skill-portability-requirements)
 
 ## Unit model
 
-A report row is keyed by `(surface, unit, host)`.
+A report row is keyed by `(surface, unit, host)`:
 
-- `surface` ∈ { `agents-md`, `hooks`, `skills` } — the three fixed check
-  surfaces.
-- `unit` — a unit id (grammar under "Attribute charsets" below), or a
-  repo-root-relative path (adoption candidates only), or `-` (no-source-unit
-  rows only), or a synthetic ordinal-suffixed unit id `<unit-id>#<ordinal>`
-  (ordinal ≥ 2; emitted only by the duplicate-block rule under "Malformation
-  handling", on drift rows). Unit ids, paths, `-`, and synthetic ids are
-  four distinct token classes; the registries never mix them. `#` is
-  deliberately outside the unit-id charset, so a synthetic id can never
-  collide with a real unit id.
-- `host` ∈ { `claude`, `codex`, `-` }. Surface `agents-md` and `skills` rows
-  always have host `codex` (Claude consumes the source natively; no
-  Claude-side row exists for them). Surface `hooks` rows exist once per
-  declared target host (plus marked-orphan rows on the host whose file holds
-  the orphan). `-` only on no-source-unit rows.
+| Field | Values |
+|---|---|
+| `surface` | `agents-md`, `hooks`, `skills` |
+| `unit` | a unit id; a repo-relative adoption path; `-` for `no-source-unit`; or `<unit-id>#<ordinal>` (`ordinal` ≥ 2) for duplicate managed blocks |
+| `host` | `claude`, `codex`, or `-`; use `codex` for `agents-md` and `skills`, the declared host for `hooks`, the containing host for marked hook orphans, and `-` for `no-source-unit` |
 
-Unit enumeration (pure function of repo bytes):
+The four `unit` token classes are disjoint; `#` is outside the unit-id
+charset.
 
-- `agents-md` source units: the **entry unit** (id `entry`, source = root
-  `CLAUDE.md`; if root `CLAUDE.md` is absent and `.claude/CLAUDE.md` exists,
-  source = `.claude/CLAUDE.md`; if both exist, source = root `CLAUDE.md` and
-  the `dual-project-entry` observation is emitted) — the entry unit exists
-  iff its source file exists; plus one **rule-shard unit** per tracked file
-  matching `.claude/rules/**/*.md` EXCLUDING `.claude/rules/hooks.md` (owned
-  by the hooks surface), with id `rules/<relative path under .claude/rules/
-  minus the .md extension>` (e.g. `.claude/rules/docs.md` → `rules/docs`;
-  `.claude/rules/API.md` → `rules/API`). Projection-side elements: the
-  managed blocks parsed from the root `AGENTS.md` per the marker grammar
-  below. Pairing key: block `id` attribute ↔ derived unit id.
-- `hooks` source units: one per schema-valid entry of
-  `.claude/rules/hooks.md` (schema under "Hook intent document" below), id
-  `hooks/<entry id>`. Each entry produces one row per host in its `targets`
-  map. Projection-side elements: the bridge-owned groups of
-  `.claude/settings.json` (top-level `hooks` key) and `.codex/hooks.json` —
-  a group is bridge-owned iff some schema-valid entry targeting that host
-  (declared surface ≠ `none`) declares its `(event, matcher)` pair
-  (matcher-absence counts as a value and matches only matcher-absence) —
-  plus **marked handlers**: any handler object whose `statusMessage` value
-  begins with `[bridge:` (the reinforcement marker defined below).
-- `skills` source units: one per immediate subdirectory of `.claude/skills/`
-  that contains a tracked `SKILL.md`; unit id = the directory name.
-  Projection-side elements: immediate subdirectories of `.agents/skills/`
-  containing a tracked `SKILL.md`. Pairing key: directory name. A
-  subdirectory without `SKILL.md` on either side is not a unit (it is inert
-  for both hosts); the sentinel checklist recommends a free-form note.
-- A would-be source file whose repo-relative path contains any character
-  outside the source-path charset below is NOT a unit; it emits the
-  `unrepresentable-source-path` observation. Because the unit-id charset
-  admits every character the source-path charset admits, every representable
-  source path derives a valid unit id — no second failure mode exists.
+Enumerate units as follows:
 
-**No-source-unit emission rule**: every surface emits at least one row. If a
-surface would otherwise emit zero rows, it emits exactly one row
-`(surface, -, -, no-source-unit, -, -, -)`.
+- **agents-md**: the entry unit `entry` uses root `CLAUDE.md`, falling back to
+  `.claude/CLAUDE.md`, and exists only when one of them exists. If both exist,
+  root wins and emit
+  `dual-project-entry`. Add one unit for each tracked
+  `.claude/rules/**/*.md` except `.claude/rules/hooks.md`; its id is
+  `rules/<path below .claude/rules without .md>`. Pair units with root
+  `AGENTS.md` managed blocks by `id`.
+- **hooks**: each schema-valid `.claude/rules/hooks.md` entry is
+  `hooks/<entry-id>` and produces one row per declared target host. Pair it
+  with its owned `(event, matcher)` group in `.claude/settings.json` or
+  `.codex/hooks.json`. Matcher absence matches only absence. Also enumerate
+  handlers whose `statusMessage` begins `[bridge:` for orphan detection.
+- **skills**: each immediate `.claude/skills/<name>/` directory containing a
+  tracked `SKILL.md` is unit `<name>`. Pair it with the same-name immediate
+  directory under `.agents/skills/` when that directory also contains a
+  tracked `SKILL.md`. Directories without `SKILL.md` are not units.
+
+A would-be source path outside the source-path grammar is not a unit; emit
+`unrepresentable-source-path`. Each surface that otherwise has no rows emits
+exactly `(surface, -, -, no-source-unit, -, -, -)`.
 
 ## Onboarding predicate
 
-> A project is **onboarded** if and only if at least one of the following
-> holds over the tracked files of the scan root:
->
-> (a) the root `AGENTS.md` contains at least one well-formed bridge managed
-> block (a start marker and an end marker, matched as a pair per the marker
-> grammar, outside code fences);
->
-> (b) a bridge-declared hooks key exists: EITHER a hook intent document exists
-> at `.claude/rules/hooks.md` and at least one of its schema-valid entries
-> has, for some host with declared surface other than `none`, its owned
-> `(event, matcher)` group present in that surface's file with at least one
-> command handler (field values are irrelevant to the predicate); OR any
-> handler object in `.claude/settings.json` or `.codex/hooks.json` carries a
-> `statusMessage` value beginning with the characters `[bridge:`;
->
-> (c) at least one directory `.agents/skills/<name>/` is a whole-directory
-> raw-byte-identical copy of an existing master `.claude/skills/<name>/`
-> (identical relative file sets; every file pair byte-identical);
->
-> (d) the covenant rule shard exists at `.claude/rules/bridge-covenant.md`.
->
-> Otherwise the project is **not-onboarded**. When not-onboarded, the report
-> contains zero `drift` rows by construction: missing projections are
-> `not-projected`, existing unmanaged content is `adoption-candidate`. When
-> onboarded, every missing projection of a source unit is `drift` with
-> suggested action `reproject-from-source`.
+Evaluate onboarding once per project. The project is **onboarded** when any
+trigger holds over repo bytes:
 
-Notes pinned alongside (all facts normative):
+| Trigger | Evidence |
+|---|---|
+| a | Root `AGENTS.md` contains a well-formed managed block outside code fences. |
+| b | A schema-valid hook entry targeting a non-`none` surface has an owned `(event, matcher)` group with a command handler, regardless of field equality; or either hooks file contains a handler whose `statusMessage` begins `[bridge:`. |
+| c | A `.agents/skills/<name>/` copy and its `.claude/skills/<name>/` master have identical relative file sets and raw bytes. |
+| d | `.claude/rules/bridge-covenant.md` exists. |
 
-- The predicate is project-level, never per-unit (a per-unit predicate would
-  mislabel newly added source units forever and mask covenant omissions).
-- Trigger (b) fires on group EXISTENCE, not field equality — a declared
-  group whose command has drifted still evidences bridge management, and the
-  field difference then reports as ordinary drift under the hooks decision
-  table in `report-spec.md`. The marker clause makes bridge-written orphan
-  keys (intent entry deleted or never landed) onboard the project so they
-  can report as `drift`/`adopt-to-source` (有键无意图), never as silence.
-- Trigger (c) deliberately requires whole-directory byte identity: a
-  diverged same-name copy alone NEVER onboards a project — mere directory
-  coexistence is not evidence of management (a hand-maintained parallel tree
-  is the product's canonical pre-bridge user and exactly the Codex-start
-  state M3 onboarding must recognize). Accepted boundary behavior, stated so
-  fixture authors cannot encode another reading: in a project whose ONLY
-  onboarding evidence is one byte-identical copy, a later one-byte
-  divergence flips the project to not-onboarded and the pair reports as
-  `not-projected` (master) plus `adoption-candidate` (copy). The covenant
-  shard (d) is the robust anchor; trigger (c) is a fallback for
-  covenant-less histories.
-- Trigger (d) pins the covenant's installed filename,
-  `.claude/rules/bridge-covenant.md`; the covenant asset shipped with the
-  sentinel skill states this filename normatively.
-- Intent records alone never make a project onboarded (evidence, not
-  ownership).
+Otherwise the project is **not-onboarded**: missing projections are
+`not-projected`, existing unmanaged content is `adoption-candidate`, and no
+row is `drift`. In an onboarded project, a missing source projection is
+`drift`/`reproject-from-source`.
+
+The predicate is project-level. Intent records do not trigger it. A diverged
+same-name skill pair does not satisfy trigger c; if c was the only trigger,
+divergence changes the project to not-onboarded and yields a master
+`not-projected` row plus a copy `adoption-candidate` row.
 
 ## Marker grammar
 
@@ -160,9 +92,8 @@ claude-only-end   = "<!-- bridge:claude-only:end -->"
 ```
 
 Exactly one U+0020 between every token shown; no tabs; no other attributes;
-attribute order fixed (`id`, then `source`, then optional `mode`); no
-quoting mechanism exists at M1 (a quoted-attribute grammar is RESERVED as a
-future additive extension for paths containing whitespace).
+attribute order is `id`, `source`, then optional `mode`. Absent `mode` means
+verbatim mode.
 
 ### Attribute charsets
 
@@ -173,128 +104,75 @@ source-path = seg *("/" seg)          ; same seg charset; repo-root-relative,
 mode-token  = [a-z][a-z0-9-]{0,15}    ; absence of the attribute = verbatim mode
 ```
 
-The unit-id and source-path charsets are deliberately identical per segment
-(uppercase, digits, dot, underscore, hyphen), so every representable source
-path derives a representable unit id — real-world file names like
-`.claude/rules/API.md` or `team_style.md` are first-class source units.
-Attribute values must not contain whitespace, `=`, backticks, or the byte
-sequence `-->`; the seg charset enforces this. A file whose path cannot be
-represented cannot be a source unit; the sentinel emits
-`unrepresentable-source-path`. Within these charsets the marker parser stays
-a single full-line regex; the reserved quoting extension (never a breaking
-change) is the designated path to whitespace support.
+The shared segment grammar admits ASCII letters, digits, dot, underscore, and
+hyphen. It excludes whitespace, `=`, backticks, and `-->`. An
+unrepresentable source path is not a unit and emits
+`unrepresentable-source-path`.
 
 ### Line and placement rules
 
 - A marker must occupy an entire line: after stripping the trailing EOL, the
-  line must match the grammar from first byte to last. Anything else is
-  ordinary content.
+   line must match the grammar from first byte to last. Anything else is
+   ordinary content.
 - Managed blocks appear only in root `AGENTS.md`. Claude-only pairs appear
-  only in `CLAUDE.md` (or `.claude/CLAUDE.md`) and `.claude/rules/*.md`
-  (Claude strips block-level HTML comments from this family before context
-  injection — zero runtime cost Claude-side; Codex feeds markers to the
-  model verbatim, counted against the 32 KiB budget).
-- Code-fence rule (pinned, simplified from CommonMark, deterministic): scan
-  lines top-to-bottom; a line whose first non-space characters (at most 3
-  leading spaces) are three backticks or `~~~` toggles fence state; marker
-  lines are recognized only while fence state is closed. This simplification
-  is accepted and documented.
-- Blocks never nest. Pairing algorithm: a full-line start match opens a
-  block only when no block is open; every following line up to the next
-  full-line end match is the block body; an end match with no open block is
-  content.
+   only in `CLAUDE.md` (or `.claude/CLAUDE.md`) and `.claude/rules/*.md`
+   and are recognized under the same rules.
+- Scan top-to-bottom. A line with at most three leading spaces followed by
+  three backticks or `~~~` toggles fence state. Recognize markers only while
+  the fence is closed.
+- Blocks do not nest. A start opens a block only when none is open; the next
+  end closes it. An end without an open block is content.
 
-### Malformation handling (deterministic, never fatal)
+### Malformation handling
 
-Every condition below additionally emits one `marker-anomaly` observation
-(line format in `report-spec.md`); the states and agents-md cases named here
-are defined in `report-spec.md`.
+Each condition emits one `marker-anomaly`:
 
-- Start marker while a block is open → the inner line is body content (it
-  will byte-compare as drift).
-- End marker with no open block → content.
-- Block still open at EOF → the block is NOT recognized (its start line is
-  content; the affected unit reports per case A3).
-- A recognized block whose `source` attribute differs from the path derived
-  from its `id` (unit-model derivation above) → the block still pairs by
-  `id` (authoritative key).
-- Duplicate blocks with the same `id` → the first (topmost) pairs; each
-  later one reports per case A4 semantics as unattributable projection
-  content (`drift`/`adopt-to-source`, unit = `<id>#<ordinal>` — the
-  synthetic fourth unit token class of the unit model — ordinal 2, 3, … in
-  file order).
-- Claude-only: an unpaired start (no matching end before EOF, outside
-  fences) → NOTHING is subtracted; rendering proceeds with the marker line
-  included as literal content (the resulting drift is the honest signal).
-
-### Marker byte cost
-
-Per managed block, marker overhead on the Codex budget =
-`41 + len(id) + len(source)` bytes for the start line (`+ 6 + len(mode)` when
-a mode attribute is present) + `27` bytes for the end line + 2 EOL bytes
-(LF). Example: the covenant block (`id=rules/bridge-covenant`, 21 bytes;
-`source=.claude/rules/bridge-covenant.md`, 32 bytes) costs 41+21+32+27+2 =
-123 bytes of the effective combined Codex project-document budget. The
-claude-only pair costs 33 + 31 bytes + 2 EOL where it appears (Claude-side
-files only — where stripping makes runtime cost zero). Claude-side cost of
-all markers is zero (comments stripped before context injection). The
-effective Codex budget and its warning threshold are defined by the
-`agents-md-size` observation in `report-spec.md`, not frozen into this marker
-grammar.
+| Condition | Interpretation |
+|---|---|
+| Start while a block is open | Body content |
+| End without an open block | Content |
+| Open block at EOF | Unrecognized block; its start is content |
+| Block `source` differs from the path derived from `id` | Pair by authoritative `id` |
+| Duplicate `id` | Pair the first; report later blocks as A4 with unit `<id>#<ordinal>` in file order |
+| Claude-only start unclosed at EOF | Subtract nothing; retain the start and following content |
 
 ## Applicability preamble and rendering pipeline
 
 ### Preamble sentence template (versioned `pv1`)
 
-For a rule shard whose frontmatter has a `paths` key with globs g1…gn (in
-frontmatter list order):
+For a rule shard with globs g1…gn in frontmatter order:
 
 ```
 Applies only when working on files matching: <G>. (bridge:pv1)
 ```
 
-where `<G>` = the globs, each wrapped in single backticks, joined by the
-two-byte string ", ". One line; no other whitespace variation permitted.
-Example for `paths: ["docs/**/*"]`:
-
-```
-Applies only when working on files matching: `docs/**/*`. (bridge:pv1)
-```
-
-The trailing `(bridge:pv1)` token versions the template in-band (12 bytes
-plus one leading space, 13 bytes total, per scoped block on the Codex
-budget) — the only baseline-free way to know which template rendered a
-block. A future template change bumps to `pv2`; blocks carrying an older
-token than the current spec re-render as drift (deterministic, intended).
+`<G>` is each glob wrapped in single backticks and joined by `, `. The line,
+including `(bridge:pv1)`, admits no other whitespace variation.
 
 ### Applicability
 
-Rendered iff the shard's frontmatter `paths` list is present and non-empty.
-The entry unit and unscoped shards render no preamble line (and no blank
-separator line). Pinned edge: a `paths` key that is present but empty or not
-a list of strings → no preamble; note the anomaly free-form.
+Render the preamble only when `paths` is a non-empty list of strings. The
+entry unit, unscoped shards, and invalid or empty `paths` values render no
+preamble or separator; note an empty or invalid value free-form.
 
 ### Rendering pipeline
 
-`render(u)` for an agents-md unit u:
+Throughout this specification, frontmatter is recognized only when the first
+line is exactly `---` and a later full line is exactly `---`. An unclosed
+block is content.
+
+For an agents-md unit `u`, `render(u)`:
 
 1. Take the source file's literal tracked bytes. For the entry unit this is
-   the entry file itself — `@path` imports are NOT expanded; an imported file
-   owns a projection only if it is itself a source unit. A leading UTF-8 BOM
-   is NOT skipped anywhere in this pipeline (see the BOM note below).
-2. Strip the YAML frontmatter block if the first line is exactly `---`
-   (through the closing `---` line, inclusive).
+   the entry file itself; do not expand `@path` imports.
+2. Strip recognized YAML frontmatter, including both delimiter lines.
 3. Subtract claude-only segments: remove all lines from each recognized
-   claude-only start-marker line through its end-marker line, inclusive
-   (recognition per the marker grammar's line, placement, and malformation
-   rules above).
+   start through its end, inclusive.
 4. Strip leading blank lines.
 5. Apply normalization N (defined below).
-6. If the applicability condition above holds, prepend the preamble line
-   followed by exactly one empty line.
+6. If applicable, prepend the preamble and exactly one empty line.
 
-The projected block (what the covenant writes at M2+ and what the sentinel
-re-renders for comparison) is:
+The projected block is:
 
 ```
 <managed-start line for u>
@@ -302,29 +180,19 @@ re-renders for comparison) is:
 <managed-end line>
 ```
 
-The sentinel compares N(body as found between the markers) against
-render(u). "Entry-block comparison input = literal file bytes, no @import
-expansion" is normative; an `@AGENTS.md` import is never expanded and
-additionally trips the `self-referential-import` observation. LLM-rewritten
-projections (host self-reference rewrites) are not a rendering mode:
-source-side claude-only markers are the ONLY normative subtraction path; any
-rewritten projection byte-compares as drift by construction (arbitration's
-problem, M2+).
+Compare `N(body between markers)` with `render(u)`. An `@AGENTS.md` import
+remains literal and also emits `self-referential-import`. Claude-only segments
+are the sole subtraction mechanism; rewritten projection text compares as
+drift.
 
-BOM note: a leading UTF-8 BOM is never skipped in this pipeline, nor by the
-frontmatter recognition of the schemas below — a BOM'd file has no
-recognizable frontmatter here, and in a rendered comparison a BOM is content
-and produces honest drift. The single deliberate exception is lint
-computation, which skips a leading BOM per the lint BOM-skip rule in
-`report-spec.md` (lints diagnose what each host would see; rendering stays
-byte-honest).
+A leading UTF-8 BOM is content and prevents frontmatter recognition. Only
+skill-lint computation skips it, as defined in `report-spec.md`.
 
 ## Normalization set N (exact, closed)
 
-Applied ONLY where a rule says so: agents-md body comparison (both sides)
-and the report-comparison preprocessing in `report-spec.md`. Never applied
-to the skills surface. Hooks fields use the field normalization under
-"Declared-keys derivation" below instead.
+Apply N only to both sides of agents-md body comparison and to report
+comparison preprocessing. Skills use raw bytes; hooks use their field
+normalization.
 
 1. **EOL**: replace every CRLF (0x0D 0x0A) and every lone CR (0x0D) with LF
    (0x0A).
@@ -333,54 +201,46 @@ to the skills surface. Hooks fields use the field normalization under
 3. **Final newline**: strip all trailing whitespace/newlines at end of
    content, then append exactly one LF; empty content stays empty.
 
-Nothing else. Explicitly NOT normalized: BOM (in a rendered comparison a BOM
-is content and produces honest drift; on skills it is a lint), Unicode
-normalization forms, interior blank lines, whitespace collapse, case. N is
-deliberately the narrowest useful "empty diff" normalization; anything more
-would smuggle semantic judgment into the deterministic layer.
+Do not normalize BOM, Unicode forms, interior blank lines, interior
+whitespace, or case.
 
 ## Frontmatter schemas and entry formats
+
+### Intent-record format
+
+One record is `{date: valid YYYY-MM-DD calendar date, note: single-line
+string}`. Keep records oldest first and append one in the same change whenever
+a source entry changes. They are arbitration and report evidence only; they
+follow normal byte comparison when part of a compared unit and never override
+decision-table state, action, or onboarding.
+
+A root entry record, when needed, is a full line at the file top:
+`<!-- bridge:intent <YYYY-MM-DD> <single-line note> -->`. The same grammar is
+reserved as a rule-shard fallback but is not active for rule shards in v2.
 
 ### Rule-shard frontmatter (`.claude/rules/*.md`)
 
 ```yaml
 ---
-paths:                # optional; YAML list of glob strings (host-native key)
+paths:                # optional list of glob strings
   - "docs/**/*"
-bridge:               # optional; the ONE bridge-namespaced key
-  intent:             # required inside bridge:; list, newest entry appended last
-    - date: 2026-07-08     # required; ISO 8601 calendar date, YYYY-MM-DD
-      note: one-line motivation   # required; single-line string, recommended <= 120 chars
+bridge:               # optional map
+  intent:             # required when bridge is present
+    - date: 2026-07-08
+      note: one-line motivation
 ---
 ```
 
-- `paths` is the only host-documented rules key; `bridge` is the single
-  additional key the bridge ever adds to host-parsed frontmatter (minimal
-  unknown-key surface). `bridge` is a map; M1 defines exactly one subkey,
-  `intent`; other subkeys are reserved (ignored, never errors).
-- Intent-record rule (the 含意图记录 convention): whenever a change lands in
-  a source entry, the acting agent appends one `{date, note}` element to
-  that entry's `bridge.intent` list in the same unit of work.
-- Two intent-record forms are pinned, exactly one is in force at a time, and
-  this spec states which. **In force: the frontmatter form above.** The
-  fallback form — activated repo-wide only if the empirical check of
-  Claude's tolerance for the extra `bridge` frontmatter key in rules files
-  (officially unspecified; dated result recorded in this repo's
-  `knowledge/entry-and-rules.md`) proves Claude intolerant — is a
-  block-level HTML comment placed immediately after the frontmatter (or at
-  the top of the file when no frontmatter exists), one per record, grammar
-  `<!-- bridge:intent <YYYY-MM-DD> <single-line note> -->`, full-line,
-  outside code fences.
-- `CLAUDE.md` itself carries no frontmatter and no `bridge` key at M1 (entry
-  intent records would use the comment fallback if ever needed).
-- Skill masters MUST NOT add `bridge` to `SKILL.md` frontmatter. Skill intent
-  records use the supporting-file form below so host-parsed frontmatter stays
-  portable.
+`paths` is the host-native rules key. In v2, `bridge` frontmatter is the
+rule-shard intent carrier and the sole bridge-added key;
+its `intent` value is a list of intent records, with notes recommended at no
+more than 120 characters. Ignore reserved unknown `bridge` subkeys.
+The entry file (`CLAUDE.md` or `.claude/CLAUDE.md`) has no frontmatter.
 
-### Skill intent supporting file (`bridge-intent.yaml`)
+### Skill intent supporting file
 
 A skill master that carries intent history stores it at
-`<skill-directory>/bridge-intent.yaml`, never in `SKILL.md` frontmatter:
+`<skill-directory>/bridge-intent.yaml`:
 
 ```yaml
 intent:
@@ -388,27 +248,15 @@ intent:
     note: One-line motivation
 ```
 
-`intent` is the only top-level key defined at M1. Its elements use the
-intent-record format below. The file is part of the skill directory and is
-therefore copied byte-for-byte to the Codex projection. Neither host parses
-it as skill metadata; the bridge reads it only as arbitration evidence.
+`intent` is the only defined top-level key. The file is copied byte-for-byte
+with the skill and read only as bridge evidence. Do not add `bridge` to
+`SKILL.md` frontmatter.
 
-### Intent-record format
+### Hook intent document
 
-One record = `{date: YYYY-MM-DD, note: single-line string}`. Records are
-append-only in file order (oldest first), so git diffs of intent history
-stay one-line additions. They are evidence for arbitration (M2+) and for the
-report's evidence section; they never alter M1 state or suggested-action
-determinations, and they never make a project onboarded.
-
-### Hook intent document (`.claude/rules/hooks.md`)
-
-File-level frontmatter: optional `bridge` key per the rule-shard schema
-above (no `paths` — the intent document loads unconditionally). The document
-body is a sequence of entries.
-
-**Entry format** — heading, five-aspect prose bullets, then exactly ONE
-fenced YAML block:
+`.claude/rules/hooks.md` may use `bridge` frontmatter but not `paths`; it loads
+unconditionally. Each entry has a heading, five prose bullets, and one fenced
+`yaml` block:
 
 ```markdown
 ## hook: <id>
@@ -420,102 +268,98 @@ fenced YAML block:
 - Failure policy: <prose>
 ```
 
-followed by one fenced code block with info string `yaml` carrying the
-machine fields.
+Follow the prose with exactly one fenced code block whose info string is
+`yaml`; it carries the machine fields below.
 
-- Entry enumeration rule: an entry is a section opened by a level-2 heading
-  matching the regex `^## hook: (?<id>[a-z0-9][a-z0-9-]*)$` and extending to
-  the next such heading or EOF. The heading id is the authoritative entry
-  id.
-- The five bullet labels are pinned exactly: `Trigger`, `Purpose`,
-  `Command`, `Environment`, `Failure policy`. Their prose never enters the
-  consistency verdict.
-- Exactly one fenced `yaml` block per entry carries the machine fields.
+An entry starts at
+`^## hook: (?<id>[a-z0-9][a-z0-9-]*)$` and ends before the next matching
+heading or at EOF. The heading id is authoritative. Bullet labels are
+exactly `Trigger`, `Purpose`, `Command`, `Environment`, and `Failure policy`;
+their prose does not affect consistency.
 
-**Machine fields (names, types, required/optional):**
+Machine fields:
 
 | Field | Type | Req | Meaning / constraints |
 |---|---|---|---|
-| `id` | string | required | must equal the heading id; charset `[a-z0-9-]`, starts alphanumeric; unique in the document |
-| `event` | string | required | host event name, exact case (e.g. `Stop`, `SessionStart`, `PreToolUse`); unknown names are "newer than research date", never invalid |
-| `matcher` | string | optional | omitted means "no matcher key in the projected group" (events like Stop take none); when present, compared code-point exact |
+| `id` | string | required | equals the heading id; `[a-z0-9-]`, starting alphanumeric; unique |
+| `event` | string | required | exact-case host event; unknown names remain valid |
+| `matcher` | string | optional | omission means no projected `matcher` key and matches only omission; otherwise use the string normalization below |
 | `command` | string | required unless both targets are tier-4 | the command line |
-| `commandWindows` | string | optional | Codex-only Windows branch; when declared, the codex handler must carry it; ignored on the claude surface at M1 (the mapping to Claude's handler `shell` field is deferred to M4) |
-| `timeout` | integer | optional | seconds; when declared the handler must carry the same integer; when omitted the handler must omit it |
-| `enabled` | boolean | required | `false` = declared but off: expected absence on all target surfaces (a present artifact is `drift`/`conflict` per case H-DISABLED-PRESENT in `report-spec.md`) |
-| `targets` | map | required | MUST declare both `claude` and `codex` (complete projection) |
-| `targets.claude.surface` | enum | required | `settings-json` \| `none` — abstract tokens, never file paths; the token→file mapping (`settings-json` → `.claude/settings.json` top-level `hooks` key) lives in this spec so a host layout change is a one-line spec edit, never a user-project migration |
-| `targets.codex.surface` | enum | required | `codex-hooks-json` \| `none` — token→file: `codex-hooks-json` → `.codex/hooks.json` |
-| `targets.<host>.tier` | enum | required | M1-valid set: `native` \| `declared-unsynced`, with `declared-unsynced` ⇔ `surface: none`. The values `structural` and `semantic` and the surface value `agents-md` (tier-3 standing-instruction carrier) are RESERVED for M4 and schema-invalid at M1 |
-| `intent` | list of {date, note} | optional | per-entry intent log, same element schema as the intent-record format above (no `bridge:` wrapper needed — the fenced block is bridge-owned, no host parses it) |
+| `commandWindows` | string | optional | Codex-only Windows branch; compare only on the Codex surface |
+| `timeout` | integer | optional | seconds; projected iff declared and equal as an integer |
+| `enabled` | boolean | required | `false` expects no handler on any target surface |
+| `targets` | map | required | contains exactly `claude` and `codex` |
+| `targets.claude.surface` | enum | required | `settings-json` → `.claude/settings.json` top-level `hooks`; or `none` |
+| `targets.codex.surface` | enum | required | `codex-hooks-json` → `.codex/hooks.json` top-level `hooks`; or `none` |
+| `targets.<host>.tier` | enum | required | `native` or `declared-unsynced`; `declared-unsynced` iff surface is `none` |
+| `intent` | list of {date, note} | optional | entry-local intent records |
 
-**YAML quoting note (normative)**: the fenced block must parse as valid
-YAML. A `command`, `commandWindows`, or `matcher` value containing `: `
-(colon + space) — or any other construct YAML forbids in an unquoted plain
-scalar — MUST be quoted (single quotes recommended). Comparison always uses
-the parsed scalar value, so quoting never affects field equality.
+`structural`, `semantic`, and surface `agents-md` are reserved and invalid in
+v2. The fenced block must be valid YAML; quote scalars when YAML requires it.
+Comparisons use parsed scalar values.
 
-**Schema violations**: any schema violation (missing required field,
-duplicate id, unknown or reserved surface/tier value, tier/surface mismatch,
-id/heading mismatch, zero or multiple `yaml` blocks in a section, an
-unparseable `yaml` block per the quoting note above — counting as exactly
-one violation for the section, never one per unextractable field — or
-duplicate `(event, matcher, host)` declaration across entries, which makes
-BOTH involved entries schema-invalid so ownership stays unambiguous per
-group) → the entry (all involved entries, for the duplicate-pair case)
-produces no unit rows and one mandatory `intent-doc-anomaly` observation per
-violation (detail format in `report-spec.md` — the observation makes the
-omission non-silent and fixture-comparable).
+Schema violations include a missing or mislabeled prose bullet, a missing or
+invalid machine field, heading/id mismatch, zero or multiple `yaml` blocks,
+unknown or reserved enum values, tier/surface mismatch, duplicate ids, and duplicate
+`(event, matcher, host)` declarations. YAML parse failure counts as one
+violation for its section. Every entry sharing a duplicate id or ownership
+declaration is invalid. An invalid entry emits no unit row and emits one
+`intent-doc-anomaly` per violation.
 
 ### Declared keys and ownership derivation
 
-The intent document IS the ownership declaration — no separate manifest
-exists or may be
-introduced. For host h, the bridge-owned groups of h's file are exactly the
-`(event, matcher)` pairs declared by schema-valid entries whose
-`targets.<h>.surface` ≠ `none`. Field normalization for comparisons: string
-fields are compared code-point exact after stripping leading/trailing ASCII
-whitespace; `timeout` compares as integer; `type` must be exactly `command`;
-matcher-absence in the intent matches only matcher-absence in the JSON
-group.
+The intent document is the sole ownership declaration. For host `h`, owned
+groups are exactly the `(event, matcher)` pairs from valid entries whose
+`targets.<h>.surface` is not `none`.
 
-**Reinforcement marker (SECONDARY, optional, never load-bearing)**: a
-projected handler MAY carry `statusMessage` whose value begins with
-`[bridge:<id>]` (the entry's id; any following text free-form). The marker's
-roles: human readability in the JSON file, and orphan attribution — a marked
-handler whose id has no schema-valid entry yields the H-MARKED-ORPHAN row of
-the hooks decision table in `report-spec.md` instead of vanishing into the
-undeclared channel. Comparison rule: a `statusMessage` matching
-`[bridge:<entry-id>]…` on the entry's own handler is neither required nor an
-undeclared key; any other `statusMessage` value IS an undeclared key. The
-M2+ write path SHOULD add the marker on both surfaces because the v2 host
-profile supports `statusMessage` on each. The marker is never required for
-ownership, which always derives from the intent document.
+For equality, strip leading and trailing ASCII whitespace from string fields,
+then compare code points. Compare `timeout` as an integer and require `type`
+to equal `command`. Matcher absence matches only absence.
 
-**Allowed-key rule (for cases H-OK / H-EXTRA-KEYS)**: the handler's allowed
-key set is `{type, command}` ∪ `{commandWindows}` if declared ∪ `{timeout}`
-if declared ∪ `{statusMessage}` iff its value begins with
-`[bridge:<entry-id>]`. Any other key present on the handler is an undeclared
-key. The sibling `matcher` key on the GROUP object is governed by the
-matcher field rule, not this set.
+Allowed handler keys are `{type, command}`, plus:
+
+- `commandWindows` on Codex only, iff declared;
+- `timeout` iff declared;
+- optional `statusMessage` iff it begins `[bridge:<entry-id>]`.
+
+Claude ignores the source `commandWindows` field; a projected Claude
+`commandWindows` key remains undeclared. `matcher` belongs to the group, not
+the handler. Any other handler key is undeclared.
+
+The optional `[bridge:<entry-id>]` status prefix reinforces attribution but
+does not establish ownership. Another `statusMessage` value is undeclared. A
+`[bridge:<id>]` marker without a valid entry produces H-MARKED-ORPHAN.
+Projection SHOULD add the marker on both hosts; ownership remains
+intent-derived.
 
 ### Projected handler shape
 
-What the covenant writes at M2+, and what case H-OK expects: inside
-`hooks.<event>` (settings.json) / `<event>`
-(.codex/hooks.json), a group `{"matcher": <matcher>?, "hooks": [{"type":
-"command", "command": <command>, "commandWindows": <commandWindows>?,
-"timeout": <timeout>?, "statusMessage": "[bridge:<id>]"?}]}` with no other
-keys on the handler. `.codex/hooks.json` is a top-level object whose
-`hooks` key holds the event-name map (the same family as Claude's `hooks`
-settings value); an optional top-level `description` string may sit beside
-it and is ignored by the sentinel. The v2 host profile defines this shape
-and `statusMessage` support. Dated official-source evidence belongs in
-`knowledge/hooks.md`; this specification pins only the resulting profile.
+Both projection files place an array of groups under `hooks.<event>`:
+
+```json
+[
+  {
+    "matcher": "<matcher>",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "<command>",
+        "commandWindows": "<Codex-only, when declared>",
+        "timeout": 30,
+        "statusMessage": "[bridge:<id>]"
+      }
+    ]
+  }
+]
+```
+
+Omit optional keys when undeclared. The handler contains no other keys.
+`.codex/hooks.json` may also contain a top-level `description` string, which
+the sentinel ignores.
 
 ## Skill portability requirements
 
-Normative MUSTs for every skill master `.claude/skills/<name>/`:
+Every skill master `.claude/skills/<name>/` must satisfy:
 
 - `SKILL.md` has a YAML frontmatter block present from line 1;
 - the frontmatter carries `name` and `description` as non-empty strings;
@@ -526,19 +370,11 @@ Normative MUSTs for every skill master `.claude/skills/<name>/`:
 - `description` is at most 1024 characters and contains neither `<` nor `>`;
 - the frontmatter uses only the cross-host keys `name`, `description`,
   `license`, `metadata`, and `allowed-tools`;
-- every file in the master directory is saved UTF-8 without BOM.
+- no file in the master directory begins with a UTF-8 BOM.
 
-The five-key set is the v2 common validation profile for Claude Code and
-Codex. The Agent Skills standard also defines `compatibility`, but the v2
-Codex validator profile does not accept it; using it therefore receives the
-dedicated `codex-validator-gap` lint rather than being mislabeled as a Claude
-extension. Claude-specific keys (for example `disable-model-invocation`,
-`context`, `hooks`, and `paths`) and unknown keys receive
-`implementation-specific-frontmatter`.
-
-A violation of any MUST above is a portability lint, never an error. The
-deterministic conditions and pinned report wordings are the closed lint list
-in `report-spec.md`; lints never affect the state column. Masters restricted
-to the portable frontmatter subset and a static body reach `native`
-behaviorally. Others remain `native` mechanically because projection is a
-byte copy, with degradation recorded by lints.
+The Agent Skills `compatibility` key receives `codex-validator-gap` because
+the v2 Codex validator profile rejects it. Other keys outside the five-key
+set, including Claude-specific keys, receive
+`implementation-specific-frontmatter`. Dynamic body features and violations
+above produce the lints defined in `report-spec.md`; lints do not change
+projection state.
