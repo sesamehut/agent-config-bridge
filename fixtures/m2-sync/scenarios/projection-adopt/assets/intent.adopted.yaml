@@ -1,0 +1,5 @@
+intent:
+  - date: 2026-07-22
+    note: Establish the synchronized inert adoption baseline
+  - date: 2026-07-23
+    note: Adopt projection-only fixture changes into the master

@@ -1,0 +1,18 @@
+{
+  "base": "trees/baseline.json",
+  "operations": [
+    {
+      "base64": "AAECA2lnbm9yZWQtZ2VuZXJhdGVkCg==",
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-untracked/assets/generated.tmp"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-untracked/references/new.md",
+      "source": "assets/new-reference.md"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

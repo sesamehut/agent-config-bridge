@@ -1,0 +1,33 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "versioned-covenant-bootstrap",
+    "both-covenant-halves-created-together",
+    "manual-agents-zone-byte-preserved",
+    "no-hook-installation",
+    "untracked-input-evidence"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "versioned-covenant-bootstrap",
+        "both-covenant-halves-created-together",
+        "manual-agents-zone-byte-preserved",
+        "no-hook-installation",
+        "untracked-input-evidence"
+      ],
+      "id": "bootstrap",
+      "plan": "expected-plan.md",
+      "post_state": "trees/expected.json"
+    }
+  ],
+  "forbidden_post_paths": [
+    ".claude/settings.json:hooks",
+    ".claude/settings.local.json",
+    ".codex/hooks.json"
+  ],
+  "input": "trees/input.json",
+  "name": "covenant-bootstrap",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Install both versioned covenant halves while preserving manual AGENTS bytes."
+}

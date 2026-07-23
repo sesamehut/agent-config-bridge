@@ -8,7 +8,8 @@
 Bridge 的主要产物是 skill 和知识库，代码只承担入口和辅助检查职责。仓库内部按角色分层：
 
 - `skills/`：skill 源，面向目标工具中智能体的 skill 内容，markdown 为主；可含
-  必要的宿主元数据、参考资料和过窄门的只读机械辅助脚本，入库。
+  必要的 host metadata、reference specs 和过窄门的机械辅助脚本，入库。M2 已有
+  严格只读的 `bridge-sentinel` 与独立写侧 `bridge-sync`，不能把两种权限重新合并。
 - `templates/`：面向目标项目安装的约定模板等写入素材，与只读 skill 指令分离，
   入库；只有路线图开放相应写路径后才会安装。
 - `knowledge/`：工具映射知识，自然语言知识库，带采集日期，入库。
@@ -32,8 +33,13 @@ Bridge 的主要产物是 skill 和知识库，代码只承担入口和辅助检
 机制，本仓库的技能源在开发期不维护这份文件，发布产物中也不出现；技能出处由发布
 版本号加本仓库的 git 历史承担，用户收编技能后从自己的第一条意图记录开始。
 
-用户安装插件后即可获得快路径 / 哨兵 / 仲裁 skill，具体流程由目标工具中的智能体执行，
-git 提供变更依据；Claude Code 插件与 Codex 插件分别适配各自入口。
+用户安装插件后将获得 read-only Sentinel 与 plan-confirm-write Sync；具体流程由
+目标工具中的智能体执行，Git 提供 per-unit baseline 与 ownership evidence。Claude
+Code 插件与 Codex 插件分别适配各自入口。
+
+M2 开发态不引入 plugin manifest、package files、CLI、bundled JavaScript 或
+distribution payload。仓库根 `CLAUDE.md` / `AGENTS.md` 只提供 checked-in skill
+development entrypoint；到 M5 才生成 host-native plugin entrypoint。
 
 ## Claude Code 入口
 
@@ -45,7 +51,8 @@ git 提供变更依据；Claude Code 插件与 Codex 插件分别适配各自入
 node "${CLAUDE_PLUGIN_ROOT}/scripts/bridge.mjs" status
 ```
 
-这里的 `bridge.mjs` 是薄包装脚本，投射 / 仲裁判断仍由 skill 正文和工具映射知识完成。
+这里的 `bridge.mjs` 是未来薄包装脚本，投射 / 仲裁判断仍由 skill 正文、versioned
+spec 与工具映射知识完成。
 另一锚点 `${CLAUDE_SKILL_DIR}` 指技能自身子目录（官方推荐用于“随技能打包”的文件，
 例如工具映射知识片段）。
 
@@ -73,7 +80,9 @@ Codex 已为插件 hook 进程注入插件根目录环境变量，hook 命令可
 未来产物至少需要包含：
 
 - 目标工具清单：Claude Code 与 Codex 各自需要的插件元数据。
-- 技能：触发 Bridge 投射 / 哨兵 / 仲裁工作流的目标工具 skill。
+- 技能：权限分离的 `bridge-sentinel` 与 `bridge-sync`。
+- covenant templates：M2 bootstrap 的 exact source / managed block；M4 hook-intent
+  asset 保持不可由 M2 安装。
 - 工具映射知识：Claude Code / Codex 语义差异的自然语言知识，带采集日期。
 - 薄包装脚本：交付 skill、定位自带文件、执行 doctor 的可选 `bridge.mjs`；doctor
   应可离线运行。
@@ -81,7 +90,8 @@ Codex 已为插件 hook 进程注入插件根目录环境变量，hook 命令可
   以及 `plugin/` 产物目录的生成物属性。
 
 产物生成应该使用允许清单。发布物只包含经过审计的文件，避免把本地环境变量、密钥、调试
-输出和其他开发期内容带入插件。
+输出和其他开发期内容带入插件。`bridge-sync` 默认排除 ignored files，并阻断疑似
+secret / generated payload；打包 allowlist 与项目 write-side scope 是两道独立边界。
 
 ## 版本策略
 

@@ -1,0 +1,39 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "git-identical-managed-baseline",
+    "source-replace-delete-add",
+    "binary-byte-preservation",
+    "executable-mode-preservation",
+    "untracked-input-evidence"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "git-identical-managed-baseline",
+        "source-replace-delete-add",
+        "binary-byte-preservation",
+        "executable-mode-preservation",
+        "untracked-input-evidence"
+      ],
+      "id": "reproject",
+      "plan": "expected-plan.md",
+      "post_state": "trees/expected.json",
+      "precondition": "core.filemode=true and the executable-bit probe passes"
+    },
+    {
+      "covers": [
+        "executable-mode-preservation",
+        "untracked-input-evidence"
+      ],
+      "id": "mode-limited",
+      "plan": "expected-plan.mode-limited.md",
+      "post_state": "trees/input.json",
+      "precondition": "core.filemode=false or the executable-bit probe fails"
+    }
+  ],
+  "input": "trees/input.json",
+  "name": "source-reproject",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Reproject all source-side tree changes from a proven git baseline."
+}

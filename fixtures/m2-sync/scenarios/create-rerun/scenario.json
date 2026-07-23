@@ -1,0 +1,36 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "master-only-create",
+    "rerun-idempotent",
+    "unrelated-file-preserved",
+    "untracked-input-evidence"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "master-only-create",
+        "unrelated-file-preserved",
+        "untracked-input-evidence"
+      ],
+      "id": "first-run",
+      "plan": "expected-plan.first-run.md",
+      "post_state": "trees/expected.json"
+    },
+    {
+      "baseline_ref": "checkpoint:first-run",
+      "covers": [
+        "rerun-idempotent",
+        "unrelated-file-preserved"
+      ],
+      "id": "rerun",
+      "plan": "expected-plan.rerun.md",
+      "post_state": "trees/expected.json",
+      "precondition": "first-run"
+    }
+  ],
+  "input": "trees/input.json",
+  "name": "create-rerun",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Create a source-only skill, then prove a zero-write rerun."
+}

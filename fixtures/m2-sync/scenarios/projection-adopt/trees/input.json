@@ -1,0 +1,24 @@
+{
+  "base": "trees/baseline.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-adopt/SKILL.md",
+      "source": "assets/SKILL.projected.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-adopt/references/guide.md",
+      "source": "assets/guide.projected.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-adopt/references/projected-addition.md",
+      "source": "assets/projected-addition.md"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

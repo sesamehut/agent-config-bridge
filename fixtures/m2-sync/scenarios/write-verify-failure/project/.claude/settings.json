@@ -1,0 +1,6 @@
+{
+  "skillOverrides": {
+    "fixture-write-first": "off",
+    "fixture-write-second": "off"
+  }
+}

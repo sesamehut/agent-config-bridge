@@ -2,156 +2,223 @@
 
 ## 总体设计
 
-Agent Config Bridge 使用声明式单一源树模型：项目中一棵 Claude 形态的配置树被声明为
-唯一源（下称源树），其余所有 host 可见的配置都是从源树投射出来的结果
-（清单见下文"源树与投射面"）。
+Agent Config Bridge 采用声明式单一源树：共享配置以 Claude 形态落在项目里，其他
+host-native carrier 是投射。源形态是容器 schema 的工程选择，不表示 Claude 优先；
+用户可以从 Claude Code 或 Codex 会话提出变更，projection-side 新意图经证据充分的
+adoption 回到 source，再投射到两侧。
 
-两点前提约束全部设计：
+架构受三条原则约束：
 
-- **工具等权重**：用户在各工具之间等权重切换，源树取 Claude 形态只是容器 schema
-  的工程选择，编辑体验必须对称（立场见[产品范围](../product/scope.md)）。
-- **AI-native**：同步能力主要由 skill 承载，语义判断交给 LLM，文件读写交给 host
-  自带工具，确定性兜底交给 git，不建同步引擎（选型理由见[技术栈](tech-stack.md)）。
+- **AI-native**：工作流、语义判断与用户采访由 skill + LLM 承担；文件操作使用 host
+  自带工具；自定义代码只做 byte compare、path/type check 等稳定机械步骤。
+- **Git-native**：tracked tree 是可证明事实，reachable history 是 arbitration /
+  ownership evidence；不建长期 daemon、内容 hash 数据库或独立同步 baseline。
+- **权限分层**：只读观察与写侧 reconciliation 是两个 skill；current carrier diff
+  不授予写入方向。
 
-同步因此不是"两份状态之间的对账"，而是一组行为约定加两级兜底（流程细节见
-[同步模型](../implementation/sync-model.md)）：
-
-- **快路径（编辑即传播）**：任一工具会话中产生配置意图时，执行编辑的 agent 按约定
-  把改动落进源树，并在同一个工作单元内更新投射面；同步单元就是一次提交，常规路径
-  上不存在跨提交漂移。
-- **哨兵（漂移检测）**：便宜的确定性检查，发现投射面与源树不一致时报告，不自行修复。
-- **仲裁（语义修复）**：漂移确认后，由 LLM 结合 `git log` / `git blame` 证据判断
-  改动的归属与去向。
-
-编辑入口是对称的：源树不是唯一可编辑的位置，人工或 agent 直接改投射面（例如手改
-`AGENTS.md`，哪怕改的是来自规则分片的段落）时，改动会被反向采纳回源树的对应位置
-（入口或分片），再重投射到所有面。`CLAUDE.md` 与 `AGENTS.md` 因此都不需要人工
-双份维护。
+详细状态机见[同步模型](../implementation/sync-model.md)。
 
 ```mermaid
 flowchart LR
-  subgraph fast["快路径（常规）"]
-    E["任一工具会话中的配置编辑"] --> S["agent 落改动进源树"]
-    S --> P["同一工作单元内更新投射面"]
-    P --> C["源与投射同次提交"]
-  end
-  subgraph repair["修复路径（异常）"]
-    D["哨兵报告漂移"] --> A["LLM 仲裁（git 证据）"]
-    A -->|"投射面新意图"| W["采纳回源树并重投射"]
-    A -->|"约定遗漏"| R["按源重投射"]
-    A -->|"冲突 / 收编"| U{"用户确认"}
-  end
+  C["versioned covenant"] --> O["ownership model"]
+  S["bridge-sentinel\ncurrent carrier, read-only"] --> R["report/v3: drift → reconcile"]
+  G["HEAD-reachable Git DAG"] --> B["per-unit provable baseline"]
+  O --> B
+  B --> W["bridge-sync\nsync-plan/v1"]
+  R --> W
+  W --> Q{"complete plan confirmed?"}
+  Q -->|yes| X["write dependency closures"]
+  Q -->|no| N["zero writes"]
+  X --> V{"re-read + Git-tree compare\nscoped diff/status/diff --check"}
+  V -->|pass| A["applied"]
+  V -->|fail| FC["journaled CAS compensation"]
+  FC -->|pre-write closure verified| K["compensated"]
+  FC -->|unsafe / incomplete| P["partial; later work not-attempted"]
 ```
 
-确定性部分交给 git：`git diff` 确认改动，提交历史充当仲裁证据，`git restore` 回滚
-错误写入。Bridge 不维护内容指纹、归因数据库或独立基线快照。行为约定是概率性的
-（agent 可能忘记收尾），但失败的最坏结果只是暂时漂移，可由哨兵发现、仲裁修复、
-git 回滚——失败代价被 git 封顶。
+## 源树与 milestone 边界
 
-## 为什么源是一棵现有的树
-
-"源"是对项目中现有配置树的角色声明，而不是一个独立的中立源目录。理由有三：
-
-- **零新增布局**：源就是 `CLAUDE.md` 加 `.claude/`，项目根目录不多一个顶层概念，
-  用户不用学习一套既非 Claude 也非 Codex 的第三种格式。
-- **一个 host 免费**：Claude Code 原生消费源树，投射只需覆盖其余 host；改动也
-  只走"源到投射"一跳，不存在"源与两个投射"的三方同步。
-- **中间 schema**：源树布局对本项目而言只是承载共享语义的容器。Codex 起点的项目
-  同样由 skill 引导，把既有 `AGENTS.md` 内容收编进源树（见
-  [同步模型](../implementation/sync-model.md)的项目引导一节）。
-
-选 Claude 形态当超集容器的结构理由：`.claude/rules/` 支持多文件分片、递归发现和
-path-scoped frontmatter；技能目录以 `SKILL.md` 为核心，两个工具都能消费；hooks
-在两侧都有真实的配置面。结构差异集中在指令组织：Codex 没有 `.claude/rules/`
-那样的多文件分片机制，`AGENTS.md` 承载不了分片组织与 path-scoped 作用域，
-反向不成立。
-
-源树身兼双重角色：它同时是 Claude 的运行态配置，因此源树内容必须满足"被 Claude
-读取时无害或有益"。钩子意图文档以规则片段的形式存在（Claude 读到的是意图说明，
-正好有益）；Codex 审批 / 沙盒这类执行语义不进源树，声明为 Codex 所有。
-
-## 源树与投射面
+完整 MVP 的逻辑布局是：
 
 ```text
 <project-root>/
-  CLAUDE.md                # 源：入口指令
+  CLAUDE.md
   .claude/
-    rules/*.md             # 源：规则分片，可带 paths frontmatter
-    rules/hooks.md         # 源：钩子意图文档
-    skills/<name>/         # 源：技能母本（SKILL.md + 脚本 / 资源）
-    settings.json          # 投射面：hooks 等声明键由意图文档投射（Claude 侧）
-  AGENTS.md                # 投射面：受管区块承载投射内容，区块外为人工区（Codex 侧）
-  .agents/skills/<name>/   # 投射面：技能受管副本（Codex 侧）
-  .codex/hooks.json        # 投射面：hooks 声明键由意图文档投射（Codex 侧）
-  .codex/config.toml 等     # Codex 所有：审批 / 沙盒 / rules，声明不同步
+    rules/*.md
+    rules/hooks.md
+    skills/<name>/
+    settings.json
+  AGENTS.md
+  .agents/skills/<name>/
+  .codex/hooks.json
 ```
 
-投射面在两个 host 侧都存在——"源树取 Claude 形态"不等于"只向 Codex 投射"；
-投射面上的直接改动按上文对称入口反向采纳（见[同步模型](../implementation/sync-model.md)）。
+实现按风险分阶段开放：
 
-## 完备投射原则
+- **M2**：只写技能 complete Git tree，以及 bootstrap 所需的 covenant source /
+  `AGENTS.md` block。
+- **M3**：才开放一般 entry / rule shards 到 `AGENTS.md` managed blocks 的投射与
+  反向采纳。
+- **M4**：才开放 hook intents 到双侧 hooks carrier。
 
-源树中的每个语义单元都必须到达每个 host，档位取该 host 可达的最高保真度。缺机制
-只是降档的理由，不是不投射的理由。保真度分四档：
+因此 M2 covenant 是基础设施例外，不是“规则写路径已经实现”。M2 不安装
+`hook-intents.md`，不写 hooks，不修改其他 `CLAUDE.md` / `.claude/rules/` 内容。
 
-1. **原生等价**：对方有同构机制，机械搬运。技能目录整体复制、能力面内的钩子
-   写入对方原生 hooks 配置面即此档。
-2. **结构降级**：对方缺组织机制但内容可完整表达，换承载面注入。`.claude/rules/`
-   分片投射进 `AGENTS.md` 受管区块，按分片保留小节与来源标注。
-3. **语义降级**：对方缺特性但语义可用自然语言复现。path-scoped 规则渲染成显式
-   适用性前言（"以下规则仅在处理 `docs/` 下文件时适用"）；超出对方 hooks
-   能力面的钩子意图降级成常驻指令。机械限定变成注意力限定，降级但生效。
-4. **声明不同步**：语义没有对应物，且散文模拟会制造执行假象。判据：执行点在
-   host 运行时而不在模型上的内容（审批 / 沙盒）不许散文模拟。
+## 为什么 source 是现有树
 
-同步计划逐单元报告落在哪一档，"已同步"必须建立在保真档位可解释的基础上；
-`unsupported` 只能来自第 4 档的显式声明，不允许来自静默遗漏。
+source 是项目中现有 Claude 形态树的角色，不新增中立顶层目录：
 
-## 系统分层
+- Claude 原生消费一侧，技能只需向 Codex 做一跳 byte projection；
+- 两 host 都使用 `SKILL.md` 技能目录，技能可先验证最窄的 native carrier；
+- 后续 `.claude/rules/` 提供分片与 path scope 的超集容器，Codex 可通过
+  `AGENTS.md` 受管区块降级表达；
+- Codex 起点项目仍可经明确 annex / onboarding 进入同一模型。
 
-架构分成六层：
+source 同时是 Claude runtime input，因此必须保持对 Claude 无害或有益。Codex
+approval / sandbox 等 runtime execution policy 不进入共享 source，避免把散文提示
+伪装成安全边界。
 
-- **源树**：Claude 形态布局承载全部共享语义；markdown 加轻量 frontmatter，便于
-  人工审阅和 agent 直接处理。
-- **工具映射知识**：记录 Claude Code / Codex 的语义差异，标注每类语义单元的保真
-  档位与投射方式。已确定的映射沉淀为枚举表由代码查询，长尾交给 LLM 判断；知识带
-  采集日期，随工具演进更新。
-- **行为约定**：注入到各 host 的常驻指令与 hook 提醒，约定"改配置时落源树、
-  同工作单元投射、提交前自查"。hook 与常驻指令同为提示词注入，差别只在投递
-  确定性与事件邻近性。
-- **host 自带工具**：读写文件由目标工具的 Read / Edit / Write 承担，不另写文件
-  读写器。
-- **git 底座**：`diff` 确认改动，提交历史充当仲裁证据，`restore` 提供回滚。
-- **打包与入口层**：skill、映射知识和薄包装脚本发布为 Claude / Codex 插件。
-  Claude 入口依赖 `CLAUDE_PLUGIN_ROOT`，Codex 入口用技能本地包装脚本。
+## versioned covenant
 
-这个分层把"如何判断工具语义"（映射知识与 skill 流程）与"如何可追溯地写文件"
-（host 自带工具、声明式所有权、git）分开处理。
+M2 用 tracked、immutable、双 half 的 `covenant/v1` 建立项目级 onboarding anchor：
 
-## 所有权与护栏
+- `.claude/rules/bridge-covenant.md` exact source template；
+- root `AGENTS.md` 内 exact managed block，区块外是逐字节保留的 manual zone。
 
-所有权是声明式的，不依赖在内容里做标记，按文件集（技能受管副本）、区块
-（`AGENTS.md` 受管区块）、键（hooks 声明键）三种粒度声明，粒度定义见
-[同步模型](../implementation/sync-model.md)。
+两个 half 绑定 `source-tree/v3`、`report/v3`、`reconciliation/v1` 与
+`sync-plan/v1`。二者必须同时 tracked、schema / template / version valid 才算
+onboarded。partial / malformed / untracked / modified / mismatch 是 blocker；旧版本
+进入显式 migration，不能当普通 drift。历史上曾完整 onboard、当前 pair 消失是
+offboarding decision。判定优先级是 safety / trackability、pair coherence、tuple
+version、history；因此 untracked old tuple 先 `repair` / 用户处理，形成 tracked
+exact pair 后才可在新一轮进入 `migrate`。
 
-写入护栏：
+covenant 只声明 ownership model，不会把项目里所有 `.agents/skills/<name>/`
+自动据为己有。unit ownership 仍需 Git transition evidence 或本轮明确 annex。
+写侧把 partial / modified pair 作为 `repair`，历史消失作为明确 `restore` /
+`offboard`，tuple barrier 作为 `migrate`；每个动作都以两个 half 与 manual zone
+为同一 closure。Bridge 不 stage，所以新建 half 在用户自行记录前不能虚报
+onboarded。
 
-- 常规传播自动执行：正向投射与无歧义的反向采纳直接落盘，同步计划随写入作为
-  报告产出，git 留痕可回滚。
-- 三类决策必须先问：`conflict`（两侧携带不同新意图）、收编既有人工内容、扩大
-  自动执行面（如启用高副作用钩子）。
-- 只写声明过的所有权范围；范围外内容逐字节保留。
-- 遇到看似人工维护、不在声明范围内的既有内容，先询问收编还是保留。
-- 无法判断语义等价性时停止并要求用户确认。
-- 写入后用 git diff 和重读文件自检；写错可 `git restore`。
+## 两层状态：carrier 与 reconciliation
 
-## 工具边界
+### Sentinel：current carrier
 
-初始设计只处理项目级配置，两侧配置面即上文"源树与投射面"的清单。工具映射知识
-必须如实暴露工具差异：提示词引导、命令审批规则、权限和执行时机按各自语义处理。
+Sentinel 对当前 repo bytes 做只读观察：
 
-## 仓库和生成物
+- skill paths、bytes 与 modes 是否相同；
+- entry/rule managed block 与未来 hook carrier 的当前结构状态；
+- path safety、loadability 与 portability lint；
+- onboarding covenant 是否完整。
 
-本仓库采用单仓库模式，上游开发态内容与可安装插件产物共存；`plugin/` 作为入库的
-边界产物提交，仍按生成物管理。分层细节见
+它可以记录 additions-only / deletions-only / both 作为 evidence，但所有 onboarded
+且 source 存在的 drift，suggested action 都是 `reconcile`。copy-only S4 在两种
+onboarding 状态下都保持 `adoption-candidate` / `annex-or-keep`，因为只有 Sync
+历史仲裁才能区分 unmanaged copy 与受管 source deletion。`adopt`、`reproject` 与
+`conflict` 不在 Sentinel 权限内。
+
+### Sync：Git baseline reconciliation
+
+Bridge Sync 为每个 unit 从 `HEAD` 可达 DAG 重算 candidate baselines。candidate
+必须在当前 contract 下 ownership 有效，且 source / projection complete Git tree
+一致。取 ancestry-maximal candidate：
+
+- 唯一 maximal → baseline；
+- 零个 → evidence insufficient / no baseline；
+- 多个互不比较 maximal → merge ambiguity，停问。
+
+算法不按 timestamp 或 first-parent 擅选。随后才用同一 baseline 区分
+source-only、projection-only 与 both-changed。只有两侧自同一 baseline 得到不同
+current trees 才是 conflict；Bridge 不自动三方 merge。
+
+## M2 canonical unit
+
+技能 unit 是 immediate `.claude/skills/<name>/` 的完整 regular-file Git tree，
+projection 是 `.agents/skills/<name>/` 的同名完整 tree。契约包括：
+
+- `SKILL.md`、required `bridge-intent.yaml` 与全部 scripts / refs / assets；
+- source 明确提供的 `agents/openai.yaml` 逐字节复制；
+- relative file set、blob bytes 与可保真的 Git mode；
+- empty directories 不存在于 Git tree。
+
+不派生 sidecar、不写 `skills.config`。symlink / gitlink / reparse / special file /
+case collision / path escape 阻断。tree identity 用 manifest 比较 path、type、
+bytes、mode：tracked current 组合 HEAD / index 与可用的 POSIX worktree mode
+probe，历史读 Git tree；probe 不可用时普通 untracked 使用 prospective default
+`100644`。只有方向性写入或 explicit intent 要求 target 实现无法可靠设置的 mode
+时才产生 `mode-limited`；零写 pending / keep 不受影响。filesystem-only content
+equality 不是 tree equality。
+
+## compatibility 是四条正交轴
+
+投射 mechanism tier 与行为兼容不能混成一个布尔值：
+
+| 轴 | 回答的问题 |
+|---|---|
+| Agent Skills format | `SKILL.md` 是否满足公共格式与 identity contract |
+| runtime loadable | 两个 host 是否确定可加载当前 bytes |
+| release validator profile | 当前某版 authoring validator 是否接受 |
+| behavior portability | host extension / dynamic rendering / permissions 是否同义 |
+
+技能 complete-tree copy 的 carrier tier 是 `native`。Claude-only frontmatter、
+dynamic body 与 `allowed-tools` 若两 host 仍可加载，就原样复制并标
+`behavior-degraded`；identity、YAML、确定加载失败与 path safety 才 blocker。
+validator rejection 单独报告，不反向改写合法 source。
+
+Codex 项目 skills 没有已文档化的 project-trust gate，所以不用
+`awaiting-host-trust`。repo bytes 也不能证明当前 session 已重新发现 skill，故使用
+中性的 `live-activation-unknown` 与 restart hedge。hooks 的 trust annotation 是
+另一条未来 surface 事实，不能外推到 skills。
+
+## ownership 与写入护栏
+
+ownership 分三种粒度：
+
+- 技能：完整 file set / Git tree；
+- M3 的 `AGENTS.md`：managed block，manual zone 不受管；
+- M4 的 hooks：intent 声明的 keys。
+
+M2 任何写入都遵循：
+
+1. relevant tracked、non-ignored untracked、ignored 与 dirty scope 全部进入计划；
+2. ignored / secret / generated payload 不复制，Bridge 不 stage / commit；
+3. 无 baseline 的 non-empty target 必须 annex-or-keep，零静默覆盖；
+4. delete / rename 只有 Git 证明目标曾受管才可自动进入计划；
+5. 每次写前给完整 scoped plan 并确认；conflict / annex / replace / migrate /
+   offboard / destructive decision 需明确选择；
+6. decision 按 unit，physical batch 按 dependency closure / shared file 聚合；
+7. 首次写前 journal 每条 path 的 existence / type / bytes / mode，每步用 CAS；
+8. 写后重读、机械比较、scoped status / diff / diff --check。
+
+`keep` 只表示本轮零写且未解决，不创建 ignore manifest、不能报同步成功。conflict
+unit 与其 closure 零写；确认后可执行互不依赖的无歧义 closure。
+
+## intent 与可追溯性
+
+每个 managed skill 有 `bridge-intent.yaml`。create / annex / adopt / semantic
+change / rename 追加日期与动机；pure mechanical reproject 不追加。intent 是
+arbitration evidence，不授予 ownership、不覆盖 baseline。
+
+Bridge 不自动 commit。delete 的 tombstone 动机需由后续 user commit / diff evidence
+承载；rename 在 new source intent 中记录 old/new。版本 migration 与 offboarding
+同样必须在计划与后续 Git history 中可解释。
+
+## failure、rollback 与 git 边界
+
+写前在 repo 外记录本轮 exact mutation paths 的 operation-local journal，含
+existence / type / bytes / mode。确认原计划同时授权同一 closure 的自动失败补偿：
+verification 失败后只在 current 仍等于本轮精确写入值时逆序恢复；成功验证
+pre-write closure 报 `compensated`，CAS 冲突或恢复失败报 `partial`，后续依赖项报
+`not-attempted`。这不是无限原子保证，极端失败会如实暴露。
+
+已 `applied` 后的用户 rollback 是另一项操作，只限本轮 journal，必须重新出计划、
+确认，并先证明 current 仍等于 applied value。绝不 blanket restore / reset /
+stash，也不擦除用户原有或并发 dirty bytes。
+
+Git 的作用是事实与损失边界，不是 Bridge 获得无限写权限的理由。
+
+## 仓库与分发
+
+开发态 skill、templates、knowledge 与 fixtures 和未来 plugin boundary 同仓库存放，
+但 packaging 仍由 milestone gate 控制。目录职责与 Claude / Codex 入口差异见
 [分发模型](../implementation/distribution-model.md)。

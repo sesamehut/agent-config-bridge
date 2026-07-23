@@ -1,0 +1,24 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "git-identical-managed-baseline",
+    "both-sides-changed-differently",
+    "conflict-unit-zero-write"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "git-identical-managed-baseline",
+        "both-sides-changed-differently",
+        "conflict-unit-zero-write"
+      ],
+      "id": "conflict",
+      "plan": "expected-plan.md",
+      "post_state": "trees/input.json"
+    }
+  ],
+  "input": "trees/input.json",
+  "name": "conflict-zero-write",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Report a two-sided conflict and leave the entire unit untouched."
+}

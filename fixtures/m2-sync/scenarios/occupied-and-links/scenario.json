@@ -1,0 +1,30 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "target-directory-without-skill-md",
+    "target-directory-with-extra-manual-files",
+    "target-symlink-or-reparse-guard",
+    "source-symlink-policy",
+    "guarded-unit-zero-write",
+    "untracked-input-evidence"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "target-directory-without-skill-md",
+        "target-directory-with-extra-manual-files",
+        "target-symlink-or-reparse-guard",
+        "source-symlink-policy",
+        "guarded-unit-zero-write",
+        "untracked-input-evidence"
+      ],
+      "id": "guarded",
+      "plan": "expected-plan.md",
+      "post_state": "trees/input.json"
+    }
+  ],
+  "input": "trees/input.json",
+  "name": "occupied-and-links",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Refuse unsafe file types and preserve occupied target directories."
+}

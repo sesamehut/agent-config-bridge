@@ -1,0 +1,46 @@
+{
+  "base": "trees/baseline.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/SKILL.md",
+      "source": "assets/SKILL.v2.md"
+    },
+    {
+      "base64": "AP8QIGNoYW5nZWQKYmluYXJ5AA==",
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/assets/blob.bin"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/bridge-intent.yaml",
+      "source": "assets/intent.v2.yaml"
+    },
+    {
+      "op": "delete",
+      "path": ".claude/skills/fixture-reproject/references/remove.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/references/add.md",
+      "source": "assets/add.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/references/replace.md",
+      "source": "assets/replace.v2.md"
+    },
+    {
+      "mode": "100755",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/scripts/run.sh",
+      "source": "assets/run.sh"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

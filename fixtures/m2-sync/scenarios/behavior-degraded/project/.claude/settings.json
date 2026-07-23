@@ -1,0 +1,7 @@
+{
+  "skillOverrides": {
+    "fixture-allowed-tools": "off",
+    "fixture-at-path-static": "off",
+    "fixture-dynamic-content": "off"
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "base": "trees/baseline.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-extra-files/SKILL.md",
+      "source": "assets/SKILL.extra-files.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-extra-files/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-no-skill/SKILL.md",
+      "source": "assets/SKILL.no-skill.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-no-skill/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-source-link/SKILL.md",
+      "source": "assets/SKILL.source-link.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-source-link/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "op": "symlink",
+      "path": ".claude/skills/fixture-source-link/references/linked.txt",
+      "target": "../../../../.fixture-link-target/keep.txt",
+      "target_type": "file"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-target-link/SKILL.md",
+      "source": "assets/SKILL.target-link.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-target-link/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-extra-files/SKILL.md",
+      "source": "assets/SKILL.extra-files.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-extra-files/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-extra-files/manual-note.md",
+      "source": "assets/manual-extra.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-no-skill/README.md",
+      "source": "assets/manual-readme.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-no-skill/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "op": "symlink",
+      "path": ".agents/skills/fixture-target-link",
+      "target": "../../.fixture-link-target",
+      "target_type": "directory"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

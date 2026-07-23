@@ -1,0 +1,35 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "nonignored-untracked-included",
+    "ignored-file-excluded",
+    "ignored-file-warning",
+    "git-identical-managed-baseline"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "nonignored-untracked-included",
+        "ignored-file-excluded",
+        "ignored-file-warning",
+        "git-identical-managed-baseline"
+      ],
+      "id": "git-visible-inputs",
+      "plan": "expected-plan.md",
+      "post_state": "trees/expected.json"
+    }
+  ],
+  "git_expectations": {
+    "ignored": [
+      ".claude/skills/fixture-untracked/assets/generated.tmp"
+    ],
+    "tracked_changes": [],
+    "untracked": [
+      ".claude/skills/fixture-untracked/references/new.md"
+    ]
+  },
+  "input": "trees/input.json",
+  "name": "untracked-ignore",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Project non-ignored untracked input and warn while excluding ignored bytes."
+}

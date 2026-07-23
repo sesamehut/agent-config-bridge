@@ -1,14 +1,45 @@
 # Agent Config Bridge
 
 `agent-config-bridge` is the single-repo home for Agent Config Bridge: a Claude
-Code / Codex bridge that will let a project maintain one canonical source for
-agent skills, hooks, and rules, then project that source into host-native
+Code / Codex bridge designed to let a project maintain one canonical source
+for agent skills, hooks, and rules, then project that source into host-native
 layouts.
 
-The repository is in the implementation phase: the roadmap has opened M1
-(source-tree declaration and a read-only sentinel). Product artifacts land
-milestone by milestone; the [roadmap](docs/phases/roadmap.md) says what each
-milestone introduces.
+The development tree has completed M1 and M2. Its current capability is the
+project-skill surface:
+
+- [`bridge-sentinel`](skills/bridge-sentinel/SKILL.md) observes repository
+  carriers without writing, using `source-tree/v3` and `report/v3`.
+- [`bridge-sync`](skills/bridge-sync/SKILL.md) plans, confirms, projects,
+  adopts, and verifies complete skill trees using Git-proven per-unit
+  baselines, `reconciliation/v1`, and `sync-plan/v1`.
+- [`covenant/v1`](templates/covenant/README.md) provides the exact two-part
+  onboarding anchor.
+- The [M2 fixture matrix](fixtures/m2-sync/README.md) defines 13 isolated
+  scenarios and 22 lightweight safeguards. Twelve scenarios have real agent
+  workflow replay evidence; `write-verify-failure` is deliberately
+  declarative-only because it requires fault injection between write and
+  verification.
+
+Reproduce the stable repository-local mechanical checks with:
+
+```text
+python -B skills/bridge-sentinel/scripts/sentinel_mechanics.py self-test
+python -B fixtures/m2-sync/fixture_harness.py self-test
+git diff --check
+```
+
+The fixture harness command validates scenario contracts, expected plans,
+post-state trees, and safeguards; it is not a substitute for agent workflow
+replay. The completed replay evidence covers 6/6 transition scenarios with
+7/7 plan-plus-tree comparisons, 7/7 guard branches, and the independent
+baseline-DAG ambiguity case.
+
+M3 entry/rule projection is next and has not been implemented. There is no
+CLI, npm package, plugin manifest or payload, CI release gate, or claimed
+Claude Code/Codex live-host activation smoke yet. Packaging remains gated
+until M5, and CI remains M6 work. Product artifacts land milestone by
+milestone; the [roadmap](docs/phases/roadmap.md) owns that boundary.
 
 Start with:
 

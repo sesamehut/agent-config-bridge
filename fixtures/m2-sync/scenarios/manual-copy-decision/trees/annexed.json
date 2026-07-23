@@ -1,0 +1,30 @@
+{
+  "base": "trees/input.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-manual-copy/SKILL.md",
+      "source": "assets/SKILL.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-manual-copy/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-manual-copy/bridge-intent.yaml",
+      "source": "assets/annex-intent.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-manual-copy/bridge-intent.yaml",
+      "source": "assets/annex-intent.yaml"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

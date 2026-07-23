@@ -1,0 +1,8 @@
+{
+  "skillOverrides": {
+    "fixture-extra-files": "off",
+    "fixture-no-skill": "off",
+    "fixture-source-link": "off",
+    "fixture-target-link": "off"
+  }
+}

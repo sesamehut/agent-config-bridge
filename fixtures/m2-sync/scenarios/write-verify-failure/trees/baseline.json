@@ -1,0 +1,95 @@
+{
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/rules/bridge-covenant.md",
+      "source": "@shared/bridge-covenant.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/settings.json",
+      "source": "project/.claude/settings.json"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": "AGENTS.md",
+      "source": "@shared/AGENTS.covenant.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-write-first/SKILL.md",
+      "source": "assets/SKILL.first.v1.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-write-first/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-write-first/bridge-intent.yaml",
+      "source": "assets/intent.v1.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-write-first/SKILL.md",
+      "source": "assets/SKILL.first.v1.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-write-first/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-write-first/bridge-intent.yaml",
+      "source": "assets/intent.v1.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-write-second/SKILL.md",
+      "source": "assets/SKILL.second.v1.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-write-second/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-write-second/bridge-intent.yaml",
+      "source": "assets/intent.v1.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-write-second/SKILL.md",
+      "source": "assets/SKILL.second.v1.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-write-second/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-write-second/bridge-intent.yaml",
+      "source": "assets/intent.v1.yaml"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

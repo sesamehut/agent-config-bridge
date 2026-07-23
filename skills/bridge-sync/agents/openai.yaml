@@ -1,0 +1,7 @@
+interface:
+  display_name: "Bridge Sync"
+  short_description: "Plan and reconcile managed project skills"
+  default_prompt: "Use $bridge-sync to plan and reconcile this Git repository's managed Claude/Codex project skills with confirmation before every write."
+
+policy:
+  allow_implicit_invocation: true

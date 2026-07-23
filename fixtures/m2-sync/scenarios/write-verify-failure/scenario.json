@@ -1,0 +1,46 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "post-write-exact-comparison",
+    "stop-on-first-write-mismatch",
+    "no-silent-restore",
+    "later-unit-not-written"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "post-write-exact-comparison",
+        "stop-on-first-write-mismatch",
+        "no-silent-restore",
+        "later-unit-not-written"
+      ],
+      "id": "stop-after-mismatch",
+      "plan": "expected-plan.md",
+      "post_state": "trees/expected-partial.json"
+    }
+  ],
+  "faults": {
+    "corrupt-first-copy": {
+      "checkpoint": "after fixture-write-first is written and before exact verification",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-write-first/SKILL.md",
+          "source": "assets/SKILL.first.corrupt.md"
+        }
+      ]
+    }
+  },
+  "input": "trees/input.json",
+  "name": "write-verify-failure",
+  "replay": "declarative-only",
+  "replay_reason": "The fixture harness has no write-after-operation, before-verification barrier in an agent-driven workflow.",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Stop a batch as partial when guarded compensation cannot safely restore the pre-write closure.",
+  "workflow": [
+    "Write fixture-write-first from the source tree.",
+    "Inject corrupt-first-copy before the unit verification read.",
+    "Detect the mismatch, refuse unsafe compensation after the compare-and-swap guard fails, report partial, and leave fixture-write-second not-attempted."
+  ]
+}

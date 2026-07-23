@@ -1,0 +1,36 @@
+{
+  "base": "trees/input.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-auto-source/SKILL.md",
+      "source": "assets/SKILL.auto-source.v2.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-auto-source/bridge-intent.yaml",
+      "source": "assets/intent.source.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-auto-projection/SKILL.md",
+      "source": "assets/SKILL.auto-projection.v2.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-auto-projection/bridge-intent.yaml",
+      "source": "assets/intent.adopted.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-auto-projection/bridge-intent.yaml",
+      "source": "assets/intent.adopted.yaml"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

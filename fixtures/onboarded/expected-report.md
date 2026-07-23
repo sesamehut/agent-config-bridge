@@ -1,4 +1,4 @@
-- expectation: report/v2
+- expectation: report/v3
 - scan root: .
 - scope excludes: (none)
 - onboarding: onboarded
@@ -8,22 +8,23 @@
 | surface | unit | host | state | suggested action | tier | annotations |
 |---|---|---|---|---|---|---|
 | agents-md | entry | codex | in-sync | - | structural | - |
-| agents-md | rules/legacy | codex | drift | adopt-to-source | - | - |
+| agents-md | rules/bridge-covenant | codex | in-sync | - | structural | - |
+| agents-md | rules/legacy | codex | drift | reconcile | - | - |
 | agents-md | rules/style | codex | semantic-mode-block | defer-to-arbitration | semantic | - |
 | agents-md | rules/tone | codex | in-sync | - | semantic | - |
-| hooks | hooks/fixture-orphan | codex | drift | adopt-to-source | - | - |
-| hooks | hooks/fmt-on-save | claude | drift | reproject-from-source | native | - |
-| hooks | hooks/fmt-on-save | codex | drift | reproject-from-source | native | - |
+| hooks | hooks/fixture-orphan | codex | drift | reconcile | - | - |
+| hooks | hooks/fmt-on-save | claude | drift | reconcile | native | - |
+| hooks | hooks/fmt-on-save | codex | drift | reconcile | native | - |
 | hooks | hooks/sandbox-guard | claude | in-sync | - | native | - |
 | hooks | hooks/sandbox-guard | codex | declared-unsynced | - | declared-unsynced | - |
 | hooks | hooks/sentinel-stop | claude | in-sync | - | native | - |
 | hooks | hooks/sentinel-stop | codex | in-sync | - | native | awaiting-host-trust |
-| skills | .agents/skills/fixture-codex-only | codex | adoption-candidate | annex-or-keep | - | - |
-| skills | fixture-bom-with-a-very-long-directory-name-exceeding-codexs-limit | codex | in-sync | - | native | awaiting-host-trust; lint:invalid-description; lint:invalid-name; lint:utf8-bom |
-| skills | fixture-claude-flavored | codex | in-sync | - | native | awaiting-host-trust; lint:codex-validator-gap; lint:dynamic-content; lint:implementation-specific-frontmatter; lint:invalid-name |
-| skills | fixture-drifted | codex | drift | conflict | native | - |
-| skills | fixture-portable | codex | in-sync | - | native | awaiting-host-trust |
-| skills | fixture-undiscoverable | codex | in-sync | - | native | awaiting-host-trust; lint:missing-description; lint:missing-name |
+| skills | .agents/skills/fixture-codex-only | codex | adoption-candidate | annex-or-keep | - | live-activation-unknown |
+| skills | fixture-bom-with-a-very-long-directory-name-exceeding-codexs-limit | codex | blocked | resolve-blocker | native | lint:codex-validator-rejection; lint:invalid-name; lint:utf8-bom; live-activation-unknown |
+| skills | fixture-claude-flavored | codex | in-sync | - | native | behavior-degraded; lint:codex-validator-rejection; lint:dynamic-content; lint:implementation-specific-frontmatter; live-activation-unknown |
+| skills | fixture-drifted | codex | drift | reconcile | native | live-activation-unknown |
+| skills | fixture-portable | codex | in-sync | - | native | live-activation-unknown |
+| skills | fixture-undiscoverable | codex | blocked | resolve-blocker | native | lint:invalid-frontmatter; live-activation-unknown |
 
 ## Observations
 

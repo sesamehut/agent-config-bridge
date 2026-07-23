@@ -1,0 +1,28 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "git-identical-managed-baseline",
+    "projection-only-add-replace",
+    "adopt-with-intent",
+    "exact-reprojection",
+    "untracked-input-evidence"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "git-identical-managed-baseline",
+        "projection-only-add-replace",
+        "adopt-with-intent",
+        "exact-reprojection",
+        "untracked-input-evidence"
+      ],
+      "id": "adopt",
+      "plan": "expected-plan.md",
+      "post_state": "trees/expected.json"
+    }
+  ],
+  "input": "trees/input.json",
+  "name": "projection-adopt",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Adopt projection-only intent, record it, and restore exact identity."
+}

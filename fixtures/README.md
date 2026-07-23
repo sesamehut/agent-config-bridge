@@ -15,12 +15,15 @@ fixture carries `disable-model-invocation` in `SKILL.md`.
 
 | Fixture | Purpose |
 |---|---|
-| [`not-onboarded/`](not-onboarded/) | A project the bridge has never onboarded: a hand-written `AGENTS.md` reported as an adoption candidate, unprojected entry and rule-shard units, vacuous hooks and skills surfaces, and zero drift by construction. |
-| [`onboarded/`](onboarded/) | A bridge-managed project exercising the onboarded regime end to end: in-sync rows on all three surfaces, all three drift resolutions (adopt-to-source, reproject-from-source, conflict), a skill adoption candidate, a declared-unsynced hook target, a marked orphan hook handler, every skill portability lint, claude-only subtraction, the scoped-rule applicability preamble on a verbatim in-sync block, a semantic-mode managed block, and the undeclared-hooks-key and nested-agents-md observation channels. |
+| [`not-onboarded/`](not-onboarded/) | A project the bridge has never onboarded: a hand-written `AGENTS.md` and a copy-only Codex skill reported as adoption candidates, unprojected entry and rule-shard units, a vacuous hooks surface, and zero drift by construction. |
+| [`onboarded/`](onboarded/) | A project carrying the exact two-part `covenant/v1` anchor and exercising the onboarded regime end to end: in-sync, neutral reconcile drift, adoption-candidate, blocked skill-loadability, declared-unsynced hook, marked orphan hook, representative portability lints and behavior degradation, neutral Codex live-activation annotations, claude-only subtraction, scoped-rule rendering, a semantic-mode managed block, and the undeclared-hooks-key and nested-agents-md observation channels. |
 | [`dogfood/`](dogfood/) | Expectation only — no fixture tree. Its `expected-report.md` targets this repository itself (see below). |
+| [`m2-sync/`](m2-sync/) | Declarative write-side contract vectors. A standard-library harness validates fixture data, materializes replayable inputs into marked OS-temporary Git repositories, and compares an agent-produced sync plan plus exact post-state. Its self-test does not execute the workflow. |
 
-Together the two fixture projects exercise every report state, including the
-explicit non-verbatim `semantic-mode-block` path.
+The two M1 fixture projects exercise every sentinel report state, including
+the explicit non-verbatim `semantic-mode-block` path. M2 mutation coverage
+is inventoried separately in
+[`m2-sync/README.md`](m2-sync/README.md).
 
 ## Expectation files and run parameters
 
@@ -28,7 +31,7 @@ Every expectation file (`expected-report.md`) declares its own run
 parameters in its header, then its normative content — nothing else:
 
 - `- expectation:` — the report spec version the expectation was written
-  against (`report/v2`). A sentinel run producing a different `- spec:`
+  against (`report/v3`). A sentinel run producing a different `- spec:`
   value fails the comparison loudly; documents are never compared across
   spec versions.
 - `- scan root:` — resolved relative to the directory containing the

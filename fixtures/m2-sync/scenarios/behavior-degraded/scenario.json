@@ -1,0 +1,49 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "behavior-degraded-annotation",
+    "live-activation-neutral-note",
+    "allowed-tools-behavior-separate",
+    "dynamic-content-dollar-zero",
+    "dynamic-content-multidigit-argument",
+    "dynamic-content-named-argument",
+    "dynamic-content-inline-and-indented-command",
+    "dynamic-content-fenced-command",
+    "at-path-is-not-dynamic",
+    "untracked-input-evidence"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "behavior-degraded-annotation",
+        "live-activation-neutral-note",
+        "allowed-tools-behavior-separate",
+        "dynamic-content-dollar-zero",
+        "dynamic-content-multidigit-argument",
+        "dynamic-content-named-argument",
+        "dynamic-content-inline-and-indented-command",
+        "dynamic-content-fenced-command",
+        "at-path-is-not-dynamic",
+        "untracked-input-evidence"
+      ],
+      "id": "warn-and-copy",
+      "plan": "expected-plan.md",
+      "post_state": "trees/expected.json"
+    }
+  ],
+  "input": "trees/input.json",
+  "lint_assertions": {
+    "fixture-allowed-tools": [
+      "allowed-tools-behavior"
+    ],
+    "fixture-at-path-static": [],
+    "fixture-dynamic-content": [
+      "codex-validator-rejection",
+      "dynamic-content",
+      "implementation-specific-frontmatter"
+    ]
+  },
+  "name": "behavior-degraded",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Copy native bytes while reporting behavior and activation separately."
+}

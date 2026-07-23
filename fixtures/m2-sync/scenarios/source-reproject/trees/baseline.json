@@ -1,0 +1,107 @@
+{
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/rules/bridge-covenant.md",
+      "source": "@shared/bridge-covenant.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/settings.json",
+      "source": "project/.claude/settings.json"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": "AGENTS.md",
+      "source": "@shared/AGENTS.covenant.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/SKILL.md",
+      "source": "assets/SKILL.v1.md"
+    },
+    {
+      "base64": "AAEC/2Jhc2VsaW5lCg==",
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/assets/blob.bin"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/bridge-intent.yaml",
+      "source": "assets/intent.v1.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/references/remove.md",
+      "source": "assets/remove.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/references/replace.md",
+      "source": "assets/replace.v1.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-reproject/scripts/run.sh",
+      "source": "assets/run.sh"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-reproject/SKILL.md",
+      "source": "assets/SKILL.v1.md"
+    },
+    {
+      "base64": "AAEC/2Jhc2VsaW5lCg==",
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-reproject/assets/blob.bin"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-reproject/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-reproject/bridge-intent.yaml",
+      "source": "assets/intent.v1.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-reproject/references/remove.md",
+      "source": "assets/remove.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-reproject/references/replace.md",
+      "source": "assets/replace.v1.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-reproject/scripts/run.sh",
+      "source": "assets/run.sh"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

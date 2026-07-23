@@ -40,11 +40,14 @@ both; shared conventions belong here, not in a private agent memory.
 ## Development skill entrypoint
 
 Until the packaging milestone installs host-native plugin entrypoints, the
-checked-in `skills/bridge-sentinel/` directory is development source rather
-than a natively discovered project skill. When the user explicitly asks to run
-the bridge sentinel, check bridge state, or validate its fixtures, read
-`skills/bridge-sentinel/SKILL.md` and follow it as the active skill. Never load
-skills under `fixtures/` as capabilities.
+checked-in `skills/bridge-sentinel/` and `skills/bridge-sync/` directories are
+development source rather than natively discovered project skills. When the
+user explicitly asks to run the bridge sentinel, check bridge state, or
+validate its fixtures, read `skills/bridge-sentinel/SKILL.md` and follow it as
+the active read-only skill. When the user asks to onboard, project, adopt,
+reconcile, delete, rename, or otherwise write Bridge-managed project skills,
+read `skills/bridge-sync/SKILL.md` and follow it as the active write-side
+skill. Never load skills under `fixtures/` as capabilities.
 
 ## Implementation constraints
 
@@ -56,10 +59,11 @@ skills under `fixtures/` as capabilities.
   code only when an operation is both trivial to implement and wasteful to do
   in-model, such as byte-level comparison or lookups of already-settled host
   mappings. Require no global npm dependencies.
-- Lean on git as the deterministic substrate (`git diff` for changes, history
-  as arbitration evidence, `git restore` for rollback) instead of bespoke
-  content hashing, attribution metadata, or an independently maintained sync
-  baseline.
+- Lean on git as the deterministic substrate (`git diff` for changes and
+  reachable history for per-unit baseline evidence) instead of bespoke content
+  hashing, attribution metadata, or an independently maintained sync baseline.
+  Rollback is limited to bytes recorded by the current operation, requires
+  confirmation, and must never erase a pre-existing user change.
 - Keep the Claude entrypoint and Codex entrypoint separate. Claude interpolates
   `${CLAUDE_PLUGIN_ROOT}` in skill content; Codex documents plugin-root env vars
   for plugin hook processes only, so Codex skill entrypoints go through a
@@ -77,7 +81,8 @@ skills under `fixtures/` as capabilities.
 - **Research claims**: record the collection date and re-check official host
   docs before turning research into implementation.
 - **Code and product-artifact changes**: run the check procedure defined in the
-  roadmap and keep it aligned with CI as milestones open.
+  roadmap, validate every formal skill, and keep the checks aligned with CI as
+  milestones open.
 
 ## Debug output
 

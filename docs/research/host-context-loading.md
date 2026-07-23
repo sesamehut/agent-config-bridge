@@ -1,9 +1,9 @@
 # Host 上下文加载行为核验
 
-采集日期：2026-07-07；2026-07-08 与 2026-07-23 的复核增补已并入正文，逐条标注
-日期。主要来源为 Claude Code 官方文档
-（[How Claude remembers your project](https://code.claude.com/docs/en/memory)）与
-GitHub issue 追踪。进入实现前需按本文档日期重新核验。
+采集日期：2026-07-23。文档化事实以 Claude Code 官方文档为准，主要来源为
+[How Claude remembers your project](https://code.claude.com/docs/en/memory)
+与 [Extend Claude with skills](https://code.claude.com/docs/en/slash-commands)；
+官方仓库 issue 只用于记录尚未承诺的请求状态，不承担公共契约。
 
 这份核验用于支撑两个设计决策：入口文件方向（`CLAUDE.md` 为源、`AGENTS.md` 为
 投射面）与受管区块标记的成本判断。
@@ -43,6 +43,14 @@ GitHub issue 追踪。进入实现前需按本文档日期重新核验。
   `SKILL.md` 中塞入 Claude 专属 frontmatter 更适合测试真正的可移植子集）。这组事实支撑根
   `.claude/settings.json` 的 `claudeMdExcludes` 围栏与"不在 `fixtures/` 内启动
   工作会话"的约定。
+- **skill 内容先渲染再进入上下文**：Claude Code 调用 skill 时会替换
+  `$ARGUMENTS`、`$ARGUMENTS[N]` / `$N`、由 `arguments` 声明的 `$name`，以及
+  `${CLAUDE_SESSION_ID}`、`${CLAUDE_EFFORT}`、`${CLAUDE_SKILL_DIR}`、
+  `${CLAUDE_PROJECT_DIR}`。它还会在注入前执行行内 `` !`command` `` 与
+  以 `!` 标记的 fenced shell block，用输出替换原占位；随后将渲染
+  结果作为一条消息加入会话。`allowed-tools` 另行只授予调用当回合的免询问权限，
+  并非正文转换，也不限制其他工具；项目 skill 的该权限效果受 workspace trust
+  约束。
 - **Windows 上 symlink 需要管理员权限或开发者模式**：跨工具共享文件不宜依赖
   symlink；投射选择 copy 与受管区块。
 - **`/init` 会读取既有 `AGENTS.md` 并整合**：Codex 起点项目的收编方向与官方行为
@@ -58,13 +66,19 @@ GitHub issue 追踪。进入实现前需按本文档日期重新核验。
 ## Codex 端对照（与标记成本直接相关）
 
 Codex 侧机制细节见 [codex-capability-surface.md](codex-capability-surface.md)
-（2026-07-07），此处只记影响本文档结论的差异：
+（2026-07-23），此处只记影响本文档结论的差异：
 
 - **Codex 不剥离 HTML 注释**：`AGENTS.md` 按原始字节拼进 prompt，受管标记进入
   模型上下文并占用项目指令预算——Claude 侧标记零运行时成本，Codex 侧标记应
   保持精简。
 - **`AGENTS.md` 不解析 frontmatter / `paths` 作用域**：path-scoped 分片仍以
   显式适用性前言投射。
+- **Codex skill 没有对应的动态渲染阶段**：openai/codex 固定提交 `44d76c6`
+  的
+  [显式注入路径](https://github.com/openai/codex/blob/44d76c6a6dd04fa2efc302b906ac8774267a1272/codex-rs/core-skills/src/injection.rs)
+  读取 `SKILL.md` 后把 `contents` 原样交给 prompt injection。因此上述 Claude
+  占位符和 shell injection 语法在 Codex 中保留为原文；模型随后可能把它们当
+  普通指令解释，但这不等同于宿主预处理，也不能标为行为等价。
 
 ## 对设计的影响
 

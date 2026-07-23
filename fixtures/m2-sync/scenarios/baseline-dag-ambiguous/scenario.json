@@ -1,0 +1,64 @@
+{
+  "baseline": "trees/root.json",
+  "coverage": [
+    "merge-dag-baseline-search",
+    "ancestry-maximal-candidates",
+    "mutually-incomparable-baseline-blocked",
+    "ambiguous-baseline-zero-write",
+    "commit-time-not-used"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "merge-dag-baseline-search",
+        "ancestry-maximal-candidates",
+        "mutually-incomparable-baseline-blocked",
+        "ambiguous-baseline-zero-write",
+        "commit-time-not-used"
+      ],
+      "id": "ambiguous-baseline",
+      "plan": "expected-plan.md",
+      "post_state": "trees/head.json"
+    }
+  ],
+  "history": {
+    "commits": [
+      {
+        "id": "root",
+        "message": "fixture history: install the versioned covenant",
+        "parents": [],
+        "tree": "trees/root.json"
+      },
+      {
+        "id": "left",
+        "message": "fixture history: confirmed managed create on the left branch",
+        "parents": [
+          "root"
+        ],
+        "tree": "trees/left.json"
+      },
+      {
+        "id": "right",
+        "message": "fixture history: confirmed managed create on the right branch",
+        "parents": [
+          "root"
+        ],
+        "tree": "trees/right.json"
+      },
+      {
+        "id": "head",
+        "message": "fixture history: merge unresolved carrier variants",
+        "parents": [
+          "left",
+          "right"
+        ],
+        "tree": "trees/head.json"
+      }
+    ],
+    "head": "head"
+  },
+  "input": "trees/head.json",
+  "name": "baseline-dag-ambiguous",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Block when a merge DAG has two incomparable synchronized baselines."
+}

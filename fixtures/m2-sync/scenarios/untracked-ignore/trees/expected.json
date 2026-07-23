@@ -1,0 +1,12 @@
+{
+  "base": "trees/input.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-untracked/references/new.md",
+      "source": "assets/new-reference.md"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

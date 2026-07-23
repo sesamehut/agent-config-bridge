@@ -1,4 +1,4 @@
-- expectation: report/v2
+- expectation: report/v3
 - scan root: ../..
 - scope excludes: fixtures/**
 - onboarding: not-onboarded

@@ -1,0 +1,71 @@
+{
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/rules/bridge-covenant.md",
+      "source": "@shared/bridge-covenant.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/settings.json",
+      "source": "project/.claude/settings.json"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": "AGENTS.md",
+      "source": "@shared/AGENTS.covenant.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-adopt/SKILL.md",
+      "source": "assets/SKILL.v1.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-adopt/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-adopt/bridge-intent.yaml",
+      "source": "assets/intent.v1.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-adopt/references/guide.md",
+      "source": "assets/guide.v1.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-adopt/SKILL.md",
+      "source": "assets/SKILL.v1.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-adopt/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-adopt/bridge-intent.yaml",
+      "source": "assets/intent.v1.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-adopt/references/guide.md",
+      "source": "assets/guide.v1.md"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

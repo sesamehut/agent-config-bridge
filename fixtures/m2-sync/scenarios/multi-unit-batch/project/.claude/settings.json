@@ -1,0 +1,8 @@
+{
+  "skillOverrides": {
+    "fixture-auto-projection": "off",
+    "fixture-auto-source": "off",
+    "fixture-batch-conflict": "off",
+    "fixture-batch-other": "off"
+  }
+}

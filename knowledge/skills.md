@@ -8,133 +8,220 @@ the skill portability requirements live in
 the lint tokens, their conditions, and the comparison rules live in
 [`../skills/bridge-sentinel/references/report-spec.md`](../skills/bridge-sentinel/references/report-spec.md).
 
+## Evidence layers
+
+- collected: 2026-07-23
+- source: [Agent Skills specification](https://agentskills.io/specification),
+  [official Codex skills docs](https://developers.openai.com/codex/skills),
+  and [official Claude Code skills docs](https://code.claude.com/docs/en/slash-commands)
+- status: settled
+
+Skill evidence is evaluated in four separate layers:
+
+| Layer | Question answered |
+|---|---|
+| Agent Skills format | Is the skill valid according to the open authoring format? |
+| Host runtime acceptance | What bytes does this dated host implementation currently discover and parse? |
+| Codex bundled validator | What does the current Codex authoring helper accept? |
+| Behavior portability | Do identical bytes produce equivalent behavior in both hosts? |
+
+Acceptance in one layer does not imply acceptance or equivalence in another.
+In particular, a permissive runtime parser is not a public authoring contract,
+and a validator accepting a key does not prove that the runtime implements its
+semantics.
+
+## Agent Skills format
+
+- collected: 2026-07-23
+- source: [Agent Skills specification](https://agentskills.io/specification)
+- status: settled
+
+- A skill directory contains `SKILL.md` and may contain `scripts/`,
+  `references/`, `assets/`, and other supporting files.
+- `SKILL.md` is YAML frontmatter followed by a Markdown body. `name` and
+  `description` are required.
+- `name` is 1–64 characters, uses lowercase letters, digits, and hyphens,
+  cannot start or end with a hyphen or contain consecutive hyphens, and must
+  match the parent directory name.
+- `description` is 1–1024 characters. The standard optional keys are
+  `license`, `compatibility`, `metadata`, and `allowed-tools`.
+- `allowed-tools` is explicitly experimental, and the specification says
+  support may vary between agent implementations. Its presence is format
+  compatibility, not evidence of permission-semantic equivalence.
+- The format does not define repository discovery paths, trust prompts,
+  host-local enablement, invocation policy, or Claude-specific preprocessing.
+
+## Codex repository discovery and activation
+
+- collected: 2026-07-23
+- source: [official Codex skills docs](https://developers.openai.com/codex/skills)
+  and [Codex config basics](https://learn.chatgpt.com/docs/config-file/config-basic)
+- status: settled
+
+- The public repository location is `.agents/skills/`. Codex scans that
+  directory at every level from cwd to repository root.
+- User skills live under `$HOME/.agents/skills/`; admin skills live under
+  `/etc/codex/skills`. M2 targets only the documented repository location.
+  A legacy path accepted by a current runtime is not a projection contract.
+- Codex exposes skills in its app, CLI, and IDE surfaces. Invocation can be
+  explicit (`/skills` or a `$` mention) or implicit through description
+  matching.
+- Optional `agents/openai.yaml` controls presentation, dependencies, and
+  invocation policy. `policy.allow_implicit_invocation: false` disables
+  implicit selection without preventing explicit invocation.
+- Repository bytes, discoverability, and live activation are orthogonal:
+  a directory copy proves only that bytes exist; appearance in a host skill
+  list proves discovery and metadata parsing; successful invocation in the
+  current session proves live activation.
+- Codex documents project trust for project `.codex/` config, hooks, and
+  rules. It does not document a corresponding trust gate for
+  `.agents/skills/`. The bridge therefore must not synthesize an
+  `awaiting-host-trust` state for Codex repository skills.
+
+## Codex user-level skill config
+
+- collected: 2026-07-23
+- source: [official Codex skills docs](https://developers.openai.com/codex/skills)
+  and
+  [`config_rules.rs` at `44d76c6`](https://github.com/openai/codex/blob/44d76c6a6dd04fa2efc302b906ac8774267a1272/codex-rs/core-skills/src/config_rules.rs)
+- status: settled
+
+- `[[skills.config]]` is documented in `~/.codex/config.toml`. The dated core
+  implementation reads per-skill rules only from user and session-flag
+  layers, not from project config.
+- This setting is user-owned live-activation state, not a repository
+  projection surface. M2 neither creates nor edits it.
+- An existing user override can make a written and discoverable skill
+  inactive. Report that as runtime environment context, not file drift.
+
+## Codex runtime acceptance
+
+- collected: 2026-07-23
+- source:
+  [`loader.rs` at `44d76c6`](https://github.com/openai/codex/blob/44d76c6a6dd04fa2efc302b906ac8774267a1272/codex-rs/core-skills/src/loader.rs)
+  and
+  [`injection.rs` at `44d76c6`](https://github.com/openai/codex/blob/44d76c6a6dd04fa2efc302b906ac8774267a1272/codex-rs/core-skills/src/injection.rs)
+- status: watch
+
+- The dated loader materializes `name`, `description`, and
+  `metadata.short-description`. It ignores unrecognized frontmatter keys and
+  falls back to the directory name when `name` is absent.
+- Those permissive behaviors are implementation observations only. Portable
+  skills still follow the public Agent Skills format and Codex docs.
+- The explicit-invocation path reads `SKILL.md` and forwards its `contents`
+  unchanged. Codex does not perform the Claude-specific substitutions or
+  shell preprocessing listed below.
+- A UTF-8 BOM prevents the first line from being recognized as the opening
+  `---`; portable `SKILL.md` files therefore have no BOM.
+
+## Codex bundled validator
+
+- collected: 2026-07-23
+- source:
+  [`quick_validate.py` at `44d76c6`](https://github.com/openai/codex/blob/44d76c6a6dd04fa2efc302b906ac8774267a1272/codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py)
+- status: watch
+
+The bundled `skill-creator/scripts/quick_validate.py` is an authoring gate,
+not the runtime parser:
+
+| Check | Current validator behavior |
+|---|---|
+| Required keys | Requires the `name` and `description` keys and string values |
+| Allowed top-level keys | `name`, `description`, `license`, `allowed-tools`, `metadata` |
+| `name` | When non-empty, checks grammar, 64-character limit, and hyphen placement |
+| `description` | When non-empty, checks the 1024-character limit and rejects angle brackets |
+| Directory-name match | Not checked |
+| `compatibility` | Rejected even though the Agent Skills format defines it |
+| Unknown and Claude-only keys | Rejected |
+
+The current script's acceptance of empty strings is a validator gap; it does
+not relax the open standard's non-empty requirement. Likewise, accepting
+`allowed-tools` proves only that the key passes this script, not that Codex
+implements Claude's permission behavior.
+
 ## Fidelity mapping (skills unit class)
 
-- The projection mechanism is a whole-directory byte copy; both hosts
-  consume `SKILL.md` directly, so the mechanism tier is `native`.
-- Behavioral native-equivalence holds only for the portable subset (see the
-  tiering entry below); everything outside it degrades on Codex while the
-  bytes stay identical. Degradation is expressed by portability lints in the
-  sentinel report, never by lowering the tier — bytes stay comparable.
-
-## Codex project skills dir
-
-- collected: 2026-07-07, reconfirmed 2026-07-08
-- source: official Codex docs; dated notes in [`../docs/research/codex-capability-surface.md`](../docs/research/codex-capability-surface.md)
+- collected: 2026-07-23
+- source: derived from the format and host entries above
 - status: settled
 
-- Project skills live under `.agents/skills/` — NOT `.codex/skills/`, which
-  is the legacy layout (likely invisible to the current CLI).
-- Discovery walks cwd→root, at every level.
-- Same-name skills coexist; there is no merge or shadow behavior.
+- Whole-directory byte copy is a `native` projection mechanism because both
+  hosts consume `SKILL.md` directly.
+- Behavioral native-equivalence is narrower: the common stable core is a
+  format-valid `name`, `description`, static Markdown instructions, and
+  ordinary relative references to supporting files.
+- `license` and `metadata` can remain byte-identical but do not establish
+  runtime behavior. `compatibility` is standard-valid but currently blocked by
+  the Codex bundled validator.
+- `allowed-tools` is not behaviorally equivalent. Agent Skills marks it
+  experimental; Claude implements a one-turn permission grant; Codex does not
+  publish the same contract.
+- Claude-only frontmatter and Claude-rendered dynamic content degrade on
+  Codex even when its permissive loader ignores the keys and the bytes remain
+  identical. Degradation belongs on the lint axis, not in the byte-comparison
+  result or projection-mechanism tier.
 
-## Codex SKILL.md parsing
+## Claude Code skill runtime
 
-- collected: 2026-07-07, reconfirmed 2026-07-08 and 2026-07-23
-- source: official Codex skills manual and its bundled skill validator
+- collected: 2026-07-23
+- source: [official Claude Code skills docs](https://code.claude.com/docs/en/slash-commands)
 - status: settled
 
-| Frontmatter key | Codex behavior |
-|---|---|
-| `name` | Required by the bundled validator, which enforces the name grammar; the directory-name match is an Agent Skills standard requirement the validator does not itself check |
-| `description` | Required non-empty string; at most 1024 characters and no angle brackets |
-| `license`, `metadata`, `allowed-tools` | Accepted optional top-level keys |
-| `compatibility` | Defined by the Agent Skills standard but rejected by the current bundled Codex validator |
-| any other key (including Claude-only keys) | Rejected by the bundled validator |
-
-- The body is injected verbatim: `$ARGUMENTS`, `$N` positional tokens,
-  `${CLAUDE_*}` variables, backtick-exec lines, and `@file` references are
-  inert literal text — never executed, never substituted.
-- A UTF-8 BOM at the start of `SKILL.md` breaks Codex frontmatter parsing
-  because line one no longer begins with `---`; portable skills therefore
-  prohibit BOMs without depending on an issue's current status.
-- Optional `agents/openai.yaml` metadata controls app presentation and
-  invocation policy. `policy.allow_implicit_invocation: false` prevents
-  implicit invocation without adding a host-specific key to `SKILL.md`.
-
-## Skills tiering condition
-
-- collected: 2026-07-08, updated 2026-07-23
-- source: derived from the Codex SKILL.md parsing and Claude skill surface entries in this file
-- status: settled
-
-- The mechanism is `native`: a byte copy, with both hosts consuming
+- Claude Code follows Agent Skills but extends it. Its documented frontmatter
+  includes `name`, `description`, `when_to_use`, `argument-hint`, `arguments`,
+  `disable-model-invocation`, `user-invocable`, `allowed-tools`,
+  `disallowed-tools`, `model`, `effort`, `context`, `agent`, `hooks`, `paths`,
+  and `shell`.
+- Claude's runtime permits omitted `name` and `description` by falling back to
+  the directory name and first body paragraph. That host convenience does not
+  relax the bridge's Agent Skills format gate.
+- Before the skill content enters context, Claude renders `$ARGUMENTS`,
+  `$ARGUMENTS[N]` / `$N`, named `$name` arguments, `${CLAUDE_SESSION_ID}`,
+  `${CLAUDE_EFFORT}`, `${CLAUDE_SKILL_DIR}`, and
+  `${CLAUDE_PROJECT_DIR}`.
+- Claude also executes inline `` !`command` `` placeholders and fenced shell
+  blocks marked with `!` before injection, replacing each
+  placeholder with command output. Codex leaves the same source text
+  unchanged at its injection boundary.
+- `allowed-tools` grants no-prompt permission for the invocation turn; it does
+  not restrict other tools. Its effect for project skills is gated by Claude
+  workspace trust.
+- Nested `.claude/skills/` directories are discovered on demand.
+  `skillOverrides` can change non-plugin skill visibility without modifying
   `SKILL.md`.
-- Behavioral native-equivalence holds only for the common validated subset:
-  `name`, `description`, optional `license` / `metadata` / `allowed-tools`,
-  and a static body.
-- Everything else degrades behaviorally while the bytes stay identical —
-  hence the sentinel's lint axis (lint list in the report spec).
-
-## Claude skill surface
-
-- collected: 2026-07-08, reconfirmed 2026-07-23
-- source: official Claude Code skills docs; dated notes in [`../docs/research/host-context-loading.md`](../docs/research/host-context-loading.md)
-- status: settled
-
-- Full frontmatter key list: `name`, `description`, `when_to_use`,
-  `argument-hint`, `arguments`, `disable-model-invocation`,
-  `user-invocable`, `allowed-tools`, `disallowed-tools`, `model`, `effort`,
-  `context`, `agent`, `hooks`, `paths`, `shell`. (`disallowed-tools` is
-  Claude-only; it is not part of the Agent Skills standard.)
-- Project skills' `allowed-tools` is gated by workspace trust.
-- Nested `.claude/skills/` directories are lazy-discovered from
-  subdirectories.
-- `skillOverrides` can hide or disable individual non-plugin skills from
-  project settings without changing their `SKILL.md` frontmatter.
-
-## Windows symlink caveat
-
-- collected: 2026-07-07
-- source: Windows platform behavior (symlink creation privilege), verified locally
-- status: settled
-
-- Creating symlinks on Windows requires administrator rights or Developer
-  Mode.
-- Consequence: projection is a copy, never a symlink.
 
 ## Codex skills-list metadata budget
 
-- collected: 2026-07-08
-- source: official Codex docs; dated notes in [`../docs/research/codex-capability-surface.md`](../docs/research/codex-capability-surface.md)
+- collected: 2026-07-23
+- source: [official Codex skills docs](https://developers.openai.com/codex/skills)
 - status: settled
 
-- The injected skills LIST (name + description + path metadata) has a budget
-  of about 2% of the context window / 8000 characters.
-- The full SKILL.md body loads only on selection.
-- Consequence: keep projected descriptions terse.
+- The initial skills list (name, description, and path metadata) uses at most
+  2% of the context window, or 8,000 characters when the context window is
+  unknown.
+- Codex shortens descriptions first and may omit skills with a warning when
+  the list is too large. It still loads the full `SKILL.md` after selection.
+- Consequence: keep projected descriptions concise.
 
-## Codex skills config flags
+## Skill name collisions
 
-- collected: 2026-07-08
-- source: official Codex docs and open issues openai/codex#20210, #24237, #14161, #16012
-- status: watch
-
-- `[[skills.config]]` entries (`path`, `enabled`) and
-  `[skills] include_instructions = false` can make written skills inert —
-  the "written, not active" category.
-- Watch item: open bugs openai/codex#20210, #24237, #14161, and #16012
-  affect whether project-local filtering is honored.
-
-## Skill name-collision behavior
-
-- collected: 2026-07-08
-- source: official Claude Code and Codex docs
+- collected: 2026-07-23
+- source: [official Codex skills docs](https://developers.openai.com/codex/skills)
+  and [official Claude Code skills docs](https://code.claude.com/docs/en/slash-commands)
 - status: settled
 
-- Codex never merges or shadows same-name skills; both appear.
-- Claude has a precedence chain — enterprise > personal > project, and any
-  level over bundled — plus directory-qualified names for nested skills.
+- Codex does not merge same-name repository skills; both can appear.
+- Claude has enterprise > personal > project > bundled precedence and uses
+  directory-qualified names for nested collisions.
 
-## `.agents/skills` trust gating
+## Windows symlink caveat
 
-- collected: 2026-07-08
-- source: official Codex docs (gap); dated notes in [`../docs/research/codex-capability-surface.md`](../docs/research/codex-capability-surface.md)
-- status: watch
+- collected: 2026-07-23
+- source:
+  [Microsoft CreateSymbolicLink documentation](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createsymboliclinka)
+- status: settled
 
-- Trust gating was confirmed for the legacy `.codex/skills` layout; it is
-  undocumented for the current `.agents/skills` path.
-- Together with the trust-gating entry in [`hooks.md`](hooks.md), this is
-  the basis of the `awaiting-host-trust` annotation on Codex-side skills
-  rows (annotation rules in the report spec).
-- Watch item: re-verify before M2 write work.
+- Windows symlink creation is privilege- and policy-sensitive; Microsoft
+  exposes a separate unprivileged-create flag, with Developer Mode
+  requirements on applicable hosts.
+- Consequence: projection is a copy, never a symlink.

@@ -14,9 +14,17 @@ templates, frontmatter schemas, the report format — live in the sentinel
 skill's reference specs and are linked from here, never restated:
 
 - [`../skills/bridge-sentinel/references/source-tree-spec.md`](../skills/bridge-sentinel/references/source-tree-spec.md)
-  — source-tree entry conventions (spec version `source-tree/v2`)
+  — source-tree entry conventions, onboarding, and Git-tree identity
+  (spec version `source-tree/v3`)
 - [`../skills/bridge-sentinel/references/report-spec.md`](../skills/bridge-sentinel/references/report-spec.md)
-  — report states, tiers, lints, comparison rules (spec version `report/v2`)
+  — read-only report states, tiers, lints, and comparison rules
+  (spec version `report/v3`)
+- [`../skills/bridge-sync/references/reconciliation-spec.md`](../skills/bridge-sync/references/reconciliation-spec.md)
+  — write-side ownership, baseline, safety, and transaction contract
+  (spec version `reconciliation/v1`)
+- [`../skills/bridge-sync/references/sync-plan-spec.md`](../skills/bridge-sync/references/sync-plan-spec.md)
+  — deterministic write-plan states, actions, outcomes, and warnings
+  (spec version `sync-plan/v1`)
 
 ## Files
 

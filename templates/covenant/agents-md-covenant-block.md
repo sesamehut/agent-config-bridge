@@ -1,25 +1,30 @@
 <!-- bridge:managed:start id=rules/bridge-covenant source=.claude/rules/bridge-covenant.md -->
 # Bridge covenant
 
-This project keeps one canonical source for project-level agent
-configuration: `CLAUDE.md`, `.claude/rules/*.md` (including the hook intent
-document `.claude/rules/hooks.md`), and `.claude/skills/<name>/`. Host-native
-counterparts are projections: managed blocks in `AGENTS.md`,
-`.agents/skills/<name>/` copies, and declared hooks keys in
-`.claude/settings.json` and `.codex/hooks.json`.
+Bridge contract versions: `covenant/v1`, `source-tree/v3`, `report/v3`,
+`reconciliation/v1`, and `sync-plan/v1`.
 
-For ANY change to project-level agent configuration, from either tool's
-session:
+This project keeps each managed project skill as one canonical Git tree at
+`.claude/skills/<name>/` and one byte-identical Codex projection at
+`.agents/skills/<name>/`. The complete regular-file tree is the unit,
+including an explicitly authored `agents/openai.yaml`; the bridge never
+derives a sidecar or writes `skills.config`.
 
-1. Land the change in the source tree, appending a new dated intent record.
-   Rule shards use `bridge.intent` in frontmatter; skills use the
-   `bridge-intent.yaml` supporting file so `SKILL.md` remains portable.
-2. Update every affected projection surface in the same unit of work.
-3. Commit source and projections together, in one commit.
+Use the `bridge-sync` skill before creating, updating, adopting, deleting,
+renaming, or annexing a managed skill. It must present a complete scoped plan
+and receive confirmation before writing. Conflict and adoption decisions
+always require an explicit choice. The `bridge-sentinel` skill is strictly
+read-only and cannot choose a reconciliation direction.
 
-Never overwrite content outside bridge-managed regions (managed blocks,
-managed skill copies, declared hooks keys). Before ending a session, and
-before any commit that touches agent configuration, self-check that source
-and projections still match; when in doubt, run the bridge-sentinel skill and
-follow its report.
+Every managed skill carries `bridge-intent.yaml`. Append a dated motivation
+for onboarding, annexation, adoption, rename, or a semantic change. Do not
+append a record for a byte-for-byte mechanical reprojection.
+
+Never overwrite an unmanaged skill path or content outside bridge-owned
+regions. Preserve the root `AGENTS.md` manual zone byte-for-byte. A `keep`
+decision applies only to the current run and leaves the unit unresolved; it
+does not create an ignore rule.
+
+M2 projects skills only. General `CLAUDE.md` or rule projection and all hook
+installation remain disabled until their roadmap milestones.
 <!-- bridge:managed:end -->

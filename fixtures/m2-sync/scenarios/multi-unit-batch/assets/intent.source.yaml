@@ -1,0 +1,5 @@
+intent:
+  - date: 2026-07-22
+    note: Establish an inert synchronized batch baseline
+  - date: 2026-07-23
+    note: Record an independent source-side batch edit

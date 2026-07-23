@@ -1,0 +1,609 @@
+{
+  "case_schema": {
+    "additional_case_fields": false,
+    "additional_expected_fields": false,
+    "array_fields": {
+      "invariants": {
+        "items": "invariant_values",
+        "unique": true
+      },
+      "warnings": {
+        "items": "warning_values",
+        "unique": true
+      }
+    },
+    "authorization_values": [
+      "required",
+      "confirmed",
+      "not-applicable"
+    ],
+    "case_order": "id-bytewise",
+    "direction_values": [
+      "-",
+      "source-to-projection",
+      "projection-to-source",
+      "user-decision"
+    ],
+    "expected_required_fields": [
+      "state",
+      "action",
+      "direction",
+      "outcome",
+      "authorization",
+      "write_policy",
+      "warnings",
+      "invariants"
+    ],
+    "id_pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+    "invariant_values": [
+      "automatic-compensation-is-not-rollback",
+      "baseline-required-for-delete",
+      "closure-indivisible",
+      "compensation-operation-local",
+      "compensation-stopped-or-failed",
+      "contract-migration-explicit",
+      "destination-decision-required",
+      "failed-closure-stops-immediately",
+      "ignored-bytes-not-read",
+      "ignored-required-input-must-be-made-explicit",
+      "intent-does-not-establish-ownership",
+      "keep-does-not-establish-ownership",
+      "offboarding-explicit",
+      "onboarding-not-proven",
+      "preexisting-dirty-preserved",
+      "prewrite-closure-restored",
+      "projection-deletion-propagates-to-source",
+      "reachable-head-only",
+      "repair-before-migrate",
+      "reviewable-diff-preserved",
+      "rollback-confirmation-required",
+      "rollback-recorded-bytes-only",
+      "secret-generated-bytes-not-copied",
+      "source-deletion-propagates-to-projection",
+      "tracked-deletion-participates",
+      "unsafe-entry-blocks-unit",
+      "writes-zero-until-confirmed"
+    ],
+    "phase_values": [
+      "onboarding",
+      "snapshot",
+      "baseline-selection",
+      "planning",
+      "pre-write",
+      "post-write",
+      "rollback"
+    ],
+    "required_case_fields": [
+      "id",
+      "phase",
+      "input",
+      "requirement",
+      "expected"
+    ],
+    "state_values": [
+      "unchanged",
+      "source-only",
+      "projection-only",
+      "both-changed",
+      "no-baseline",
+      "contract-migration",
+      "offboarding",
+      "blocked"
+    ],
+    "action_values": [
+      "create",
+      "repair",
+      "restore",
+      "update",
+      "reproject",
+      "adopt",
+      "conflict",
+      "delete",
+      "rename",
+      "annex-or-keep",
+      "annex",
+      "keep",
+      "migrate",
+      "offboard",
+      "resolve-blocker",
+      "unchanged"
+    ],
+    "outcome_values": [
+      "planned",
+      "applied",
+      "unchanged",
+      "deferred",
+      "blocked",
+      "failed",
+      "compensated",
+      "partial",
+      "not-attempted",
+      "rolled-back"
+    ],
+    "warning_values": [
+      "ignored-files-excluded",
+      "mode-limited",
+      "sensitive-or-generated-blocked",
+      "unrelated-dirty-preserved",
+      "unsafe-tree-entry",
+      "untracked-files-included",
+      "validator-profile-mismatch"
+    ],
+    "write_policy_values": [
+      "automatic-compensation",
+      "none",
+      "none-before-confirmation",
+      "operation-snapshot-only",
+      "preserve-partial-diff"
+    ]
+  },
+  "cases": [
+    {
+      "expected": {
+        "action": "resolve-blocker",
+        "authorization": "not-applicable",
+        "direction": "-",
+        "invariants": [
+          "unsafe-entry-blocks-unit"
+        ],
+        "outcome": "blocked",
+        "state": "blocked",
+        "warnings": [
+          "unsafe-tree-entry"
+        ],
+        "write_policy": "none"
+      },
+      "id": "case-fold-collision-blocked",
+      "input": "Two entries anywhere in one skill unit collide under Unicode-aware case folding.",
+      "phase": "pre-write",
+      "requirement": "The complete unit is blocked before byte comparison or copying; no colliding path is selected by host filesystem behavior."
+    },
+    {
+      "expected": {
+        "action": "repair",
+        "authorization": "required",
+        "direction": "user-decision",
+        "invariants": [
+          "onboarding-not-proven",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "blocked",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "covenant-malformed",
+      "input": "One or both tracked covenant halves fail exact-template, marker, or schema validation.",
+      "phase": "onboarding",
+      "requirement": "A malformed ownership anchor is a project blocker and never proves onboarding."
+    },
+    {
+      "expected": {
+        "action": "repair",
+        "authorization": "required",
+        "direction": "user-decision",
+        "invariants": [
+          "onboarding-not-proven",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "blocked",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "covenant-untracked",
+      "input": "Exact covenant bytes exist only as untracked files, on either or both surfaces.",
+      "phase": "onboarding",
+      "requirement": "Untracked anchor bytes do not establish managed ownership."
+    },
+    {
+      "expected": {
+        "action": "repair",
+        "authorization": "required",
+        "direction": "user-decision",
+        "invariants": [
+          "contract-migration-explicit",
+          "onboarding-not-proven",
+          "repair-before-migrate",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "blocked",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "covenant-version-mismatch",
+      "input": "Both tracked covenant halves are individually valid but declare different contract versions.",
+      "phase": "onboarding",
+      "requirement": "Tuple disagreement is blocked and must first be repaired into one coherent exact pair. If that pair is an older recognized tuple, crossing to the current tuple requires a later separately confirmed migration plan."
+    },
+    {
+      "expected": {
+        "action": "delete",
+        "authorization": "required",
+        "direction": "projection-to-source",
+        "invariants": [
+          "baseline-required-for-delete",
+          "projection-deletion-propagates-to-source",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "projection-only",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "delete-projection-to-source",
+      "input": "A unique reachable baseline proves a managed pair; the source still equals the baseline and the projection is a tracked deletion.",
+      "phase": "planning",
+      "requirement": "After an explicit destructive decision and full-plan confirmation, deletion may converge from projection to source; Bridge itself does not commit the tombstone."
+    },
+    {
+      "expected": {
+        "action": "delete",
+        "authorization": "required",
+        "direction": "source-to-projection",
+        "invariants": [
+          "baseline-required-for-delete",
+          "source-deletion-propagates-to-projection",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "source-only",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "delete-source-to-projection",
+      "input": "A unique reachable baseline proves a managed pair; the projection still equals the baseline and the source is a tracked deletion.",
+      "phase": "planning",
+      "requirement": "After an explicit destructive decision and full-plan confirmation, deletion may converge from source to projection; Bridge itself does not commit the tombstone."
+    },
+    {
+      "expected": {
+        "action": "resolve-blocker",
+        "authorization": "not-applicable",
+        "direction": "-",
+        "invariants": [
+          "unsafe-entry-blocks-unit"
+        ],
+        "outcome": "blocked",
+        "state": "blocked",
+        "warnings": [
+          "unsafe-tree-entry"
+        ],
+        "write_policy": "none"
+      },
+      "id": "gitlink-blocked",
+      "input": "A tracked gitlink occurs anywhere under a source or projection skill unit.",
+      "phase": "pre-write",
+      "requirement": "A gitlink is an unsafe tree entry and blocks the complete unit without traversing or copying the linked repository."
+    },
+    {
+      "expected": {
+        "action": "resolve-blocker",
+        "authorization": "not-applicable",
+        "direction": "-",
+        "invariants": [
+          "ignored-bytes-not-read",
+          "ignored-required-input-must-be-made-explicit"
+        ],
+        "outcome": "blocked",
+        "state": "blocked",
+        "warnings": [
+          "ignored-files-excluded"
+        ],
+        "write_policy": "none"
+      },
+      "id": "ignored-required-input-blocked",
+      "input": "An ignored path is excluded by Git but is required for the skill to function.",
+      "phase": "snapshot",
+      "requirement": "Bridge lists the ignored path without reading or copying its bytes, stops the unit, and asks the user to make it an intentional non-ignored source input."
+    },
+    {
+      "expected": {
+        "action": "annex-or-keep",
+        "authorization": "required",
+        "direction": "user-decision",
+        "invariants": [
+          "intent-does-not-establish-ownership",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "deferred",
+        "state": "no-baseline",
+        "warnings": [],
+        "write_policy": "none"
+      },
+      "id": "intent-is-not-ownership",
+      "input": "A bridge-intent.yaml exists without a valid covenant and a proven equal managed Git tree.",
+      "phase": "baseline-selection",
+      "requirement": "Intent records are semantic evidence only and cannot independently grant ownership."
+    },
+    {
+      "expected": {
+        "action": "keep",
+        "authorization": "confirmed",
+        "direction": "user-decision",
+        "invariants": [
+          "keep-does-not-establish-ownership"
+        ],
+        "outcome": "deferred",
+        "state": "no-baseline",
+        "warnings": [],
+        "write_policy": "none"
+      },
+      "id": "keep-remains-unresolved",
+      "input": "The user chooses keep for an unmanaged copy-only skill in the current run.",
+      "phase": "planning",
+      "requirement": "Keep creates no ignore rule, ownership claim, or future directional baseline and cannot be reported as synchronized."
+    },
+    {
+      "expected": {
+        "action": "migrate",
+        "authorization": "required",
+        "direction": "user-decision",
+        "invariants": [
+          "contract-migration-explicit",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "contract-migration",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "migrate-explicit",
+      "input": "A valid older contract tuple is present and the current tuple cannot use it as a baseline.",
+      "phase": "planning",
+      "requirement": "Migration is a dedicated migrate action that replaces the tuple atomically only after an explicit migration decision and complete-plan confirmation."
+    },
+    {
+      "expected": {
+        "action": "offboard",
+        "authorization": "required",
+        "direction": "user-decision",
+        "invariants": [
+          "offboarding-explicit",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "offboarding",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "offboard-explicit",
+      "input": "Both current covenant halves are absent while history reachable from HEAD proves a prior valid onboarding covenant.",
+      "phase": "planning",
+      "requirement": "The state is proposed offboarding and requires an explicit offboard-or-restore decision; absence is never silently treated as a never-onboarded project."
+    },
+    {
+      "expected": {
+        "action": "rename",
+        "authorization": "required",
+        "direction": "source-to-projection",
+        "invariants": [
+          "closure-indivisible",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "source-only",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "rename-atomic",
+      "input": "A source-directed rename has explicit intent or reliable reachable Git path history, every old path has ownership proof, and every destination path passes preflight.",
+      "phase": "planning",
+      "requirement": "The source and projection old/new paths form one indivisible dependency closure; a blocker in any member gives the entire closure zero writes."
+    },
+    {
+      "expected": {
+        "action": "annex-or-keep",
+        "authorization": "required",
+        "direction": "user-decision",
+        "invariants": [
+          "closure-indivisible",
+          "destination-decision-required",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "deferred",
+        "state": "no-baseline",
+        "warnings": [],
+        "write_policy": "none"
+      },
+      "id": "rename-destination-occupied",
+      "input": "A proven managed rename targets a non-empty destination that is not already proven managed and has not been explicitly annexed.",
+      "phase": "planning",
+      "requirement": "Unknown destination occupancy is never overwritten; the complete rename closure writes nothing until the user resolves annex-or-keep or chooses another destination."
+    },
+    {
+      "expected": {
+        "action": "rename",
+        "authorization": "confirmed",
+        "direction": "source-to-projection",
+        "invariants": [
+          "automatic-compensation-is-not-rollback",
+          "closure-indivisible",
+          "compensation-operation-local",
+          "prewrite-closure-restored"
+        ],
+        "outcome": "compensated",
+        "state": "source-only",
+        "warnings": [],
+        "write_policy": "automatic-compensation"
+      },
+      "id": "rename-mid-compensated",
+      "input": "A confirmed rename closure encounters a failure after mutation, every operation-local compare-and-swap guard still matches, and automatic compensation restores and verifies the complete pre-write closure.",
+      "phase": "post-write",
+      "requirement": "Report compensated only after the complete pre-write closure is restored and verified. This automatic compensation is part of the already-confirmed operation and is not the later user-confirmed rollback action."
+    },
+    {
+      "expected": {
+        "action": "rename",
+        "authorization": "confirmed",
+        "direction": "source-to-projection",
+        "invariants": [
+          "compensation-stopped-or-failed",
+          "failed-closure-stops-immediately",
+          "reviewable-diff-preserved",
+          "rollback-confirmation-required"
+        ],
+        "outcome": "partial",
+        "state": "source-only",
+        "warnings": [],
+        "write_policy": "preserve-partial-diff"
+      },
+      "id": "rename-mid-failure",
+      "input": "A confirmed rename closure encounters a failure after mutation, and a compare-and-swap guard, byte restoration, mode restoration, or complete pre-write proof fails during automatic compensation.",
+      "phase": "post-write",
+      "requirement": "Report partial, stop dependent execution, and preserve the reviewable diff. Any later rollback is a new plan requiring confirmation and remains limited to the recorded operation bytes."
+    },
+    {
+      "expected": {
+        "action": "update",
+        "authorization": "confirmed",
+        "direction": "source-to-projection",
+        "invariants": [
+          "preexisting-dirty-preserved",
+          "rollback-confirmation-required",
+          "rollback-recorded-bytes-only"
+        ],
+        "outcome": "rolled-back",
+        "state": "source-only",
+        "warnings": [
+          "unrelated-dirty-preserved"
+        ],
+        "write_policy": "operation-snapshot-only"
+      },
+      "id": "rollback-preserves-preexisting-dirty",
+      "input": "A post-write failure occurs in a repository that already had unrelated dirty bytes and pre-existing dirty bytes on a path whose operation-local mutation was recorded.",
+      "phase": "rollback",
+      "requirement": "After separate rollback confirmation, restore only this run's recorded mutation layer, re-run verification, and preserve every pre-existing dirty byte exactly."
+    },
+    {
+      "expected": {
+        "action": "resolve-blocker",
+        "authorization": "not-applicable",
+        "direction": "-",
+        "invariants": [
+          "secret-generated-bytes-not-copied"
+        ],
+        "outcome": "blocked",
+        "state": "blocked",
+        "warnings": [
+          "sensitive-or-generated-blocked"
+        ],
+        "write_policy": "none"
+      },
+      "id": "secret-generated-blocked",
+      "input": "Content in a candidate unit appears to contain a secret, credential, private key, or generated payload that should not be copied.",
+      "phase": "pre-write",
+      "requirement": "Block the complete unit, emit the registered warning, and do not copy the suspected payload."
+    },
+    {
+      "expected": {
+        "action": "resolve-blocker",
+        "authorization": "not-applicable",
+        "direction": "-",
+        "invariants": [
+          "unsafe-entry-blocks-unit"
+        ],
+        "outcome": "blocked",
+        "state": "blocked",
+        "warnings": [
+          "unsafe-tree-entry"
+        ],
+        "write_policy": "none"
+      },
+      "id": "special-file-blocked",
+      "input": "A filesystem special file such as a socket, FIFO, or device node occurs anywhere in a skill unit.",
+      "phase": "pre-write",
+      "requirement": "A special file is an unsafe tree entry and blocks the complete unit without reading or copying its payload."
+    },
+    {
+      "expected": {
+        "action": "delete",
+        "authorization": "required",
+        "direction": "source-to-projection",
+        "invariants": [
+          "baseline-required-for-delete",
+          "tracked-deletion-participates",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "source-only",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "tracked-deletion-participates",
+      "input": "Scoped git status reports a tracked deletion under a managed source unit whose projection still equals the unique baseline.",
+      "phase": "snapshot",
+      "requirement": "The tracked deletion is a current snapshot value and reaches the reconciliation table; it is not dropped merely because the worktree path is absent."
+    },
+    {
+      "expected": {
+        "action": "create",
+        "authorization": "required",
+        "direction": "source-to-projection",
+        "invariants": [
+          "reachable-head-only",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "no-baseline",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "unreachable-refs-excluded",
+      "input": "A valid source exists and the target is absent, while an ownership-like equal pair exists only in a commit unreachable from HEAD through another ref or reflog.",
+      "phase": "baseline-selection",
+      "requirement": "Ignore unreachable commits, other refs, and reflogs for ownership and baseline selection; classify the current unit as no-baseline and plan create from the valid source."
+    },
+    {
+      "expected": {
+        "action": "repair",
+        "authorization": "required",
+        "direction": "user-decision",
+        "invariants": [
+          "contract-migration-explicit",
+          "onboarding-not-proven",
+          "repair-before-migrate",
+          "writes-zero-until-confirmed"
+        ],
+        "outcome": "planned",
+        "state": "blocked",
+        "warnings": [],
+        "write_policy": "none-before-confirmation"
+      },
+      "id": "untracked-covenant-old-tuple-repair-before-migrate",
+      "input": "One or both covenant halves are untracked while their bytes declare an older contract tuple.",
+      "phase": "onboarding",
+      "requirement": "First repair and prove a tracked atomic covenant pair without treating untracked bytes as ownership; only a subsequent explicit migrate plan may cross the tuple boundary."
+    }
+  ],
+  "contracts": {
+    "reconciliation": "reconciliation/v1",
+    "sync_plan": "sync-plan/v1"
+  },
+  "required_case_ids": [
+    "case-fold-collision-blocked",
+    "covenant-malformed",
+    "covenant-untracked",
+    "covenant-version-mismatch",
+    "delete-projection-to-source",
+    "delete-source-to-projection",
+    "gitlink-blocked",
+    "ignored-required-input-blocked",
+    "intent-is-not-ownership",
+    "keep-remains-unresolved",
+    "migrate-explicit",
+    "offboard-explicit",
+    "rename-atomic",
+    "rename-destination-occupied",
+    "rename-mid-compensated",
+    "rename-mid-failure",
+    "rollback-preserves-preexisting-dirty",
+    "secret-generated-blocked",
+    "special-file-blocked",
+    "tracked-deletion-participates",
+    "unreachable-refs-excluded",
+    "untracked-covenant-old-tuple-repair-before-migrate"
+  ],
+  "spec": "bridge-sync-safeguards/v1"
+}

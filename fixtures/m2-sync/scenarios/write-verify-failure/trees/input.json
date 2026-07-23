@@ -1,0 +1,30 @@
+{
+  "base": "trees/baseline.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-write-first/SKILL.md",
+      "source": "assets/SKILL.first.v2.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-write-first/bridge-intent.yaml",
+      "source": "assets/intent.v2.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-write-second/SKILL.md",
+      "source": "assets/SKILL.second.v2.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-write-second/bridge-intent.yaml",
+      "source": "assets/intent.v2.yaml"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

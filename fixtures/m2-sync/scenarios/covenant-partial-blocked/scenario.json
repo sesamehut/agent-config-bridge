@@ -1,0 +1,26 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "partial-covenant-anchor-blocked",
+    "tracked-source-half-alone-is-not-onboarded",
+    "project-blocker-zero-write",
+    "untracked-input-evidence"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "partial-covenant-anchor-blocked",
+        "tracked-source-half-alone-is-not-onboarded",
+        "project-blocker-zero-write",
+        "untracked-input-evidence"
+      ],
+      "id": "partial-anchor-blocks",
+      "plan": "expected-plan.md",
+      "post_state": "trees/input.json"
+    }
+  ],
+  "input": "trees/input.json",
+  "name": "covenant-partial-blocked",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Treat a lone tracked covenant half as a blocker, not onboarding."
+}

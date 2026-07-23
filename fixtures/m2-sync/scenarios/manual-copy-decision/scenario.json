@@ -1,0 +1,50 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "copy-only-without-baseline",
+    "annex-or-keep-decision",
+    "predecision-zero-write",
+    "annex-branch-exact-copy",
+    "keep-branch-zero-write",
+    "untracked-input-evidence"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "copy-only-without-baseline",
+        "annex-or-keep-decision",
+        "predecision-zero-write",
+        "untracked-input-evidence"
+      ],
+      "id": "pending",
+      "plan": "expected-plan.pending.md",
+      "post_state": "trees/input.json"
+    },
+    {
+      "covers": [
+        "copy-only-without-baseline",
+        "annex-branch-exact-copy",
+        "untracked-input-evidence"
+      ],
+      "decision": "annex",
+      "id": "annex",
+      "plan": "expected-plan.annex.md",
+      "post_state": "trees/annexed.json"
+    },
+    {
+      "covers": [
+        "copy-only-without-baseline",
+        "keep-branch-zero-write",
+        "untracked-input-evidence"
+      ],
+      "decision": "keep",
+      "id": "keep",
+      "plan": "expected-plan.keep.md",
+      "post_state": "trees/input.json"
+    }
+  ],
+  "input": "trees/input.json",
+  "name": "manual-copy-decision",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Keep a hand-written copy untouched until annex or keep is confirmed."
+}

@@ -1,0 +1,1 @@
+This file is the inert target of fixture links and reparse points.

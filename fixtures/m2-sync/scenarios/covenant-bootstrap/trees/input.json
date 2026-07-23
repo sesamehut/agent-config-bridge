@@ -1,0 +1,24 @@
+{
+  "base": "trees/baseline.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-covenant-bootstrap/SKILL.md",
+      "source": "assets/SKILL.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-covenant-bootstrap/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-covenant-bootstrap/bridge-intent.yaml",
+      "source": "assets/bridge-intent.yaml"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

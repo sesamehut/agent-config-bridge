@@ -1,4 +1,4 @@
-- expectation: report/v2
+- expectation: report/v3
 - scan root: .
 - scope excludes: (none)
 - onboarding: not-onboarded
@@ -11,7 +11,7 @@
 | agents-md | entry | codex | not-projected | onboard | structural | - |
 | agents-md | rules/style | codex | not-projected | onboard | semantic | - |
 | hooks | - | - | no-source-unit | - | - | - |
-| skills | - | - | no-source-unit | - | - | - |
+| skills | .agents/skills/fixture-manual-copy | codex | adoption-candidate | annex-or-keep | - | live-activation-unknown |
 
 ## Observations
 

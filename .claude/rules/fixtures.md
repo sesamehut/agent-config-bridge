@@ -10,13 +10,25 @@ bridge:
 # fixtures/ - Fixture authoring rules
 
 Everything under `fixtures/` is an inert verification bed for the
-bridge-sentinel skill. These are hard rules, binding on every change inside
+Bridge skills. These are hard rules, binding on every change inside
 `fixtures/`.
 
-- **Scan in place, real names.** Fixtures keep their real host-native file
-  names (`CLAUDE.md`, `AGENTS.md`, `.claude/…`, `.agents/…`, `.codex/…`) and
-  are scanned where they sit. Never neutralize file names and never scan
-  scratch copies instead of the fixture itself.
+- **Real host-native names.** Fixtures keep real host-native file names
+  (`CLAUDE.md`, `AGENTS.md`, `.claude/…`, `.agents/…`, `.codex/…`). Read-only
+  sentinel projects are scanned where they sit and are never neutralized or
+  replaced by scratch copies.
+- **Mutation isolation.** A mutation scenario is declarative source data, not
+  a writable miniature repository. Materialize its versioned baseline into a
+  newly created OS temporary directory, initialize and commit a disposable
+  git repository there, then apply the versioned input state. Run every
+  mutating workflow and post-state comparison only in that temporary copy.
+  Never initialize a nested `.git` under `fixtures/`, never point a mutating
+  workflow at fixture source data, and never start either host with a current
+  working directory under `fixtures/`.
+- **Synthetic history only.** Mutation baselines come from the scenario's
+  versioned tree manifests. The harness creates their git history in the OS
+  temporary directory. Never use this repository's parent history as
+  scenario evidence and never check in a git bundle.
 - **Contained fixture skills.** Every fixture skill has a harmless body and a
   directory name starting with `fixture-`.
   - Claude fence, two-layered: the fixture project's `.claude/settings.json`
@@ -50,11 +62,8 @@ bridge-sentinel skill. These are hard rules, binding on every change inside
   and changes only together with the fixture bytes it describes, in the same
   change.
 - **Fixture hooks never execute.** Sentinel runs are file comparison only at
-  M1. Live-loading a fixture under Codex requires copying it outside this
-  repo first.
-- **Parent-history-blind.** Fixture evidence is intent records plus file
-  structure only. Never consult this repo's git history as fixture evidence;
-  no git bundles ship at M1.
+  M1. M2 mutation fixtures do not install hooks. Any later live-loading check
+  must use a materialized temporary project, never fixture source data.
 - **Never start a work session with cwd inside `fixtures/`.** Fixture project
   settings and hooks can become active there. The skill fences above do not
   make the rest of the fixture configuration safe to load.

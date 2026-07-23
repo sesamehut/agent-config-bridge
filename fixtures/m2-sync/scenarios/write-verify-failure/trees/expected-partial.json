@@ -1,0 +1,18 @@
+{
+  "base": "trees/input.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-write-first/SKILL.md",
+      "source": "assets/SKILL.first.corrupt.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-write-first/bridge-intent.yaml",
+      "source": "assets/intent.v2.yaml"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

@@ -1,0 +1,27 @@
+{
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/rules/bridge-covenant.md",
+      "source": "@shared/bridge-covenant.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/settings.json",
+      "source": "project/.claude/settings.json"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": "AGENTS.md",
+      "sources": [
+        "@shared/AGENTS.covenant.md",
+        "@shared/blank-line.txt",
+        "assets/AGENTS.md"
+      ]
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

@@ -1,0 +1,24 @@
+{
+  "base": "trees/baseline.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-conflict/SKILL.md",
+      "source": "assets/SKILL.source.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-conflict/bridge-intent.yaml",
+      "source": "assets/intent.source.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-conflict/SKILL.md",
+      "source": "assets/SKILL.projection.md"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

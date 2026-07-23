@@ -1,0 +1,18 @@
+{
+  "base": "trees/baseline.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-manual-copy/SKILL.md",
+      "source": "assets/SKILL.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-manual-copy/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

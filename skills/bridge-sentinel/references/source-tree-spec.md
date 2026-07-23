@@ -1,17 +1,18 @@
 # Bridge source-tree specification
 
-Spec version: source-tree/v2.
+Spec version: source-tree/v3.
 
 This file defines source units, onboarding, markers, rendering, intent
 records, hook ownership, and skill portability. Its companion,
 [`report-spec.md`](report-spec.md), defines inputs, findings, observations,
-and report comparison. All rules consume the filtered tracked files called
-**repo bytes** in that companion.
+and report comparison. Rules consume the filtered tracked files called
+**repo bytes** in that companion, except its exact untracked covenant-path
+safety check.
 
 ## Contents
 
 - [Unit model](#unit-model)
-- [Onboarding predicate](#onboarding-predicate)
+- [Onboarding anchor](#onboarding-anchor)
 - [Marker grammar](#marker-grammar)
 - [Applicability preamble and rendering pipeline](#applicability-preamble-and-rendering-pipeline)
 - [Normalization set N](#normalization-set-n-exact-closed)
@@ -20,7 +21,8 @@ and report comparison. All rules consume the filtered tracked files called
 - [Hook intent document](#hook-intent-document)
 - [Hook ownership](#declared-keys-and-ownership-derivation)
 - [Projected handler shape](#projected-handler-shape)
-- [Skill portability requirements](#skill-portability-requirements)
+- [Managed skill tree](#managed-skill-tree)
+- [Skill compatibility layers](#skill-compatibility-layers)
 
 ## Unit model
 
@@ -50,35 +52,51 @@ Enumerate units as follows:
   `.codex/hooks.json`. Matcher absence matches only absence. Also enumerate
   handlers whose `statusMessage` begins `[bridge:` for orphan detection.
 - **skills**: each immediate `.claude/skills/<name>/` directory containing a
-  tracked `SKILL.md` is unit `<name>`. Pair it with the same-name immediate
-  directory under `.agents/skills/` when that directory also contains a
-  tracked `SKILL.md`. Directories without `SKILL.md` are not units.
+  tracked regular-file `SKILL.md` is unit `<name>`. Its source is the complete
+  regular-file Git tree rooted at that directory, including an explicitly
+  authored `agents/openai.yaml` when present. Pair it with the same-name
+  immediate directory under `.agents/skills/` when that directory also
+  contains a tracked regular-file `SKILL.md`. Directories without `SKILL.md`
+  are not units. Empty directories are not part of a Git tree.
 
 A would-be source path outside the source-path grammar is not a unit; emit
 `unrepresentable-source-path`. Each surface that otherwise has no rows emits
 exactly `(surface, -, -, no-source-unit, -, -, -)`.
 
-## Onboarding predicate
+## Onboarding anchor
 
-Evaluate onboarding once per project. The project is **onboarded** when any
-trigger holds over repo bytes:
+Evaluate onboarding once per project. M2 replaces inference from coincidental
+carrier equality with a persistent, versioned two-part covenant anchor:
 
-| Trigger | Evidence |
-|---|---|
-| a | Root `AGENTS.md` contains a well-formed managed block outside code fences. |
-| b | A schema-valid hook entry targeting a non-`none` surface has an owned `(event, matcher)` group with a command handler, regardless of field equality; or either hooks file contains a handler whose `statusMessage` begins `[bridge:`. |
-| c | A `.agents/skills/<name>/` copy and its `.claude/skills/<name>/` master have identical relative file sets and raw bytes. |
-| d | `.claude/rules/bridge-covenant.md` exists. |
+1. source half: tracked `.claude/rules/bridge-covenant.md`, byte-equal to the
+   `covenant/v1` source template; and
+2. projection half: a tracked, well-formed root `AGENTS.md` block whose id is
+   `rules/bridge-covenant` and whose source attribute is
+   `.claude/rules/bridge-covenant.md`, with body byte-equal after N to the
+   `covenant/v1` projection template.
 
-Otherwise the project is **not-onboarded**: missing projections are
-`not-projected`, existing unmanaged content is `adoption-candidate`, and no
-row is `drift`. In an onboarded project, a missing source projection is
-`drift`/`reproject-from-source`.
+Both templates declare `covenant/v1`, `source-tree/v3`, `report/v3`,
+`reconciliation/v1`, and `sync-plan/v1`. Bootstrap installs both halves in
+one confirmed write. The project is **onboarded** only while both halves are
+present, schema-valid, version-equal, and template-valid. If neither exists,
+it is **not-onboarded**. A partial, malformed, modified, untracked, or
+version-mismatched anchor is **blocked**, not a degraded onboarding signal.
+Contract upgrades use an explicit migration plan; they are never ordinary
+content drift.
 
-The predicate is project-level. Intent records do not trigger it. A diverged
-same-name skill pair does not satisfy trigger c; if c was the only trigger,
-divergence changes the project to not-onboarded and yields a master
-`not-projected` row plus a copy `adoption-candidate` row.
+The anchor declares the Bridge ownership model, not ownership of every
+occupied path. A particular skill copy is proven managed only by a historical
+identical baseline under an installed anchor or by an explicit current
+annexation decision. The read-only sentinel never attempts that historical
+proof. Before onboarding, missing projections are `not-projected` and
+occupied projection locations are `adoption-candidate`. After onboarding,
+carrier mismatches with a present canonical source are `drift`;
+`bridge-sync` decides their direction. A copy-only skill remains
+`adoption-candidate` under either onboarding state because the covenant alone
+cannot prove that a missing source is a managed deletion. Only
+`bridge-sync`, using reachable ownership history and a unique baseline, may
+arbitrate that deletion. Removing the anchor from an onboarded history is
+offboarding and requires an explicit write-side decision.
 
 ## Marker grammar
 
@@ -209,14 +227,15 @@ whitespace, or case.
 ### Intent-record format
 
 One record is `{date: valid YYYY-MM-DD calendar date, note: single-line
-string}`. Keep records oldest first and append one in the same change whenever
-a source entry changes. They are arbitration and report evidence only; they
-follow normal byte comparison when part of a compared unit and never override
-decision-table state, action, or onboarding.
+string}`. Keep records oldest first. Append a record for initial onboarding or
+annexation and whenever a semantic source intent changes. A byte-for-byte
+mechanical reprojection does not append a record. Records are arbitration and
+report evidence only; they follow normal byte comparison when part of a
+compared unit and never override decision-table state, action, or onboarding.
 
 A root entry record, when needed, is a full line at the file top:
 `<!-- bridge:intent <YYYY-MM-DD> <single-line note> -->`. The same grammar is
-reserved as a rule-shard fallback but is not active for rule shards in v2.
+reserved as a rule-shard fallback but is not active for rule shards in v3.
 
 ### Rule-shard frontmatter (`.claude/rules/*.md`)
 
@@ -231,15 +250,31 @@ bridge:               # optional map
 ---
 ```
 
-`paths` is the host-native rules key. In v2, `bridge` frontmatter is the
+`paths` is the host-native rules key. In v3, `bridge` frontmatter is the
 rule-shard intent carrier and the sole bridge-added key;
 its `intent` value is a list of intent records, with notes recommended at no
 more than 120 characters. Ignore reserved unknown `bridge` subkeys.
 The entry file (`CLAUDE.md` or `.claude/CLAUDE.md`) has no frontmatter.
 
+The single covenant shard `.claude/rules/bridge-covenant.md` additionally
+requires this exact map inside `bridge`:
+
+```yaml
+covenant:
+  version: covenant/v1
+  source_tree: source-tree/v3
+  report: report/v3
+  reconciliation: reconciliation/v1
+  sync_plan: sync-plan/v1
+```
+
+The covenant is immutable infrastructure. Unknown, missing, or changed
+covenant fields are an anchor anomaly and require migration or repair, not a
+normal rule-shard intent update.
+
 ### Skill intent supporting file
 
-A skill master that carries intent history stores it at
+Every Bridge-managed skill master stores intent history at
 `<skill-directory>/bridge-intent.yaml`:
 
 ```yaml
@@ -248,8 +283,11 @@ intent:
     note: One-line motivation
 ```
 
-`intent` is the only defined top-level key. The file is copied byte-for-byte
-with the skill and read only as bridge evidence. Do not add `bridge` to
+`intent` is the only defined top-level key. The file is required from the
+first confirmed onboarding or annexation onward, copied byte-for-byte with the
+rest of the skill tree, and read only as bridge evidence. Append a dated
+motivation for a semantic change or projection-side adoption. Do not append
+for a purely mechanical reprojection. Do not add Bridge-private keys to
 `SKILL.md` frontmatter.
 
 ### Hook intent document
@@ -295,7 +333,7 @@ Machine fields:
 | `intent` | list of {date, note} | optional | entry-local intent records |
 
 `structural`, `semantic`, and surface `agents-md` are reserved and invalid in
-v2. The fenced block must be valid YAML; quote scalars when YAML requires it.
+v3. The fenced block must be valid YAML; quote scalars when YAML requires it.
 Comparisons use parsed scalar values.
 
 Schema violations include a missing or mislabeled prose bullet, a missing or
@@ -357,24 +395,72 @@ Omit optional keys when undeclared. The handler contains no other keys.
 `.codex/hooks.json` may also contain a top-level `description` string, which
 the sentinel ignores.
 
-## Skill portability requirements
+## Managed skill tree
 
-Every skill master `.claude/skills/<name>/` must satisfy:
+The canonical unit is the complete Git tree rooted at the immediate directory
+`.claude/skills/<name>/`. Its projection is the same relative file set and
+bytes under `.agents/skills/<name>/`. This includes
+`bridge-intent.yaml`, scripts, references, assets, and an explicitly authored
+`agents/openai.yaml`. M2 never derives a Codex sidecar and never writes
+`skills.config`.
 
-- `SKILL.md` has a YAML frontmatter block present from line 1;
-- the frontmatter carries `name` and `description` as non-empty strings;
-- `name` equals the directory name, is 1–64 characters, uses only
-  lowercase ASCII letters, digits, and hyphens, does not begin or end with a
-  hyphen, does not contain consecutive hyphens, and does not contain the
-  reserved words `anthropic` or `claude`;
-- `description` is at most 1024 characters and contains neither `<` nor `>`;
-- the frontmatter uses only the cross-host keys `name`, `description`,
-  `license`, `metadata`, and `allowed-tools`;
-- no file in the master directory begins with a UTF-8 BOM.
+Only regular files and ordinary directories are representable. A Git symlink
+(mode `120000`), gitlink, filesystem symlink, junction/reparse point, special
+file, case-fold collision, or resolved path outside the unit root blocks the
+unit. The sentinel reports the blocker; the write-side skill stops and asks.
+Empty directories are absent from both the Git tree and byte comparison.
+For a current manifest, the case-fold collision domain is the union of
+current selected entry paths and tracked-deletion paths. Deduplicate an exact
+same-path occurrence, but block distinct spellings such as deleted `Foo` plus
+current `foo`; deletion does not release the path name inside this snapshot.
 
-The Agent Skills `compatibility` key receives `codex-validator-gap` because
-the v2 Codex validator profile rejects it. Other keys outside the five-key
-set, including Claude-specific keys, receive
-`implementation-specific-frontmatter`. Dynamic body features and violations
-above produce the lints defined in `report-spec.md`; lints do not change
-projection state.
+Git modes are part of the tree contract: identity compares relative path,
+entry type, raw bytes, and mode. For tracked worktree entries, read the index
+mode and the reachable `HEAD` tree mode, then use a POSIX executable-bit probe
+when `core.filemode=true` to expose any unstaged mode-only change. When that
+probe is unavailable, the index still proves the Git mode of an already
+tracked entry, but it cannot prove a worktree-only executable-mode claim.
+Historical entries take their mode directly from the selected Git tree.
+
+For a relevant untracked file, no index or historical mode exists. Its mode is
+the prospective Git-add mode rather than an existing tree fact. A reliable
+POSIX executable-bit probe distinguishes `100644` from `100755`. When that
+probe is unavailable on Windows, with `core.filemode=false`, or for another
+host reason, an ordinary untracked regular file has the platform-provable
+prospective default `100644`; that default is sufficient for create, ordinary
+source additions, or an annex decision that explicitly adopts `100644`.
+
+Do not infer executable intent from an unreliable filesystem bit. If a
+tracked source, historical tree, or explicit user intent requires `100755`,
+the target must already prove `100755` or expose a reliable way to set it.
+Otherwise emit `mode-limited` for the proposed write. A direction-neutral
+observation, including pending `annex-or-keep` or confirmed `keep`, does not
+invent that requirement and is not blocked merely because the occupied file
+is untracked. Mode `100755` is writable only when the evidence also proves
+the target can preserve it.
+
+## Skill compatibility layers
+
+Byte identity and runtime behavior are separate. Evaluate these four axes
+independently:
+
+1. **Agent Skills format**: `SKILL.md` starts on byte one with parseable YAML
+   frontmatter; `name` and `description` are non-empty strings; `name` equals
+   the directory, is 1–64 characters, uses lowercase ASCII letters, digits,
+   and hyphens, and has neither edge nor consecutive hyphens; `description`
+   is at most 1024 characters. Standard optional keys are `license`,
+   `compatibility`, `metadata`, and `allowed-tools`.
+2. **Host runtime loadability**: identity, YAML, BOM, and known loader failures
+   are blockers. Unknown live discovery or activation is not a byte state.
+3. **Release validator profile**: the pinned Codex authoring validator may
+   reject standard-valid `compatibility`, angle brackets in `description`, or
+   host extensions. Record `codex-validator-rejection`; do not rewrite the
+   source to satisfy a profile silently.
+4. **Behavior portability**: `allowed-tools`, Claude-only frontmatter, and
+   Claude-rendered dynamic content can remain loadable and are copied
+   byte-for-byte, but receive `behavior-degraded`.
+
+No file in a portable master begins with a UTF-8 BOM. The exact lint registry,
+blocker mapping, and dynamic-content recognizers are in
+[`report-spec.md`](report-spec.md). Lints never turn a changed carrier into a
+directional adoption or conflict decision.

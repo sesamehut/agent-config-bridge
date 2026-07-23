@@ -1,5 +1,8 @@
 {
   "permissions": {
     "allow": ["Read"]
+  },
+  "skillOverrides": {
+    "fixture-manual-copy": "off"
   }
 }

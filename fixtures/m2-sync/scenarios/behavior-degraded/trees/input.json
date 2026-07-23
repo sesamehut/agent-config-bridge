@@ -1,0 +1,66 @@
+{
+  "base": "trees/baseline.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-allowed-tools/SKILL.md",
+      "source": "assets/SKILL.allowed-tools.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-allowed-tools/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-allowed-tools/bridge-intent.yaml",
+      "source": "assets/intent.allowed-tools.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-at-path-static/SKILL.md",
+      "source": "assets/SKILL.at-path.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-at-path-static/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-at-path-static/bridge-intent.yaml",
+      "source": "assets/intent.at-path.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-at-path-static/references/example.md",
+      "source": "assets/example.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-dynamic-content/SKILL.md",
+      "source": "assets/SKILL.dynamic.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-dynamic-content/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-dynamic-content/bridge-intent.yaml",
+      "source": "assets/intent.dynamic.yaml"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

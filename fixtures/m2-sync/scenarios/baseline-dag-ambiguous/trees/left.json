@@ -1,0 +1,42 @@
+{
+  "base": "trees/root.json",
+  "operations": [
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-dag-ambiguous/SKILL.md",
+      "source": "assets/SKILL.left.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-dag-ambiguous/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".claude/skills/fixture-dag-ambiguous/bridge-intent.yaml",
+      "source": "assets/intent.left.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-dag-ambiguous/SKILL.md",
+      "source": "assets/SKILL.left.md"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-dag-ambiguous/agents/openai.yaml",
+      "source": "assets/inert-openai.yaml"
+    },
+    {
+      "mode": "100644",
+      "op": "write",
+      "path": ".agents/skills/fixture-dag-ambiguous/bridge-intent.yaml",
+      "source": "assets/intent.left.yaml"
+    }
+  ],
+  "spec": "bridge-sync-tree/v1"
+}

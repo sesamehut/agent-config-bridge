@@ -1,0 +1,30 @@
+{
+  "baseline": "trees/baseline.json",
+  "coverage": [
+    "multi-unit-confirmed-actions",
+    "conflict-independent-batch",
+    "conflict-unit-zero-write",
+    "unrelated-dirty-file-preserved",
+    "manual-agents-preserved",
+    "unrelated-skill-preserved"
+  ],
+  "expectations": [
+    {
+      "covers": [
+        "multi-unit-confirmed-actions",
+        "conflict-independent-batch",
+        "conflict-unit-zero-write",
+        "unrelated-dirty-file-preserved",
+        "manual-agents-preserved",
+        "unrelated-skill-preserved"
+      ],
+      "id": "independent-batches",
+      "plan": "expected-plan.md",
+      "post_state": "trees/expected.json"
+    }
+  ],
+  "input": "trees/input.json",
+  "name": "multi-unit-batch",
+  "spec": "bridge-sync-scenario/v1",
+  "summary": "Apply confirmed independent update and adopt units while isolating one conflict."
+}
