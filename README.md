@@ -22,11 +22,14 @@ Start with:
 ## Repository role
 
 This is a single repository, modeled on `appstore-connect-skill` and
-`sesamehut-auth`: it is the upstream design/development home **and** carries the
-installable plugin payload. The layout layers by role:
+`sesamehut-auth`: it is the upstream design/development home and will carry the
+installable plugin payload once the packaging milestone opens. The layout
+layers by role:
 
-- `skills/` — agent-facing skill sources: `SKILL.md` plus per-skill assets such
-  as covenant text templates (tracked).
+- `skills/` — agent-facing skill sources: `SKILL.md`, references, metadata,
+  and narrowly scoped read-only mechanics (tracked).
+- `templates/` — install-time project templates such as the bridge covenant;
+  these are not loaded as skill instructions (tracked).
 - `knowledge/` — the host-mapping knowledge base, with collection dates
   (tracked).
 - `fixtures/` — fixture projects with known states and expected reports, used

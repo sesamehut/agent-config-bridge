@@ -30,50 +30,58 @@ the lint tokens, their conditions, and the comparison rules live in
 
 ## Codex SKILL.md parsing
 
-- collected: 2026-07-07, reconfirmed 2026-07-08
-- source: openai/codex@58b66d3 and official Codex docs
-- status: settled (facts), watch (BOM fix)
+- collected: 2026-07-07, reconfirmed 2026-07-08 and 2026-07-23
+- source: official Codex skills manual and its bundled skill validator
+- status: settled
 
 | Frontmatter key | Codex behavior |
 |---|---|
-| `name` | Optional; defaults to the directory name; at most 64 characters |
-| `description` | REQUIRED non-empty; when missing the skill is silently undiscoverable |
-| `metadata.short-description` | Parsed |
-| any other key (including Claude-only keys) | Ignored for discovery; shown verbatim to the model on invocation |
+| `name` | Required by the bundled validator, which enforces the name grammar; the directory-name match is an Agent Skills standard requirement the validator does not itself check |
+| `description` | Required non-empty string; at most 1024 characters and no angle brackets |
+| `license`, `metadata`, `allowed-tools` | Accepted optional top-level keys |
+| `compatibility` | Defined by the Agent Skills standard but rejected by the current bundled Codex validator |
+| any other key (including Claude-only keys) | Rejected by the bundled validator |
 
 - The body is injected verbatim: `$ARGUMENTS`, `$N` positional tokens,
   `${CLAUDE_*}` variables, backtick-exec lines, and `@file` references are
   inert literal text — never executed, never substituted.
 - A UTF-8 BOM at the start of `SKILL.md` breaks Codex frontmatter parsing
-  (openai/codex#13918, open as of 2026-07-08) and makes the skill silently
-  undiscoverable. Watch item: the fix status of that bug.
+  because line one no longer begins with `---`; portable skills therefore
+  prohibit BOMs without depending on an issue's current status.
+- Optional `agents/openai.yaml` metadata controls app presentation and
+  invocation policy. `policy.allow_implicit_invocation: false` prevents
+  implicit invocation without adding a host-specific key to `SKILL.md`.
 
 ## Skills tiering condition
 
-- collected: 2026-07-08
+- collected: 2026-07-08, updated 2026-07-23
 - source: derived from the Codex SKILL.md parsing and Claude skill surface entries in this file
 - status: settled
 
 - The mechanism is `native`: a byte copy, with both hosts consuming
   `SKILL.md`.
-- Behavioral native-equivalence holds only for the portable subset:
-  {`name`, `description`} frontmatter plus a static body.
+- Behavioral native-equivalence holds only for the common validated subset:
+  `name`, `description`, optional `license` / `metadata` / `allowed-tools`,
+  and a static body.
 - Everything else degrades behaviorally while the bytes stay identical —
   hence the sentinel's lint axis (lint list in the report spec).
 
 ## Claude skill surface
 
-- collected: 2026-07-08
+- collected: 2026-07-08, reconfirmed 2026-07-23
 - source: official Claude Code skills docs; dated notes in [`../docs/research/host-context-loading.md`](../docs/research/host-context-loading.md)
 - status: settled
 
 - Full frontmatter key list: `name`, `description`, `when_to_use`,
   `argument-hint`, `arguments`, `disable-model-invocation`,
   `user-invocable`, `allowed-tools`, `disallowed-tools`, `model`, `effort`,
-  `context`, `agent`, `hooks`, `paths`, `shell`.
+  `context`, `agent`, `hooks`, `paths`, `shell`. (`disallowed-tools` is
+  Claude-only; it is not part of the Agent Skills standard.)
 - Project skills' `allowed-tools` is gated by workspace trust.
 - Nested `.claude/skills/` directories are lazy-discovered from
   subdirectories.
+- `skillOverrides` can hide or disable individual non-plugin skills from
+  project settings without changing their `SKILL.md` frontmatter.
 
 ## Windows symlink caveat
 

@@ -1,6 +1,6 @@
 # Bridge sentinel report specification
 
-Spec version: report/v1.
+Spec version: report/v2.
 
 This file is the durable normative home of the bridge sentinel's report
 contract: the pinned input set, the closed report-state vocabulary and its
@@ -16,6 +16,19 @@ set N, the frontmatter schemas, the hook-intent entry format with its
 ownership derivation and field normalization, and the skill portability
 requirements. Together these two files are complete: an implementer or
 sentinel-executing agent needs nothing else.
+
+## Contents
+
+- [Input set](#input-set)
+- [Registry growth rule](#registry-growth-rule-binding-on-all-closed-sets)
+- [States](#the-states-closed-set)
+- [Decision tables](#per-surface-decision-tables)
+- [Diff shape](#diff-shape-algorithm-independent-pinned)
+- [Observations](#closed-observation-vocabulary)
+- [Fidelity tiers](#fidelity-tiers-per-row-tier-column)
+- [Skill portability lints](#skill-portability-lint-list-closed)
+- [Report format](#report-document-format)
+- [Expectation comparison](#expectation-files-and-the-deterministic-comparison-rule)
 
 ## Input set
 
@@ -47,8 +60,8 @@ Every token registry in this specification and its companion — states,
 actions, tiers, lints, observations, annotations, finding details, surface
 tokens, schema enums — is append-only. Future milestones may add tokens
 under a new spec version; existing tokens are never repurposed, renamed, or
-given new conditions. Unknown `bridge.*` frontmatter sub-keys are reserved:
-the sentinel ignores them and never reports them as errors.
+given new conditions. Unknown `bridge.*` sub-keys in rule-shard frontmatter
+are reserved: the sentinel ignores them and never reports them as errors.
 
 ## The states (closed set)
 
@@ -70,7 +83,7 @@ evaluated once per run before any row.
 | 4 | `declared-unsynced` | 声明不同步 | A tier-4 declaration: the source unit explicitly declares no projection for this host | hooks only at M1: the entry's `targets.<host>` has `surface: none` and `tier: declared-unsynced`, and the H-T4-PRESENT exception does not fire. | `-` | both |
 | 5 | `not-projected` | 未投射（待引导） | The source unit has no projection and the project has never been onboarded; NOT drift | The project is not-onboarded AND the unit's expected projection element is absent or non-identical (agents-md: no block with the unit's id; hooks: cases H-NOFILE / H-MISSING with regime not-onboarded; skills: master with no same-name byte-identical copy). | `onboard` (引导) | not-onboarded only |
 | 6 | `no-source-unit` | 无源单元 | Explicit vacuous-surface row: the surface has nothing to check | Emitted per the no-source-unit emission rule (unit model, `source-tree-spec.md`). | `-` | both |
-| 7 | `semantic-mode-block` | 语义映射区块（逐字校验不适用） | A managed block self-declares a non-verbatim render mode; byte verification does not apply | agents-md only: a well-formed block whose start marker carries a `mode` attribute with any value. No byte comparison is performed and no LLM judgment substitutes for it. | `defer-to-arbitration` (仲裁时按需核验) | onboarded only (a well-formed block fires onboarding trigger (a)). M1 fixtures use default mode only, so this state is defined, detectable, and deliberately unexercised by fixtures. |
+| 7 | `semantic-mode-block` | 语义映射区块（逐字校验不适用） | A managed block self-declares a non-verbatim render mode; byte verification does not apply | agents-md only: a well-formed block whose start marker carries a `mode` attribute with any value. No byte comparison is performed and no LLM judgment substitutes for it. | `defer-to-arbitration` (仲裁时按需核验) | onboarded only (a well-formed block fires onboarding trigger (a)). |
 
 Project-level flag (not a row): `onboarded` (已接入) / `not-onboarded`
 (未接入（待引导）), computed by the onboarding predicate in
@@ -82,12 +95,13 @@ fidelity tier (the semantic tokens of the tier section below, printed in the
 `tier` column); portability lints (`lint:<token>`, lint list below);
 `awaiting-host-trust` (已写入、待 host 信任) — a STANDING HEDGE attached to
 every row with host `codex`, state `in-sync`, on the `hooks` and `skills`
-surfaces only (`.codex/hooks.json` is confirmed trust-gated;
-`.agents/skills/` is likely-but-unconfirmed trust-gated; root `AGENTS.md` is
-not trust-gated, so `agents-md` rows never carry it). Trust state is not
+surfaces only. The v2 host profile treats `.codex/hooks.json` as trust-gated
+and conservatively hedges `.agents/skills/` activation; root `AGENTS.md` is
+outside this hedge, so `agents-md` rows never carry it. Trust state is not
 observable from repo bytes, so this is never a fixture-detectable state —
 always a per-row annotation, complemented by the pinned report-level hedge
-sentence (the Codex activation hedge below).
+sentence (the Codex activation hedge below). Dated host evidence lives in
+`knowledge/hooks.md` and `knowledge/skills.md`.
 
 ## State ↔ sync-plan verb mapping (for docs traceability)
 
@@ -141,7 +155,7 @@ the manual zone: never compared, never reported as a row.
 
 **hooks** (per entry e, per host h with declared surface s; file F =
 `.claude/settings.json` top-level `hooks` object for claude,
-`.codex/hooks.json` top-level object for codex; "owned group" and "marked
+`.codex/hooks.json` top-level `hooks` object for codex; "owned group" and "marked
 handler" per the unit model and the declared-keys derivation in
 `source-tree-spec.md`; "handler-equal" := every declared field equal per the
 field normalization AND no undeclared keys per the allowed-key rule, both in
@@ -219,7 +233,7 @@ then drops from both sides.
 | Token | Emitted when | Detail |
 |---|---|---|
 | `surface-shadowed` | root `AGENTS.override.md` exists (first-class finding: the whole rules-projection surface is silently inactive) | none |
-| `agents-md-size` | root `AGENTS.md` size ≥ 28672 bytes (87.5% of the 32768-byte combined Codex project-doc budget; truncation is mid-file and silent) | `(<n> bytes of 32768)` with n the exact byte size |
+| `agents-md-size` | root `AGENTS.md` size ≥ floor(7 × B / 8), where B is the effective combined Codex project-document budget: a positive integer `project_doc_max_bytes` from tracked `.codex/config.toml`, otherwise the v2 pinned default 32768; do not emit when B = 0 because the surface is disabled | `(<n> bytes of <B>)` with n the exact byte size |
 | `self-referential-import` | the entry source file contains a token matching `(?<=^|\s)@[A-Za-z0-9_./~-]+` whose path component ends with `AGENTS.md` — searched over the entire file INCLUDING code spans and fences (deliberate: determinism over false-positive avoidance; Claude itself skips code-span imports, so a fenced match is a false-positive hazard flag, which is acceptable) | none |
 | `dual-project-entry` | both `CLAUDE.md` and `.claude/CLAUDE.md` exist at the scan root | none |
 | `nested-claude-md` | a tracked `CLAUDE.md` exists at any non-root directory | one line per file |
@@ -227,8 +241,8 @@ then drops from both sides.
 | `nested-claude-skills` | a tracked `.claude/skills/` directory exists at any non-root directory | one line per directory |
 | `nested-agents-skills` | a tracked `.agents/skills/` directory exists at any non-root directory | one line per directory |
 | `legacy-commands-dir` | `.claude/commands/` contains ≥ 1 tracked `.md` file | none |
-| `legacy-codex-skills` | a tracked `.codex/skills/` directory exists (pre-migration Codex layout, likely invisible to current CLI) | none |
-| `config-toml-budget` | `.codex/config.toml` is tracked, readable, and sets `project_doc_max_bytes` (value 0 disables the whole surface) | `(project_doc_max_bytes=<value>)` |
+| `legacy-codex-skills` | a tracked `.codex/skills/` directory exists (outside the documented Codex skills profile, whose project location is `.agents/skills/`; the path is undocumented but may still be loaded by current CLIs) | none |
+| `config-toml-budget` | `.codex/config.toml` is tracked, readable TOML, and sets `project_doc_max_bytes` to a non-negative integer (value 0 disables the whole surface) | `(project_doc_max_bytes=<value>)` |
 | `undeclared-hooks-key` | see the hooks decision table's reverse direction above | `(<Event> matcher=<matcher or omitted>)` |
 | `local-hooks-present` | a TRACKED `.claude/settings.local.json` carries a `hooks` key (untracked ones go to Local environment notes instead) | none |
 | `json-parse-error` | a hooks projection file exists but is not valid JSON | none |
@@ -290,11 +304,14 @@ rendering must stay byte-honest.
 
 | Token | Condition (pure function of master bytes) | Pinned wording (used verbatim in the report's "Evidence and notes" section) |
 |---|---|---|
-| `missing-description` | SKILL.md has no YAML frontmatter block starting at line 1 (after the lint BOM-skip), or the `description` key is absent, or its value is empty/whitespace-only | "SKILL.md lacks a non-empty `description`; Codex will not discover this skill even when the copy is byte-identical." |
-| `claude-only-frontmatter` | the frontmatter contains any top-level key other than `name`, `description`, and `bridge` (`bridge` is the Bridge-owned intent-record key, inert on both hosts) | "Frontmatter keys outside {name, description, bridge} are Claude-only; Codex ignores them for discovery and shows them verbatim to the model on invocation. Consistent but degraded on Codex." |
+| `missing-name` | SKILL.md has no YAML frontmatter block starting at line 1 (after the lint BOM-skip), or the `name` key is absent, or its value is empty/whitespace-only | "SKILL.md lacks a non-empty `name`; it does not satisfy the cross-host Agent Skills contract." |
+| `invalid-name` | the directory name violates the 1–64 character, `[a-z0-9-]`, edge-hyphen, consecutive-hyphen, or reserved-word rules; or a present `name` value is not a string, differs from the directory, or violates the same grammar | "The skill name violates the cross-host name grammar or differs from its directory; discovery is not portable." |
+| `missing-description` | SKILL.md has no YAML frontmatter block starting at line 1 (after the lint BOM-skip), or the `description` key is absent, or its value is empty/whitespace-only | "SKILL.md lacks a non-empty `description`; the skill does not satisfy the cross-host discovery contract." |
+| `invalid-description` | a present `description` value is not a string, exceeds 1024 characters, or contains `<` or `>` | "The description violates the cross-host scalar, length, or no-angle-brackets constraint." |
+| `implementation-specific-frontmatter` | the frontmatter contains a top-level key outside `name`, `description`, `license`, `metadata`, `allowed-tools`, and `compatibility` | "The frontmatter contains a host extension or unknown key; the skill is mechanically copied but is not behaviorally portable." |
+| `codex-validator-gap` | the frontmatter contains the Agent Skills standard `compatibility` key, which the v2 Codex validator profile does not accept | "The standard `compatibility` key is outside the report/v2 Codex validator profile; verify the target Codex release before distribution." |
 | `dynamic-content` | the SKILL.md body (bytes after the closing `---` line) contains any of these literal tokens: `$ARGUMENTS`, `${CLAUDE_SKILL_DIR}`, `${CLAUDE_PROJECT_DIR}`, `${CLAUDE_SESSION_ID}`, `${CLAUDE_EFFORT}`, a token matching `(?<=^|\s)\$[1-9]\b`, a line whose first non-space characters are backtick-exec (`!` immediately followed by a backtick), or a token matching `(?<=^|\s)@[A-Za-z0-9_./~-]+` — searched over the whole body including code fences (deliberate: determinism over false-positive avoidance) | "The body uses Claude dynamic-content features; in Codex they reach the model as inert literal text — never executed, never substituted. Consistent but degraded on Codex." |
-| `utf8-bom` | any file in the master directory begins with bytes `EF BB BF` | "The master contains file(s) beginning with a UTF-8 BOM; a BOM on SKILL.md breaks Codex frontmatter parsing (openai/codex#13918, open as of 2026-07-08) and makes the skill silently undiscoverable in Codex." |
-| `name-length` | the skill directory name is longer than 64 characters, or the frontmatter `name` value (if present) is longer than 64 characters or differs from the directory name | "The skill name exceeds Codex's 64-character limit or diverges from the directory name; discovery in Codex is unreliable." |
+| `utf8-bom` | any file in the master directory begins with bytes `EF BB BF` | "The master contains file(s) beginning with a UTF-8 BOM; a BOM before line-one frontmatter breaks portable skill recognition." |
 
 Growth rule: new lints get new tokens; an existing token's condition never
 changes within a spec version.
@@ -310,7 +327,7 @@ changes within a spec version.
 - scan root: <path as invoked>
 - scope excludes: <comma+space-separated globs, or (none)>
 - date: <YYYY-MM-DD>
-- spec: report/v1
+- spec: report/v2
 - scan surfaces: agents-md, hooks, skills
 - onboarding: <onboarded|not-onboarded>
 
@@ -373,7 +390,7 @@ byte-wise by whole line; `- (none)` when empty.
 declares its own run parameters and its normative content, nothing else:
 
 ```markdown
-- expectation: report/v1
+- expectation: report/v2
 - scan root: <path relative to the directory containing this file>
 - scope excludes: <comma+space-separated globs, or (none)>
 - onboarding: <onboarded|not-onboarded>
@@ -402,7 +419,7 @@ spec versions fail loudly instead of byte-breaking):**
 2. Read both documents and apply normalization N (`source-tree-spec.md`) to
    each before parsing.
 3. Version gate: the produced `- spec:` value must equal the expectation's
-   `- expectation:` value (both `report/v1`). A mismatch is FAIL — never a
+   `- expectation:` value (both `report/v2`). A mismatch is FAIL — never a
    silent cross-version comparison.
 4. Run-parameter echo: the produced `- scope excludes:` value must equal the
    expectation's (sanity check that the run parameters were honored).

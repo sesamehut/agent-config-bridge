@@ -1,6 +1,6 @@
 # Bridge source-tree specification
 
-Spec version: source-tree/v1.
+Spec version: source-tree/v2.
 
 This file is the durable normative home of the bridge's source-tree
 conventions: the unit model and unit-id derivation, the onboarding
@@ -20,6 +20,18 @@ files of the scan root, filtered by any scope excludes. The pinned input-set
 definition (repo mode, fixture mode, untracked-file handling, and the
 exclude glob dialect) lives in `report-spec.md`, as does the registry growth
 rule binding every closed token set defined here.
+
+## Contents
+
+- [Unit model](#unit-model)
+- [Onboarding predicate](#onboarding-predicate)
+- [Marker grammar](#marker-grammar)
+- [Applicability preamble and rendering pipeline](#applicability-preamble-and-rendering-pipeline)
+- [Normalization set N](#normalization-set-n-exact-closed)
+- [Frontmatter schemas and entry formats](#frontmatter-schemas-and-entry-formats)
+- [Hook ownership](#declared-keys-and-ownership-derivation)
+- [Projected handler shape](#projected-handler-shape)
+- [Skill portability requirements](#skill-portability-requirements)
 
 ## Unit model
 
@@ -222,10 +234,13 @@ Per managed block, marker overhead on the Codex budget =
 a mode attribute is present) + `27` bytes for the end line + 2 EOL bytes
 (LF). Example: the covenant block (`id=rules/bridge-covenant`, 21 bytes;
 `source=.claude/rules/bridge-covenant.md`, 32 bytes) costs 41+21+32+27+2 =
-123 bytes of the 32768-byte combined budget. The claude-only pair costs 33 +
-31 bytes + 2 EOL where it appears (Claude-side files only — where stripping
-makes runtime cost zero). Claude-side cost of all markers is zero (comments
-stripped before context injection).
+123 bytes of the effective combined Codex project-document budget. The
+claude-only pair costs 33 + 31 bytes + 2 EOL where it appears (Claude-side
+files only — where stripping makes runtime cost zero). Claude-side cost of
+all markers is zero (comments stripped before context injection). The
+effective Codex budget and its warning threshold are defined by the
+`agents-md-size` observation in `report-spec.md`, not frozen into this marker
+grammar.
 
 ## Applicability preamble and rendering pipeline
 
@@ -358,9 +373,25 @@ bridge:               # optional; the ONE bridge-namespaced key
   outside code fences.
 - `CLAUDE.md` itself carries no frontmatter and no `bridge` key at M1 (entry
   intent records would use the comment fallback if ever needed).
-- Skill masters may carry the same `bridge` key in `SKILL.md` frontmatter
-  (Codex verifiably ignores unknown keys; `bridge` is exempt from the
-  `claude-only-frontmatter` lint in `report-spec.md`).
+- Skill masters MUST NOT add `bridge` to `SKILL.md` frontmatter. Skill intent
+  records use the supporting-file form below so host-parsed frontmatter stays
+  portable.
+
+### Skill intent supporting file (`bridge-intent.yaml`)
+
+A skill master that carries intent history stores it at
+`<skill-directory>/bridge-intent.yaml`, never in `SKILL.md` frontmatter:
+
+```yaml
+intent:
+  - date: 2026-07-23
+    note: One-line motivation
+```
+
+`intent` is the only top-level key defined at M1. Its elements use the
+intent-record format below. The file is part of the skill directory and is
+therefore copied byte-for-byte to the Codex projection. Neither host parses
+it as skill metadata; the bridge reads it only as arbitration evidence.
 
 ### Intent-record format
 
@@ -436,8 +467,10 @@ produces no unit rows and one mandatory `intent-doc-anomaly` observation per
 violation (detail format in `report-spec.md` — the observation makes the
 omission non-silent and fixture-comparable).
 
-**Declared-keys derivation (ownership; PRIMARY rule)**: the intent document
-IS the ownership declaration — no separate manifest exists or may be
+### Declared keys and ownership derivation
+
+The intent document IS the ownership declaration — no separate manifest
+exists or may be
 introduced. For host h, the bridge-owned groups of h's file are exactly the
 `(event, matcher)` pairs declared by schema-valid entries whose
 `targets.<h>.surface` ≠ `none`. Field normalization for comparisons: string
@@ -455,11 +488,9 @@ the hooks decision table in `report-spec.md` instead of vanishing into the
 undeclared channel. Comparison rule: a `statusMessage` matching
 `[bridge:<entry-id>]…` on the entry's own handler is neither required nor an
 undeclared key; any other `statusMessage` value IS an undeclared key. The
-M2+ write path SHOULD add the marker on the Claude surface (`statusMessage`
-is a Claude-documented handler field); whether it is written on the Codex
-surface awaits live verification of Codex's tolerance for the field — the
-marker is never required for ownership, which always derives from the intent
-document.
+M2+ write path SHOULD add the marker on both surfaces because the v2 host
+profile supports `statusMessage` on each. The marker is never required for
+ownership, which always derives from the intent document.
 
 **Allowed-key rule (for cases H-OK / H-EXTRA-KEYS)**: the handler's allowed
 key set is `{type, command}` ∪ `{commandWindows}` if declared ∪ `{timeout}`
@@ -468,33 +499,46 @@ if declared ∪ `{statusMessage}` iff its value begins with
 key. The sibling `matcher` key on the GROUP object is governed by the
 matcher field rule, not this set.
 
-**Projected handler shape** (what the covenant writes at M2+, and what case
-H-OK expects): inside `hooks.<event>` (settings.json) / `<event>`
+### Projected handler shape
+
+What the covenant writes at M2+, and what case H-OK expects: inside
+`hooks.<event>` (settings.json) / `<event>`
 (.codex/hooks.json), a group `{"matcher": <matcher>?, "hooks": [{"type":
 "command", "command": <command>, "commandWindows": <commandWindows>?,
 "timeout": <timeout>?, "statusMessage": "[bridge:<id>]"?}]}` with no other
-keys on the handler. The `.codex/hooks.json` top-level shape (event-name
-keys, no wrapper object — same family as Claude's hooks value) is PINNED but
-UNVERIFIED: it must be live-verified before any M2 hooks write work (the
-corresponding knowledge entry carries `status: watch`; the fixtures README
-carries the caveat).
+keys on the handler. `.codex/hooks.json` is a top-level object whose
+`hooks` key holds the event-name map (the same family as Claude's `hooks`
+settings value); an optional top-level `description` string may sit beside
+it and is ignored by the sentinel. The v2 host profile defines this shape
+and `statusMessage` support. Dated official-source evidence belongs in
+`knowledge/hooks.md`; this specification pins only the resulting profile.
 
 ## Skill portability requirements
 
 Normative MUSTs for every skill master `.claude/skills/<name>/`:
 
 - `SKILL.md` has a YAML frontmatter block present from line 1;
-- the frontmatter carries a non-empty `description`;
-- the directory name is at most 64 characters, charset `[a-z0-9-]`;
-- `name`, when present, equals the directory name;
+- the frontmatter carries `name` and `description` as non-empty strings;
+- `name` equals the directory name, is 1–64 characters, uses only
+  lowercase ASCII letters, digits, and hyphens, does not begin or end with a
+  hyphen, does not contain consecutive hyphens, and does not contain the
+  reserved words `anthropic` or `claude`;
+- `description` is at most 1024 characters and contains neither `<` nor `>`;
+- the frontmatter uses only the cross-host keys `name`, `description`,
+  `license`, `metadata`, and `allowed-tools`;
 - every file in the master directory is saved UTF-8 without BOM.
 
-Schema surface: only `name` and `description` are host-portable; `bridge` is
-Bridge-owned and inert on both hosts; every other frontmatter key is
-Claude-only and lint-flagged. A violation of any MUST above is a portability
-lint, never an error — the deterministic lint conditions and their pinned
-report wordings are the closed lint list in `report-spec.md`, and lints
-never affect the state column. Masters restricted to the portable subset
-({`name`, `description`, `bridge`} frontmatter plus a static body) reach
-`native` behaviorally; others reach `native` mechanically (the projection is
-a byte copy) with degradation lints.
+The five-key set is the v2 common validation profile for Claude Code and
+Codex. The Agent Skills standard also defines `compatibility`, but the v2
+Codex validator profile does not accept it; using it therefore receives the
+dedicated `codex-validator-gap` lint rather than being mislabeled as a Claude
+extension. Claude-specific keys (for example `disable-model-invocation`,
+`context`, `hooks`, and `paths`) and unknown keys receive
+`implementation-specific-frontmatter`.
+
+A violation of any MUST above is a portability lint, never an error. The
+deterministic conditions and pinned report wordings are the closed lint list
+in `report-spec.md`; lints never affect the state column. Masters restricted
+to the portable frontmatter subset and a static body reach `native`
+behaviorally. Others remain `native` mechanically because projection is a
+byte copy, with degradation recorded by lints.

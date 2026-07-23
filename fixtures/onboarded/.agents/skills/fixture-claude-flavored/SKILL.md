@@ -1,6 +1,7 @@
 ---
 name: fixture-claude-flavored
 description: Inert test fixture exercising Claude-only skill features; do not invoke.
+compatibility: Requires a host that implements the Agent Skills compatibility field.
 disable-model-invocation: true
 context: fork
 ---

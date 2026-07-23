@@ -14,9 +14,9 @@ templates, frontmatter schemas, the report format — live in the sentinel
 skill's reference specs and are linked from here, never restated:
 
 - [`../skills/bridge-sentinel/references/source-tree-spec.md`](../skills/bridge-sentinel/references/source-tree-spec.md)
-  — source-tree entry conventions (spec version `source-tree/v1`)
+  — source-tree entry conventions (spec version `source-tree/v2`)
 - [`../skills/bridge-sentinel/references/report-spec.md`](../skills/bridge-sentinel/references/report-spec.md)
-  — report states, tiers, lints, comparison rules (spec version `report/v1`)
+  — report states, tiers, lints, comparison rules (spec version `report/v2`)
 
 ## Files
 

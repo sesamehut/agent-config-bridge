@@ -17,9 +17,9 @@ counterparts are projections: managed blocks in `AGENTS.md`,
 For ANY change to project-level agent configuration, from either tool's
 session:
 
-1. Land the change in the source tree, appending a new dated entry
-   (motivation + date) to the `bridge` intent log in the source file's
-   frontmatter.
+1. Land the change in the source tree, appending a new dated intent record.
+   Rule shards use `bridge.intent` in frontmatter; skills use the
+   `bridge-intent.yaml` supporting file so `SKILL.md` remains portable.
 2. Update every affected projection surface in the same unit of work.
 3. Commit source and projections together, in one commit.
 

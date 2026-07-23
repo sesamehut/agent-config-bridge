@@ -37,6 +37,15 @@ removing files under `docs/`, update that inventory in the same change.
 `CLAUDE.md` and `AGENTS.md` are twins - one per agent. Mirror every edit into
 both; shared conventions belong here, not in a private agent memory.
 
+## Development skill entrypoint
+
+Until the packaging milestone installs host-native plugin entrypoints, the
+checked-in `skills/bridge-sentinel/` directory is development source rather
+than a natively discovered project skill. When the user explicitly asks to run
+the bridge sentinel, check bridge state, or validate its fixtures, read
+`skills/bridge-sentinel/SKILL.md` and follow it as the active skill. Never load
+skills under `fixtures/` as capabilities.
+
 ## Implementation constraints
 
 - Keep generated artifacts out of source control unless a design doc explicitly

@@ -86,33 +86,29 @@ Codex-only events.
 
 ## `.codex/hooks.json` top-level shape
 
-- collected: 2026-07-08
-- source: inference from the Claude hooks schema family; pinned in [`../skills/bridge-sentinel/references/source-tree-spec.md`](../skills/bridge-sentinel/references/source-tree-spec.md)
-- status: watch
+- collected: 2026-07-08, corrected 2026-07-23
+- source: official Codex hooks reference; `HooksFile` in openai/codex
+  `codex-rs/config/src/hook_config.rs`
+- status: settled
 
 - The file's schema is the same family as Claude's `hooks` settings value:
   event → matcher groups → handlers.
-- THIS REPO PINS the top level as event-name keys with no wrapper object;
-  the fixtures encode the pinned shape (caveat in
-  [`../fixtures/README.md`](../fixtures/README.md)).
-- Watch item: the pinned shape MUST be live-verified BEFORE ANY M2 hooks
-  write work; if refuted, the fixtures, their expectations, and this entry
-  update together.
+- The top level is an object whose `hooks` key holds the event-name map; an
+  optional top-level `description` string may accompany it. The 2026-07-08
+  pin (bare event-name keys, no wrapper object) was REFUTED by the official
+  reference and source on 2026-07-23. The fixtures encode the official
+  wrapped shape.
 
 ## `statusMessage` reinforcement marker
 
-- collected: 2026-07-08
-- source: official Claude Code hooks docs (field); Codex tolerance unverified
-- status: watch
+- collected: 2026-07-08, reverified 2026-07-23
+- source: official Claude Code and Codex hooks references
+- status: settled
 
-- `statusMessage` is a Claude-documented command-handler field.
+- `statusMessage` is documented on command handlers by both hosts.
 - The bridge uses a `[bridge:<id>]` prefix on this field as an OPTIONAL
   ownership reinforcement — never load-bearing; ownership always derives
   from the hook intent document (rules in the source-tree spec).
-- Codex tolerance of the field inside `.codex/hooks.json` is unverified.
-- Watch item: verify before M2 write work; if Codex rejects unknown handler
-  fields, the write path omits the marker on the Codex side — ownership
-  derivation is unaffected.
 
 ## `commandWindows` ↔ Claude `shell` field
 

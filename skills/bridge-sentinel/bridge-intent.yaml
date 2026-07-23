@@ -1,0 +1,7 @@
+intent:
+  - date: 2026-07-08
+    note: Introduced the read-only M1 bridge sentinel.
+  - date: 2026-07-23
+    note: Aligned the skill with cross-host portability and deterministic mechanics.
+  - date: 2026-07-23
+    note: Added an explicit environment preflight; prerequisites beyond Git are allowed only with a user-facing check.

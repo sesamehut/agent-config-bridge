@@ -1,4 +1,4 @@
-# Covenant assets
+# Covenant templates
 
 The files in this directory are M1 drafts of the bridge covenant — nothing
 here is installed at M1, because installation is milestone-gated: it happens
@@ -15,5 +15,6 @@ covenant like any unit; `hook-intents.md` holds the covenant reminder
 entries, in the hook-intent entry format, destined for the project's
 `.claude/rules/hooks.md` and projected from there to both hooks surfaces
 (`.claude/settings.json` and `.codex/hooks.json`). Rendered byte count of the
-AGENTS.md covenant block as authored, recorded 2026-07-08: 1172 bytes of the
-32768-byte combined Codex project-doc budget.
+AGENTS.md covenant block must be measured against the target project's
+effective `project_doc_max_bytes` value at install time; the template does not
+freeze a host default into its contract.

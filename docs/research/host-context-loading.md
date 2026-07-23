@@ -1,6 +1,6 @@
 # Host 上下文加载行为核验
 
-采集日期：2026-07-07；2026-07-08 复核增补（见同名小节）。主要来源为 Claude
+采集日期：2026-07-07；2026-07-08 与 2026-07-23 复核增补（见同名小节）。主要来源为 Claude
 Code 官方文档
 （[How Claude remembers your project](https://code.claude.com/docs/en/memory)）与
 GitHub issue 追踪。进入实现前需按本文档日期重新核验。
@@ -64,8 +64,15 @@ Codex 侧机制细节见 [codex-capability-surface.md](codex-capability-surface.
 - **夹具泄漏相关事实**：嵌套 CLAUDE.md 与嵌套 `.claude/skills/` 会被根目录
   会话惰性发现并加载；settings 文件没有向下或向上发现——项目 settings 只从
   会话起始目录加载。这组事实支撑本仓库的夹具围栏：根 `.claude/settings.json`
-  的 `claudeMdExcludes` 围栏，加上"不在 `fixtures/` 内启动工作会话"的约定；
-  嵌套夹具技能没有路径排除机制，只能靠创作约定收容。
+  的 `claudeMdExcludes` 围栏，加上"不在 `fixtures/` 内启动工作会话"的约定。
+  2026-07-23 复核确认 `skillOverrides` 可按技能名设为 `"off"`；但项目
+  settings 只从会话起始目录加载，而嵌套 `.claude/skills/` 会被根会话惰性
+  发现（同日在本仓库实测复现：仅有夹具本地 settings 时，根会话仍会发现并
+  注册嵌套夹具技能，唯一未被发现的是仍带 `disable-model-invocation` 的那
+  个），因此夹具项目和仓库根的 settings 必须各自携带同一份 override 清单。
+  `skillOverrides` 能否压制惰性发现的嵌套技能官方未记载，无害正文是最后
+  兜底；即便如此，这仍比在每个被测 `SKILL.md` 中塞入 Claude 专属
+  frontmatter 更适合测试真正的可移植子集。
 - **rules frontmatter 的未知键容忍度官方未说明**：`paths` 是唯一文档化的
   rules frontmatter 键，对额外 `bridge` 键的容忍度需要实测。实测在 M1 实现
   波次内、`bridge` 键在本仓库 `.claude/rules/fixtures.md` 上线之前完成；带

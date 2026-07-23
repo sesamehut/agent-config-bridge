@@ -38,5 +38,13 @@
     "context7@claude-plugins-official": true
   },
   "plansDirectory": ".claude/plans",
-  "claudeMdExcludes": ["**/fixtures/**"]
+  "claudeMdExcludes": ["**/fixtures/**"],
+  "skillOverrides": {
+    "fixture-bom-with-a-very-long-directory-name-exceeding-codexs-limit": "off",
+    "fixture-claude-flavored": "off",
+    "fixture-codex-only": "off",
+    "fixture-drifted": "off",
+    "fixture-portable": "off",
+    "fixture-undiscoverable": "off"
+  }
 }

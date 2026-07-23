@@ -1,6 +1,6 @@
 # Codex 能力面核验
 
-采集日期：2026-07-07；2026-07-08 复核增补（见同名小节）。主要来源为 Codex
+采集日期：2026-07-07；2026-07-08 与 2026-07-23 复核增补（见同名小节）。主要来源为 Codex
 官方文档（developers.openai.com/codex）与 openai/codex 仓库的 issue /
 discussion 追踪。进入实现前需按本文档日期重新核验。
 
@@ -145,14 +145,17 @@ auth / notify 等机器本地键）、`hooks.json`、`rules/*.rules`、`agents/*
 - **`AGENTS.override.md` 是同目录遮蔽**：每目录第一个命中生效，根目录存在
   override 时它完整取代根 `AGENTS.md` 进链——整个规则投射面静默失效。哨兵将
   其作为一级发现报告。官方文档对该文件是否建议 gitignore 仍无说明。
-- **SKILL.md 解析面**：Codex 只解析 `name`（可选，缺省取目录名，上限 64
-  字符）、`description`（必填非空，缺失则技能静默不可发现）与
-  `metadata.short-description`；未知 / Claude-only frontmatter 键被发现流程
-  忽略（官方刻意保留的修复路径），但技能被调用时随正文原样呈现给模型。Claude
-  动态令牌（`$ARGUMENTS`、`${CLAUDE_*}`、反引号执行行、`@file`）在 Codex 是
-  惰性字面文本——不执行、不替换。UTF-8 BOM 会破坏 frontmatter 解析
-  （[openai/codex#13918](https://github.com/openai/codex/issues/13918)，采集日
-  仍 open），技能静默不可发现。纯空白的项目指令文件会被跳过。
+- **SKILL.md 解析面**：2026-07-23 复核 skill-creator 系统技能捆绑的官方
+  校验器（`quick_validate.py`）：要求 `name` 与 `description` 都存在；
+  `name` 需满足名称语法（小写字母/数字/连字符、≤64、禁首尾及连续连字符）；
+  "与目录名一致"是 Agent Skills 标准的要求，该校验器并不检查；`description`
+  需为非空字符串、最多 1024 字符且不含尖括号。共同接受的可选顶层键为
+  `license`、`metadata`、`allowed-tools`；Agent Skills 标准的
+  `compatibility` 当前仍未被该 Codex 校验器接受，需单独报告兼容差异。
+  Claude 动态令牌（`$ARGUMENTS`、`${CLAUDE_*}`、反引号执行行、`@file`）
+  在 Codex 是惰性字面文本——不执行、不替换。UTF-8 BOM 会让第一行不再是
+  `---`，因此破坏可移植 frontmatter 识别；该约束不再依赖某个 issue 的开放
+  状态。纯空白的项目指令文件会被跳过。
 - **技能列表元数据预算**：注入的技能列表（name + description + 路径元数据）
   约有上下文 2% / 8000 字符的预算，完整 SKILL.md 只在选中时加载——投射的
   `description` 应保持精炼。
@@ -166,10 +169,12 @@ auth / notify 等机器本地键）、`hooks.json`、`rules/*.rules`、`agents/*
 - **`.agents/skills` 的信任门控目前无文档**：信任门控此前是对旧
   `.codex/skills` 布局确认的，对当前路径官方未说明。这是技能行"已写入、待
   host 信任"常驻注记的依据之一，M2 写侧工作前必须实测复核。
-- **`.codex/hooks.json` 顶层形态已钉定、待实测**：本仓库钉定其顶层为事件名键
-  （无包装对象），与 Claude hooks 值同族（事件 → matcher 分组 → 处理器）。
-  该形态未经真机核验，任何 M2 hooks 写侧工作开始前必须实测；夹具按钉定形态
-  编码，若被证伪则夹具与期望文件一并更新。
+- **`.codex/hooks.json` 顶层形态已确认**：2026-07-23 按官方 Codex hooks
+  reference 与 openai/codex 源码（`hook_config.rs` 的 `HooksFile`）复核：
+  顶层是带 `hooks` 键的包装对象（可选顶层 `description` 字符串），`hooks`
+  内为事件名键，与 Claude hooks 值同族（事件 → matcher 分组 → 处理器）；
+  2026-07-08 钉定的"裸事件名键、无包装对象"形态被证伪。`statusMessage`
+  也是官方处理器字段。夹具与规范按该正式形态编码。
 
 ## 对设计的影响
 
@@ -188,10 +193,6 @@ auth / notify 等机器本地键）、`hooks.json`、`rules/*.rules`、`agents/*
 
 - issue #17532 状态：项目级 `config.toml` 内联 hooks 是否已修复；实测
   `.codex/hooks.json` 在当前 CLI 的触发行为。
-- `.codex/hooks.json` 顶层形态实测（事件名键、无包装对象的钉定形态）——必须
-  先于任何 M2 hooks 写侧工作。
-- Codex 对 handler 上 `statusMessage` 字段的容忍度：决定写侧是否在 Codex 面
-  附加 `[bridge:<id>]` 强化标记（所有权推导不受影响）。
 - `.agents/skills` 路径是否仍是官方项目级技能目录（该路径经历过迁移；
   2026-07-08 已再次确认，写侧实现前再复核一次）。
 - `.agents/skills` 的信任门控：对当前路径官方未说明（旧 `.codex/skills` 布局
@@ -205,5 +206,5 @@ auth / notify 等机器本地键）、`hooks.json`、`rules/*.rules`、`agents/*
   占用；警戒阈值的标定留到有真实投射体量后进行。
 - `AGENTS.override.md` 的 gitignore 定位（官方仍无说明；根目录 override 遮蔽
   整个投射面已定为哨兵一级发现，剩余悬而未决的只有 gitignore 定位）。
-- UTF-8 BOM frontmatter bug（#13918）是否修复——修复前 BOM 技能在 Codex
-  静默不可发现。
+- 官方 skill 校验器与 Agent Skills 标准对 `compatibility` 键的差异是否消失；
+  消失后再收窄对应兼容 lint。
