@@ -12,22 +12,27 @@ report states and annotations live in
 ## Fidelity mapping (hook-intent unit class)
 
 - Both hosts execute command-type hooks over a shared lifecycle event set
-  (see the shared event set entry below), so a command hook targeting a
-  shared event transfers natively on both sides.
-- Capabilities absent on one host — blocking permission decisions on Codex,
-  non-command handler types — cannot be projected; such targets are declared
-  unsynced in the hook intent document rather than simulated in prose (see
+  (see the shared event set entry below), so a command hook targeting a shared
+  event has a native carrier on both sides. Same-named events do not establish
+  identical matcher domains, timing, timeout, or decision controls; M4 must
+  compare those per event.
+- Capabilities absent or not executable on one host — such as Codex
+  non-command handler types and asynchronous command handling — cannot be
+  silently projected. Such targets are declared unsynced in the hook intent
+  document rather than simulated in prose (see
   [`execution-semantics.md`](execution-semantics.md)).
 - Per-target tiers are declared in the intent document; the M1-valid tier
   set and its schema live in the source-tree spec.
 
 ## Shared event set
 
-- collected: 2026-07-07
-- source: official Claude Code and Codex hooks docs
-- status: settled
+- collected: 2026-07-07; shared-set refreshed: 2026-07-25
+- source:
+  [Claude Code hooks reference](https://code.claude.com/docs/en/hooks) and
+  [Codex Hooks](https://learn.chatgpt.com/docs/hooks)
+- status: settled (shared set), watch (host growth)
 
-Exactly 10 same-named lifecycle events exist on both hosts; there are zero
+Exactly 11 same-named lifecycle events exist on both hosts; there are zero
 Codex-only events.
 
 | Shared event |
@@ -42,14 +47,18 @@ Codex-only events.
 | `UserPromptSubmit` |
 | `SubagentStop` |
 | `Stop` |
+| `SessionEnd` |
 
 ## Claude event superset
 
-- collected: 2026-07-08
+- collected: 2026-07-08; shared-set relation refreshed: 2026-07-25
 - source: official Claude Code hooks docs; dated notes in [`../docs/research/host-context-loading.md`](../docs/research/host-context-loading.md)
-- status: settled (list), watch (growth)
+- status: settled (shared relation), watch (Claude total and growth)
 
-- Claude documents 29 hook events — a strict superset of the shared 10.
+- The 2026-07-08 Claude snapshot documented 29 hook events. The 2026-07-25
+  shared-set refresh confirms that Claude remains a strict superset of the
+  current shared 11; it does not claim a refreshed total for Claude's
+  independently growing event set.
 - Five handler types: `command`, `http`, `mcp_tool`, `prompt`, `agent`.
 - Command handlers may carry `args`, `async`, `asyncRewake`, `shell`, `if`,
   and `statusMessage`.
@@ -59,17 +68,27 @@ Codex-only events.
 
 ## Codex hook limits
 
-- collected: 2026-07-07
-- source: official Codex docs; dated notes in [`../docs/research/codex-capability-surface.md`](../docs/research/codex-capability-surface.md)
-- status: settled (facts), watch (openai/codex#17532, handler implementation status)
+- collected: 2026-07-07; refreshed: 2026-07-25
+- source: [Codex Hooks](https://learn.chatgpt.com/docs/hooks); dated notes in
+  [`../docs/research/codex-capability-surface.md`](../docs/research/codex-capability-surface.md)
+- status: settled (current official facts), watch (handler implementation and
+  the dated openai/codex#17532 implementation report)
 
 - Command-type handlers only: `prompt` and `agent` handlers are parsed but
   skipped; `async` is skipped.
-- PreToolUse intercepts only Bash, apply_patch, and MCP tool calls.
-- `permissionDecision: "ask"` is unimplemented.
+- PreToolUse covers Bash and unified exec, `apply_patch`, MCP tools, and other
+  local function tools that use the standard hook path. Hosted tools such as
+  WebSearch do not use that path, and specialized local paths may opt out.
+- PreToolUse can deny a supported call or allow it with rewritten input;
+  `permissionDecision: "ask"` remains unimplemented. PermissionRequest can
+  allow, deny, or decline to decide and leave the normal approval prompt in
+  place.
 - `commandWindows` is Codex-only.
-- The project-level hooks target is `.codex/hooks.json`; inline hooks in
-  `config.toml` are broken (openai/codex#17532, open).
+- The official contract supports both project `.codex/hooks.json` and inline
+  `[hooks]` tables in `.codex/config.toml`; when both exist in one layer Codex
+  merges them and warns. openai/codex#17532 is dated implementation evidence
+  to re-test before M4 chooses an inline projection target, not grounds for
+  declaring the official inline form universally broken.
 
 ## Trust gating
 
@@ -130,7 +149,7 @@ seeded with the intent classes M1 already knows.
 
 | Intent class | Claude mechanism | Codex mechanism | Tier (claude) | Tier (codex) | Notes |
 |---|---|---|---|---|---|
-| Print-only reminder (session start / wrap-up) | Command handler in `.claude/settings.json` | Command handler in `.codex/hooks.json` | `native` | `native` | Per-event stdout visibility differs by host; delivery is verified at M2 install time |
+| Print-only reminder (session start / wrap-up) | Command handler in `.claude/settings.json` | Command handler in `.codex/hooks.json` | `native` | `native` | Per-event stdout visibility differs by host; M4 projection must verify delivery against the then-current hosts before claiming this tier |
 | Read-only observation (status / diff print) | Command handler | Command handler | `native` | `native` | For example `git status --short` at `Stop` |
-| Pre-execution enforcement gate (block/ask before a tool runs) | Command handler with a permission decision | None: `permissionDecision: "ask"` is unimplemented | `native` | `declared-unsynced` | Prose simulation forbidden; see [`execution-semantics.md`](execution-semantics.md) |
+| Pre-execution denial gate for a supported tool path | Command handler with a permission decision | PreToolUse command handler with `allow` / `deny` | `native` | `native` | Exact tool coverage, matcher domains, and `ask` behavior differ; M4 mapping remains pending |
 | Standing-instruction carrier (`agents-md` hook surface) | — | — | reserved | reserved | The `structural`/`semantic` hook tiers and the `agents-md` surface are reserved schema values until M4 |

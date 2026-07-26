@@ -1,0 +1,11 @@
+{
+  "authorized_closures": [
+    "closure/skill/fixture-consumer"
+  ],
+  "intent": null,
+  "motivation": "Confirm the exact fixture skill closure.",
+  "segments": [],
+  "source_bindings": [],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

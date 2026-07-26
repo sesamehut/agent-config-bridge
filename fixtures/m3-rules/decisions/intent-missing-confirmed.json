@@ -1,0 +1,16 @@
+{
+  "authorized_closures": [
+    "closure/agents-md"
+  ],
+  "intent": "Restore the missing source intent record without changing rendered prose.",
+  "motivation": "Record the exact semantic motivation required by the source contract.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": "CLAUDE.md",
+      "sha256": "241c3cca5bcf869ce7fd7958000dd37924a9e975f927ff5c717cca9ad56a4a52"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

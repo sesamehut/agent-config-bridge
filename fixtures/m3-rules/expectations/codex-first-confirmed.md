@@ -1,0 +1,59 @@
+# Bridge Sync Plan
+
+- project: codex-first-mixed
+- scan root: .
+- date: 2026-07-24
+- expectation: sync-plan/v2
+- contracts: covenant/v2, source-tree/v4, report/v4, reconciliation/v2
+- phase: post-write
+- onboarding: onboarded
+- authorization: confirmed
+
+## Units
+
+| unit | closure | selection | baseline | state | action | direction | authorization | outcome | tier | annotations |
+|---|---|---|---|---|---|---|---|---|---|---|
+| entry | closure/agents-md | selected | - | no-baseline | annex | projection-to-source | confirmed | applied | structural | live-activation-unknown; restart-may-be-required |
+
+## Closures
+
+| closure | members | depends on | selection | authorization | outcome |
+|---|---|---|---|---|---|
+| closure/agents-md | entry | - | selected | confirmed | applied |
+
+## Capability profiles
+
+| binding | profile | host | host version | tool surface | platform | filesystem assumptions |
+|---|---|---|---|---|---|---|
+| capability/1 | capability-profile/v1 | other | fixture-create-v1 | python-exclusive-create/v1 | other | exclusive-create/v1; safe-parent/v1 |
+| capability/2 | capability-profile/v1 | other | fixture-guarded-v1 | exact-literal-edit/v1 | other | existing-regular-utf8/v1; unique-exact-region/v1 |
+
+## Write capabilities
+
+| step | closure | path | operation | protocol | binding | inverse protocol | inverse binding |
+|---|---|---|---|---|---|---|---|
+| 1 | closure/agents-md | CLAUDE.md | create | strict-create/v1 | capability/1 | unavailable | - |
+| 2 | closure/agents-md | AGENTS.md | replace | guarded-patch/v1 | capability/2 | unavailable | - |
+
+## Warnings
+
+- guarded-patch-non-cas: AGENTS.md
+- manual-zone-guarded: AGENTS.md
+- strict-compensation-unavailable: AGENTS.md
+- strict-compensation-unavailable: CLAUDE.md
+- untracked-files-included: CLAUDE.md
+
+## Migration decisions
+
+- (none)
+
+## Migration candidates
+
+- (none)
+
+## Adoption decisions
+
+| segment | lines | disposition | destination | decision |
+|---|---|---|---|---|
+| segment/1 | 42-44 | shared-entry | entry | confirmed |
+| segment/2 | 46-48 | manual | - | confirmed |

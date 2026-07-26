@@ -5,41 +5,61 @@ Code / Codex bridge designed to let a project maintain one canonical source
 for agent skills, hooks, and rules, then project that source into host-native
 layouts.
 
-The development tree has completed M1 and M2. Its current capability is the
-project-skill surface:
+The development tree has completed M1 through M3. M4 hook-intent modeling and
+dual-host hook projection are next.
 
 - [`bridge-sentinel`](skills/bridge-sentinel/SKILL.md) observes repository
-  carriers without writing, using `source-tree/v3` and `report/v3`.
+  carriers without writing, using `source-tree/v4` and `report/v4`.
 - [`bridge-sync`](skills/bridge-sync/SKILL.md) plans, confirms, projects,
-  adopts, and verifies complete skill trees using Git-proven per-unit
-  baselines, `reconciliation/v1`, and `sync-plan/v1`.
-- [`covenant/v1`](templates/covenant/README.md) provides the exact two-part
-  onboarding anchor.
+  adopts, and verifies complete skill trees plus entry/rule managed blocks
+  using Git-proven per-unit baselines, deterministic rendering, serialized
+  closure selection/authorization, and explicit strict or non-CAS guarded
+  write protocols under `reconciliation/v2` and `sync-plan/v2`.
+- [`covenant/v2`](templates/covenant/README.md) provides the exact two-part
+  onboarding anchor; archived v1 bytes identify a closed-set migration whose
+  ownership transition still requires reachable Git evidence, not a supported
+  legacy runtime contract.
 - The [M2 fixture matrix](fixtures/m2-sync/README.md) defines 13 isolated
   scenarios and 22 lightweight safeguards. Twelve scenarios have real agent
   workflow replay evidence; `write-verify-failure` is deliberately
   declarative-only because it requires fault injection between write and
   verification.
+- The [M3 fixture matrix](fixtures/m3-rules/README.md) defines 41 scenarios,
+  42 expectations, and 42 replay inputs. All 39 agent-replayable scenarios
+  (40 inputs) have accepted real workflow replay evidence;
+  `guarded-postverify-race` and `verify-failure-no-compensation` remain
+  explicitly declarative-only.
 
 Reproduce the stable repository-local mechanical checks with:
 
 ```text
 python -B skills/bridge-sentinel/scripts/sentinel_mechanics.py self-test
 python -B fixtures/m2-sync/fixture_harness.py self-test
+python -B fixtures/m3-rules/fixture_harness.py self-test
+python -B fixtures/m3-rules/journal_validator_tests.py --mode worker-matrix
+python -B fixtures/m3-rules/journal_validator_tests.py --mode single
+python -B fixtures/m3-rules/journal_validator_tests.py --mode concurrent
 git diff --check
 ```
 
-The fixture harness command validates scenario contracts, expected plans,
-post-state trees, and safeguards; it is not a substitute for agent workflow
-replay. The completed replay evidence covers 6/6 transition scenarios with
-7/7 plan-plus-tree comparisons, 7/7 guard branches, and the independent
-baseline-DAG ambiguity case.
+Fixture harnesses validate declarations, expected plans, exact post-state
+trees, and safeguards; they are not substitutes for agent workflow replay.
+The M1 self-test closes 36 checks. M2 closes 13 definitions, 12 replayable
+scenarios, one declarative-only scenario, and 22 safeguards. The M3 main
+harness closes 809 checks: 28 adapter checks, one journal-suite gate, 737
+other contract checks, and 43 stale-recovery checks. Its independent journal
+evidence closes an 11/11 worker matrix and a 66/66 single suite; the concurrent
+gate closes two workers, 132 cases, two unique session roots, and two
+successful cleanups. Three final independent concurrent runs passed on their
+first attempt without retry.
 
-M3 entry/rule projection is next and has not been implemented. There is no
-CLI, npm package, plugin manifest or payload, CI release gate, or claimed
-Claude Code/Codex live-host activation smoke yet. Packaging remains gated
-until M5, and CI remains M6 work. Product artifacts land milestone by
-milestone; the [roadmap](docs/phases/roadmap.md) owns that boundary.
+These results prove repository contracts, isolated fixture behavior, and the
+recorded agent workflows; repository bytes do not prove Claude Code or Codex
+live-host discovery or activation. M4 hooks are not implemented. There is no
+CLI, npm package, plugin manifest or payload, or CI release gate: packaging
+remains gated until M5, and CI remains M6 work. Product artifacts land
+milestone by milestone; the [roadmap](docs/phases/roadmap.md) owns that
+boundary.
 
 Start with:
 

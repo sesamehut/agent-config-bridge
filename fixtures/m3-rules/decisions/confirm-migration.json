@@ -1,0 +1,11 @@
+{
+  "authorized_closures": [
+    "closure/migration"
+  ],
+  "intent": "Carry the selected legacy units into the current contract.",
+  "motivation": "Confirm the complete closed migration fixture.",
+  "segments": [],
+  "source_bindings": [],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

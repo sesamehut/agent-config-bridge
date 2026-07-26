@@ -1,0 +1,9 @@
+{
+  "version": "activation-fixture/v1",
+  "root_markers": [
+    ".bridge-root"
+  ],
+  "fallback_filenames": [],
+  "project_doc_max_bytes": 32768,
+  "budget_source": "documented-default"
+}

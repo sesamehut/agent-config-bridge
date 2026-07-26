@@ -1,6 +1,7 @@
-- expectation: report/v3
+- expectation: report/v4
 - scan root: .
 - scope excludes: (none)
+- activation profile: activation-profile.json
 - onboarding: not-onboarded
 
 ## Findings
@@ -15,4 +16,4 @@
 
 ## Observations
 
-- (none)
+- codex-effective-budget: AGENTS.md (project_doc_max_bytes=32768; source=resolved)

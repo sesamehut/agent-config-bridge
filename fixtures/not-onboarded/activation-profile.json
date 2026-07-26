@@ -1,0 +1,9 @@
+{
+  "version": "activation-fixture/v1",
+  "root_markers": [
+    "CLAUDE.md"
+  ],
+  "fallback_filenames": [],
+  "project_doc_max_bytes": 32768,
+  "budget_source": "resolved"
+}

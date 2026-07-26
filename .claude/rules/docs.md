@@ -17,6 +17,7 @@ This file is the docs entry point and inventory.
 - `architecture/` - System design and design decisions
   - `overview.md` - System architecture and the design decisions behind it
   - `tech-stack.md` - Technology selection and dependency boundaries
+  - `write-protocol.md` - Write protocol decision and capability boundaries
 - `implementation/` - Technical implementation notes / strategy
   - `sync-model.md` - The synchronization model between the canonical source
     and host-native layouts
@@ -28,6 +29,7 @@ This file is the docs entry point and inventory.
     project context loading
   - `codex-capability-surface.md` - Verified Codex-side mechanisms: hooks,
     skills, rules, and the project-level config surface
+  - `write-primitives.md` - Verified host and filesystem write primitives
 - `phases/` - Phase planning and milestone tracking
   - `roadmap.md` - Milestone roadmap and phase planning
 

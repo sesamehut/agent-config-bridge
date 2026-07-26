@@ -1,0 +1,33 @@
+{
+  "operations": [
+    {
+      "binding": null,
+      "closure": "closure/skill/fixture-consumer",
+      "inverse_binding": null,
+      "inverse_protocol": "unavailable",
+      "operation": "delete",
+      "path": ".agents/skills/fixture-consumer/SKILL.md",
+      "protocol": "unavailable"
+    },
+    {
+      "binding": null,
+      "closure": "closure/skill/fixture-consumer",
+      "inverse_binding": null,
+      "inverse_protocol": "unavailable",
+      "operation": "delete",
+      "path": ".agents/skills/fixture-consumer/agents/openai.yaml",
+      "protocol": "unavailable"
+    },
+    {
+      "binding": null,
+      "closure": "closure/skill/fixture-consumer",
+      "inverse_binding": null,
+      "inverse_protocol": "unavailable",
+      "operation": "delete",
+      "path": ".agents/skills/fixture-consumer/bridge-intent.yaml",
+      "protocol": "unavailable"
+    }
+  ],
+  "profiles": [],
+  "version": "write-capability-fixture/v1"
+}

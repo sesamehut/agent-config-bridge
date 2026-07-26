@@ -1,0 +1,50 @@
+{
+  "operations": [
+    {
+      "binding": "capability/1",
+      "closure": "closure/agents-md",
+      "inverse_binding": null,
+      "inverse_protocol": "unavailable",
+      "operation": "create",
+      "path": ".claude/rules/bridge-covenant.md",
+      "protocol": "strict-create/v1"
+    },
+    {
+      "binding": "capability/1",
+      "closure": "closure/agents-md",
+      "inverse_binding": null,
+      "inverse_protocol": "unavailable",
+      "operation": "create",
+      "path": "AGENTS.md",
+      "protocol": "strict-create/v1"
+    }
+  ],
+  "profiles": [
+    {
+      "attestations": [
+        {
+          "operations": [
+            "create"
+          ],
+          "paths": [
+            ".claude/rules/bridge-covenant.md",
+            "AGENTS.md"
+          ],
+          "proof": "fixture-exclusive-create/v1",
+          "protocol": "strict-create/v1"
+        }
+      ],
+      "binding": "capability/1",
+      "filesystem_assumptions": [
+        "exclusive-create/v1",
+        "safe-parent/v1"
+      ],
+      "host": "other",
+      "host_version": "fixture-create-v1",
+      "platform": "other",
+      "profile": "capability-profile/v1",
+      "tool_surface": "python-exclusive-create/v1"
+    }
+  ],
+  "version": "write-capability-fixture/v1"
+}

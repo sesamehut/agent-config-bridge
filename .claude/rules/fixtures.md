@@ -1,11 +1,8 @@
 ---
 paths:
   - "fixtures/**"
-bridge:
-  intent:
-    - date: 2026-07-08
-      note: fixture-authoring conventions introduced with the first M1 fixtures
 ---
+<!-- bridge:intent 2026-07-08 Fixture-authoring conventions introduced with the first M1 fixtures -->
 
 # fixtures/ - Fixture authoring rules
 
@@ -60,7 +57,9 @@ Bridge skills. These are hard rules, binding on every change inside
   follows the expectation-file format defined in
   [`skills/bridge-sentinel/references/report-spec.md`](../../skills/bridge-sentinel/references/report-spec.md)
   and changes only together with the fixture bytes it describes, in the same
-  change.
+  change. Pin deterministic live activation inputs in a contained
+  `activation-fixture/v1` profile; use `environment-dependent` only when the
+  expectation deliberately excludes all live and capability observations.
 - **Fixture hooks never execute.** Sentinel runs are file comparison only at
   M1. M2 mutation fixtures do not install hooks. Any later live-loading check
   must use a materialized temporary project, never fixture source data.

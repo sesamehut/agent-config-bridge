@@ -8,8 +8,9 @@
 Bridge 的主要产物是 skill 和知识库，代码只承担入口和辅助检查职责。仓库内部按角色分层：
 
 - `skills/`：skill 源，面向目标工具中智能体的 skill 内容，markdown 为主；可含
-  必要的 host metadata、reference specs 和过窄门的机械辅助脚本，入库。M2 已有
-  严格只读的 `bridge-sentinel` 与独立写侧 `bridge-sync`，不能把两种权限重新合并。
+  必要的 host metadata、reference specs 和过窄门的机械辅助脚本，入库。M3 继续
+  保持严格只读的 `bridge-sentinel` 与独立写侧 `bridge-sync`；后者在技能树之外
+  承担 entry / rule managed-block reconciliation，两种权限不能重新合并。
 - `templates/`：面向目标项目安装的约定模板等写入素材，与只读 skill 指令分离，
   入库；只有路线图开放相应写路径后才会安装。
 - `knowledge/`：工具映射知识，自然语言知识库，带采集日期，入库。
@@ -34,12 +35,18 @@ Bridge 的主要产物是 skill 和知识库，代码只承担入口和辅助检
 版本号加本仓库的 git 历史承担，用户收编技能后从自己的第一条意图记录开始。
 
 用户安装插件后将获得 read-only Sentinel 与 plan-confirm-write Sync；具体流程由
-目标工具中的智能体执行，Git 提供 per-unit baseline 与 ownership evidence。Claude
-Code 插件与 Codex 插件分别适配各自入口。
+目标工具中的智能体执行，Git 提供 per-unit baseline 与 ownership evidence。Sync
+把全部选中的 root `AGENTS.md` block 变化合成为一个完整 desired image；替换现有
+文件时按 capability profile 选择已证明的 strict replace，或明确非 CAS 的
+`guarded-patch/v1` 单次 exact-region replacement；新建、删除、rename 与
+compensation 仍要求对应 strict primitive。缺少合格协议就阻断，不用无标识的
+“先检查、再普通写入”替代，也不扩张为跨文件事务保证。Claude Code 插件与 Codex
+插件分别适配各自入口。
 
-M2 开发态不引入 plugin manifest、package files、CLI、bundled JavaScript 或
-distribution payload。仓库根 `CLAUDE.md` / `AGENTS.md` 只提供 checked-in skill
-development entrypoint；到 M5 才生成 host-native plugin entrypoint。
+截至 M3 的开发态仍不引入 plugin manifest、package files、CLI、bundled
+JavaScript 或 distribution payload。仓库根 `CLAUDE.md` / `AGENTS.md` 只提供
+checked-in skill development entrypoint；到 M5 才生成 host-native plugin
+entrypoint。
 
 ## Claude Code 入口
 
@@ -81,8 +88,9 @@ Codex 已为插件 hook 进程注入插件根目录环境变量，hook 命令可
 
 - 目标工具清单：Claude Code 与 Codex 各自需要的插件元数据。
 - 技能：权限分离的 `bridge-sentinel` 与 `bridge-sync`。
-- covenant templates：M2 bootstrap 的 exact source / managed block；M4 hook-intent
-  asset 保持不可由 M2 安装。
+- covenant templates：M3 当前 tuple 的 exact source / managed block，以及只作
+  显式 migration evidence 的旧版 exact bytes；M4 hook-intent asset 保持不可由
+  M3 安装。
 - 工具映射知识：Claude Code / Codex 语义差异的自然语言知识，带采集日期。
 - 薄包装脚本：交付 skill、定位自带文件、执行 doctor 的可选 `bridge.mjs`；doctor
   应可离线运行。

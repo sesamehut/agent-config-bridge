@@ -1,0 +1,11 @@
+{
+  "authorized_closures": [
+    "closure/skill/fixture-consumer"
+  ],
+  "intent": null,
+  "motivation": "Confirm only the consumer closure while leaving its prerequisite unconfirmed.",
+  "segments": [],
+  "source_bindings": [],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

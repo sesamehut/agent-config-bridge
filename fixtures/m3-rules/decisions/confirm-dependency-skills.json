@@ -1,0 +1,12 @@
+{
+  "authorized_closures": [
+    "closure/skill/fixture-consumer",
+    "closure/skill/fixture-prerequisite"
+  ],
+  "intent": null,
+  "motivation": "Confirm both exact skill closures and their dependency order.",
+  "segments": [],
+  "source_bindings": [],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

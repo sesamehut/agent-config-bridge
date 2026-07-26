@@ -1,0 +1,9 @@
+{
+  "skillOverrides": {
+    "fixture-consumer": "off",
+    "fixture-legacy-carry": "off",
+    "fixture-legacy-release": "off",
+    "fixture-legacy-repair": "off",
+    "fixture-prerequisite": "off"
+  }
+}

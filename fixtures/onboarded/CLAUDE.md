@@ -1,3 +1,4 @@
+<!-- bridge:intent 2026-07-08 Seed shared entry for the onboarded fixture -->
 # fixture-onboarded
 
 Shared entry instructions for the onboarded fixture project.

@@ -1,0 +1,1473 @@
+{
+  "default_activation_profile": "profiles/default.json",
+  "default_write_capability_fixture": "capabilities/none.json",
+  "required_coverage": [
+    "active-import-blocked",
+    "both-changed-deferred",
+    "budget-boundary-applied",
+    "budget-insufficient-blocked",
+    "budget-zero-blocked",
+    "claude-first-created",
+    "closure-dependency-satisfied",
+    "closure-dependency-unsatisfied",
+    "codex-first-confirmed",
+    "codex-first-pending",
+    "create-capability-blocked",
+    "delete-applied",
+    "delete-capability-blocked",
+    "dual-entry-blocked",
+    "empty-create-applied",
+    "empty-rerun-unchanged",
+    "empty-untracked-rescan-blocked",
+    "fallback-shadow-blocked",
+    "guarded-patch-unavailable-blocked",
+    "guarded-postverify-partial",
+    "guarded-preflight-mismatch",
+    "intent-missing-repaired",
+    "invalid-paths-blocked",
+    "legacy-mode-blocked",
+    "marker-duplicate-blocked",
+    "marker-orphan-blocked",
+    "marker-source-mismatch-blocked",
+    "marker-unclosed-blocked",
+    "migration-ambiguous-blocked",
+    "migration-carry-forward-applied",
+    "migration-release-applied",
+    "migration-repair-applied",
+    "migration-transition-rescan",
+    "migration-transition-uncommitted",
+    "multi-unit-selected",
+    "protected-adopt-applied",
+    "rename-capability-blocked",
+    "root-marker-blocked",
+    "root-override-blocked",
+    "scoped-project-applied",
+    "scoped-reverse-applied",
+    "semantic-review-deferred",
+    "source-reproject-applied",
+    "source-update-applied",
+    "strict-compensation-unavailable-partial"
+  ],
+  "required_safeguards": [
+    "active-shared-import",
+    "agents-md-budget-disabled",
+    "agents-md-budget-exceeded",
+    "agents-md-near-budget",
+    "baseline-required-for-delete",
+    "both-changed-zero-write",
+    "closure-dependency-enforced",
+    "codex-first-segmentation",
+    "covenant-migration-barrier",
+    "dual-project-entry",
+    "empty-bootstrap-honesty",
+    "empty-bootstrap-temporal-boundary",
+    "fallback-shadow",
+    "guarded-no-auto-compensation",
+    "guarded-patch-capability-gate",
+    "guarded-postverify-third-value",
+    "guarded-preflight-zero-write",
+    "intent-record-required",
+    "invalid-rule-paths",
+    "legacy-managed-mode",
+    "manual-zone-guarded",
+    "marker-duplicate",
+    "marker-orphan",
+    "marker-source-mismatch",
+    "marker-unclosed",
+    "migration-dag-maximality",
+    "migration-legacy-closed-set",
+    "migration-transition-history",
+    "multi-unit-selection",
+    "protected-source-spans",
+    "pv2-render",
+    "pv2-reverse",
+    "rename-atomic-closure",
+    "root-marker-evidence",
+    "semantic-review-required",
+    "source-authority-reproject",
+    "strict-compensation-gate",
+    "strict-create-capability",
+    "strict-delete-capability",
+    "strict-rename-capability",
+    "surface-shadowed"
+  ],
+  "scenarios": [
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "active-import-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "active-import-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/active-import.md",
+          "post_state": "active-import-input"
+        }
+      ],
+      "id": "active-import",
+      "input": "active-import-input",
+      "replay": "agent",
+      "safeguards": [
+        "active-shared-import"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block projection when the remaining shared entry contains an active Claude import.",
+      "workflow": [
+        "Materialize the fixture and run $bridge-sync from its repository root.",
+        "Confirm that planning stops before any write and compare the emitted plan."
+      ]
+    },
+    {
+      "baseline": "base-entry",
+      "coverage": [
+        "both-changed-deferred"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "both-changed-deferred"
+          ],
+          "id": "deferred",
+          "plan": "expectations/both-changed-zero-write.md",
+          "post_state": "both-changed-input"
+        }
+      ],
+      "id": "both-changed-zero-write",
+      "input": "both-changed-input",
+      "replay": "agent",
+      "safeguards": [
+        "both-changed-zero-write"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Keep a differently edited source and managed block untouched as a two-sided conflict.",
+      "workflow": [
+        "Materialize the fixture and run $bridge-sync.",
+        "Leave the conflict unresolved and compare the zero-write result."
+      ]
+    },
+    {
+      "activation_profile": "profiles/budget-boundary.json",
+      "baseline": "base-entry-manual",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "coverage": [
+        "budget-boundary-applied"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "budget-boundary-applied"
+          ],
+          "id": "applied",
+          "plan": "expectations/budget-boundary.md",
+          "planned_state": "budget-boundary-expected",
+          "post_state": "budget-boundary-expected"
+        }
+      ],
+      "id": "budget-boundary",
+      "input": "budget-boundary-input",
+      "rendered_state": "budget-boundary-expected",
+      "replay": "agent",
+      "safeguards": [
+        "agents-md-near-budget",
+        "manual-zone-guarded"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Apply a full-file AGENTS update that fits but crosses the seven-eighths warning boundary.",
+      "write_capability_fixture": "capabilities/guarded-agents.json",
+      "workflow": [
+        "Materialize the fixture with its repository-local Codex budget profile.",
+        "Acknowledge the near-budget warning, confirm the plan, and compare the result."
+      ]
+    },
+    {
+      "activation_profile": "profiles/budget-insufficient.json",
+      "baseline": "base-entry-manual",
+      "coverage": [
+        "budget-insufficient-blocked"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "budget-insufficient-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/budget-insufficient.md",
+          "planned_state": "budget-boundary-expected",
+          "post_state": "budget-insufficient-input"
+        }
+      ],
+      "id": "budget-insufficient",
+      "input": "budget-insufficient-input",
+      "replay": "agent",
+      "safeguards": [
+        "agents-md-budget-exceeded"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block a planned full AGENTS image that exceeds the pinned positive byte budget.",
+      "workflow": [
+        "Materialize the fixture with its repository-local Codex budget profile.",
+        "Run $bridge-sync and compare the zero-write blocker plan."
+      ]
+    },
+    {
+      "activation_profile": "profiles/budget-zero.json",
+      "baseline": "base-entry-manual",
+      "coverage": [
+        "budget-zero-blocked"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "budget-zero-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/budget-zero.md",
+          "post_state": "budget-zero-input"
+        }
+      ],
+      "id": "budget-zero",
+      "input": "budget-zero-input",
+      "replay": "agent",
+      "safeguards": [
+        "agents-md-budget-disabled"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block every AGENTS write when the pinned project-document budget is zero.",
+      "workflow": [
+        "Materialize the fixture with its repository-local zero-budget profile.",
+        "Run $bridge-sync and compare the zero-write blocker plan."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "decision_fixture": "decisions/claude-first-confirmed.json",
+      "coverage": [
+        "claude-first-created"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "claude-first-created"
+          ],
+          "id": "created",
+          "plan": "expectations/claude-first-interleaved.md",
+          "post_state": "claude-first-expected"
+        }
+      ],
+      "id": "claude-first-interleaved",
+      "input": "claude-first-input",
+      "rendered_state": "claude-first-expected",
+      "replay": "agent",
+      "safeguards": [
+        "manual-zone-guarded"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Project a Claude-first entry between pre-existing interleaved manual AGENTS spans.",
+      "write_capability_fixture": "capabilities/guarded-agents.json",
+      "workflow": [
+        "Materialize the fixture and run $bridge-sync.",
+        "Confirm the source-to-projection create and compare every manual byte."
+      ]
+    },
+    {
+      "baseline": "base-dependency-skills",
+      "decision_fixture": "decisions/confirm-dependency-skills.json",
+      "coverage": [
+        "closure-dependency-satisfied"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "closure-dependency-satisfied"
+          ],
+          "id": "applied",
+          "plan": "expectations/closure-dependency-satisfied.md",
+          "post_state": "dependency-skills-expected"
+        }
+      ],
+      "id": "closure-dependency-satisfied",
+      "input": "dependency-skills-input",
+      "rendered_state": "dependency-skills-expected",
+      "replay": "agent",
+      "safeguards": [
+        "closure-dependency-enforced"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Execute a dependent skill closure only after its selected prerequisite closure is confirmed.",
+      "write_capability_fixture": "capabilities/guarded-dependency-skills.json",
+      "workflow": [
+        "Materialize the two source-only skill updates and serialize the consumer dependency on the prerequisite closure.",
+        "Confirm both exact closures, apply prerequisite before consumer, and compare both projected trees."
+      ]
+    },
+    {
+      "baseline": "base-dependency-skills",
+      "coverage": [
+        "closure-dependency-unsatisfied"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "closure-dependency-unsatisfied"
+          ],
+          "id": "blocked",
+          "plan": "expectations/closure-dependency-unsatisfied.md",
+          "post_state": "dependency-skills-input"
+        }
+      ],
+      "id": "closure-dependency-unsatisfied",
+      "input": "dependency-skills-input",
+      "decision_fixture": "decisions/confirm-consumer-only.json",
+      "replay": "agent",
+      "safeguards": [
+        "closure-dependency-enforced"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block a selected dependent closure while its selected prerequisite remains unconfirmed.",
+      "write_capability_fixture": "capabilities/guarded-dependency-skills.json",
+      "workflow": [
+        "Materialize the two source-only skill updates and serialize the consumer dependency on the prerequisite closure.",
+        "Leave the prerequisite authorization unconfirmed and compare the zero-write blocker plan."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "codex-first-confirmed",
+        "codex-first-pending"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "codex-first-confirmed"
+          ],
+          "id": "confirmed",
+          "plan": "expectations/codex-first-confirmed.md",
+          "post_state": "codex-first-confirmed",
+          "replay_input": "codex-first-confirmed"
+        },
+        {
+          "covers": [
+            "codex-first-pending"
+          ],
+          "id": "pending",
+          "plan": "expectations/codex-first-pending.md",
+          "post_state": "codex-first-input",
+          "replay_input": "codex-first-pending"
+        }
+      ],
+      "id": "codex-first-mixed",
+      "input": "codex-first-input",
+      "replay_inputs": [
+        {
+          "decision_fixture": "decisions/codex-first-confirmed.json",
+          "id": "codex-first-confirmed",
+          "rendered_state": "codex-first-confirmed"
+        },
+        {
+          "decision_fixture": "decisions/codex-first-pending.json",
+          "id": "codex-first-pending"
+        }
+      ],
+      "replay": "agent",
+      "safeguards": [
+        "codex-first-segmentation",
+        "manual-zone-guarded"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Classify one existing Codex span as shared entry and another as permanent manual content.",
+      "write_capability_fixture": "capabilities/codex-first.json",
+      "workflow": [
+        "Materialize once and run $bridge-sync to capture the pending segmentation plan.",
+        "For the confirmed branch, classify segment/1 as shared-entry and segment/2 as manual, then compare."
+      ]
+    },
+    {
+      "baseline": "base-empty",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "coverage": [
+        "create-capability-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "create-capability-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/create-unavailable.md",
+          "post_state": "base-empty"
+        }
+      ],
+      "id": "create-unavailable",
+      "input": "base-empty",
+      "replay": "agent",
+      "safeguards": [
+        "strict-create-capability"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block covenant bootstrap before either path when strict create-if-absent is unavailable.",
+      "write_capability_fixture": "capabilities/create-unavailable.json",
+      "workflow": [
+        "Review the pinned unavailable strict-create capability.",
+        "Confirm both create steps are unavailable and the empty input tree remains exact."
+      ]
+    },
+    {
+      "baseline": "base-entry",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "coverage": [
+        "delete-applied"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "delete-applied"
+          ],
+          "id": "applied",
+          "plan": "expectations/delete-entry.md",
+          "post_state": "delete-expected"
+        }
+      ],
+      "id": "delete-entry",
+      "input": "delete-input",
+      "rendered_state": "delete-expected",
+      "replay": "agent",
+      "safeguards": [
+        "baseline-required-for-delete",
+        "manual-zone-guarded"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Converge a tracked source-side entry deletion only from a unique managed baseline.",
+      "write_capability_fixture": "capabilities/guarded-agents.json",
+      "workflow": [
+        "Materialize the tracked-deletion fixture and run $bridge-sync.",
+        "Explicitly confirm the destructive source-to-projection delete and compare."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "dual-entry-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "dual-entry-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/dual-entry.md",
+          "post_state": "dual-entry-input"
+        }
+      ],
+      "id": "dual-entry",
+      "input": "dual-entry-input",
+      "replay": "agent",
+      "safeguards": [
+        "dual-project-entry"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block entry projection when both supported Claude project entry files exist.",
+      "workflow": [
+        "Materialize the fixture and run $bridge-sync.",
+        "Do not select an entry path; compare the blocked zero-write plan."
+      ]
+    },
+    {
+      "baseline": "base-empty",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "coverage": [
+        "empty-create-applied"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "empty-create-applied"
+          ],
+          "id": "applied",
+          "plan": "expectations/empty-create.md",
+          "post_state": "empty-create-expected"
+        }
+      ],
+      "id": "empty-create",
+      "input": "base-empty",
+      "rendered_state": "empty-create-expected",
+      "replay": "agent",
+      "safeguards": [
+        "empty-bootstrap-honesty"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Bootstrap the exact v2 covenant pair without claiming newly written untracked files are onboarded.",
+      "write_capability_fixture": "capabilities/create-onboarding.json",
+      "workflow": [
+        "Materialize the empty agent-configuration project and run $bridge-sync.",
+        "Confirm bootstrap, leave new files untracked, and compare the honest post-write plan."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "empty-rerun-unchanged"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "empty-rerun-unchanged"
+          ],
+          "id": "unchanged",
+          "plan": "expectations/empty-rerun.md",
+          "post_state": "base-onboarded"
+        }
+      ],
+      "id": "empty-rerun",
+      "input": "base-onboarded",
+      "replay": "agent",
+      "safeguards": [
+        "empty-bootstrap-honesty"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Prove a tracked exact bootstrap rerun is zero-write and onboarded.",
+      "workflow": [
+        "Materialize the tracked exact current covenant pair.",
+        "Run $bridge-sync and compare the unchanged result without confirmation."
+      ]
+    },
+    {
+      "baseline": "base-empty",
+      "coverage": [
+        "empty-untracked-rescan-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "empty-untracked-rescan-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/empty-untracked-rescan.md",
+          "post_state": "empty-create-expected"
+        }
+      ],
+      "id": "empty-untracked-rescan",
+      "input": "empty-create-expected",
+      "replay": "agent",
+      "safeguards": [
+        "empty-bootstrap-honesty",
+        "empty-bootstrap-temporal-boundary"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block an independent scan while both exact covenant carriers remain untracked.",
+      "workflow": [
+        "Materialize the exact current covenant pair as untracked input.",
+        "Run $bridge-sync as a fresh scan and compare the blocked zero-write plan."
+      ]
+    },
+    {
+      "activation_profile": "profiles/fallback-shadow.json",
+      "baseline": "base-empty",
+      "coverage": [
+        "fallback-shadow-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "fallback-shadow-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/fallback-shadow.md",
+          "post_state": "fallback-shadow-input"
+        }
+      ],
+      "id": "fallback-shadow",
+      "input": "fallback-shadow-input",
+      "replay": "agent",
+      "safeguards": [
+        "fallback-shadow"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block creation of root AGENTS when it would shadow the pinned active fallback file.",
+      "workflow": [
+        "Materialize the fixture with its repository-local fallback profile and selected fallback file.",
+        "Run $bridge-sync and compare the zero-write target-eligibility blocker."
+      ]
+    },
+    {
+      "baseline": "base-entry-manual",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "coverage": [
+        "guarded-patch-unavailable-blocked"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "guarded-patch-unavailable-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/guarded-patch-unavailable.md",
+          "post_state": "source-update-input"
+        }
+      ],
+      "id": "guarded-patch-unavailable",
+      "input": "source-update-input",
+      "replay": "agent",
+      "safeguards": [
+        "guarded-patch-capability-gate"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block an existing-file replacement when neither strict replace nor an eligible guarded patch is attested.",
+      "write_capability_fixture": "capabilities/guarded-unavailable.json",
+      "workflow": [
+        "Review the declared unavailable replacement capability before the first path operation.",
+        "Confirm that the selected closure is blocked and the input tree remains byte-identical."
+      ]
+    },
+    {
+      "baseline": "base-entry-manual",
+      "coverage": [
+        "guarded-postverify-partial"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "guarded-postverify-partial"
+          ],
+          "id": "partial",
+          "plan": "expectations/guarded-postverify-race.md",
+          "post_state": "guarded-postverify-partial"
+        }
+      ],
+      "fault": {
+        "checkpoint": "after the guarded host call and before complete-file postverification",
+        "kind": "post-write-verification",
+        "operations": [
+          {
+            "mode": "100644",
+            "op": "write",
+            "path": "AGENTS.md",
+            "source": "fixtures/m3-rules/shared/entry-v2-corrupt-block.md"
+          }
+        ]
+      },
+      "id": "guarded-postverify-race",
+      "input": "source-update-input",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "write_capability_fixture": "capabilities/guarded-agents.json",
+      "replay": "declarative-only",
+      "replay_reason": "The agent workflow has no deterministic mutation barrier inside the host edit/postverification window; the harness validates the declared third-value result without executing a product write.",
+      "safeguards": [
+        "guarded-no-auto-compensation",
+        "guarded-postverify-third-value"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Retain exact partial evidence when a guarded edit observes a third value and has no strict inverse.",
+      "workflow": [
+        "Review the declared mutation after the guarded host call and before postverification.",
+        "Confirm that no optimistic inverse runs and the post-write result remains partial and reviewable."
+      ]
+    },
+    {
+      "baseline": "base-entry-manual",
+      "coverage": [
+        "guarded-preflight-mismatch"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "guarded-preflight-mismatch"
+          ],
+          "id": "failed",
+          "plan": "expectations/guarded-preflight-mismatch.md",
+          "post_state": "guarded-preflight-post"
+        }
+      ],
+      "fault_schedule_fixture": "fault-schedules/guarded-preflight-mismatch.json",
+      "id": "guarded-preflight-mismatch",
+      "input": "guarded-preflight-input",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "rendered_state": "source-update-expected",
+      "write_capability_fixture": "capabilities/guarded-agents.json",
+      "replay": "agent",
+      "safeguards": [
+        "guarded-preflight-zero-write",
+        "manual-zone-guarded"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Reject a confirmed guarded plan before the host edit when complete-file preflight sees a concurrent manual change.",
+      "workflow": [
+        "Materialize, validate, and confirm the exact guarded pre-write plan, then arm its bound fault receipt.",
+        "Inject the declared manual-tail change before the final full-file preflight; confirm that preflight rejects the stale plan and compare the failed zero-Bridge-write result."
+      ]
+    },
+    {
+      "baseline": "base-entry",
+      "coverage": [
+        "intent-missing-repaired"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "intent-missing-repaired"
+          ],
+          "id": "repaired",
+          "plan": "expectations/intent-missing.md",
+          "post_state": "base-entry"
+        }
+      ],
+      "id": "intent-missing",
+      "input": "intent-missing-input",
+      "decision_fixture": "decisions/intent-missing-confirmed.json",
+      "rendered_state": "base-entry",
+      "write_capability_fixture": "capabilities/guarded-claude.json",
+      "replay": "agent",
+      "safeguards": [
+        "intent-record-required"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Restore a required source intent record when rendering is already converged.",
+      "workflow": [
+        "Materialize the converged body with its missing source intent.",
+        "Confirm the intent-only update and compare the unchanged AGENTS carrier."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "invalid-paths-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "invalid-paths-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/invalid-rule-paths.md",
+          "post_state": "invalid-paths-input"
+        }
+      ],
+      "id": "invalid-rule-paths",
+      "input": "invalid-paths-input",
+      "replay": "agent",
+      "safeguards": [
+        "invalid-rule-paths"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block a universal no-op paths list instead of silently rendering it unscoped.",
+      "workflow": [
+        "Materialize the invalid scoped rule and run $bridge-sync.",
+        "Compare the zero-write invalid-rule-paths plan."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "legacy-mode-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "legacy-mode-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/legacy-mode.md",
+          "post_state": "legacy-mode-input"
+        }
+      ],
+      "id": "legacy-mode",
+      "input": "legacy-mode-input",
+      "replay": "agent",
+      "safeguards": [
+        "legacy-managed-mode"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Treat the removed v3 mode attribute as an explicit migration blocker.",
+      "workflow": [
+        "Materialize the legacy marker fixture and run $bridge-sync.",
+        "Compare the legacy-managed-mode zero-write plan."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "marker-duplicate-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "marker-duplicate-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/marker-duplicate.md",
+          "post_state": "marker-duplicate-input"
+        }
+      ],
+      "id": "marker-duplicate",
+      "input": "marker-duplicate-input",
+      "replay": "agent",
+      "safeguards": [
+        "marker-duplicate"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block the complete AGENTS region map when a managed id appears twice.",
+      "workflow": [
+        "Materialize the duplicate-id fixture and run $bridge-sync.",
+        "Compare the marker-anomaly zero-write plan."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "marker-orphan-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "marker-orphan-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/marker-orphan.md",
+          "post_state": "marker-orphan-input"
+        }
+      ],
+      "id": "marker-orphan",
+      "input": "marker-orphan-input",
+      "replay": "agent",
+      "safeguards": [
+        "marker-orphan"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block the complete AGENTS region map on an exact orphan end marker.",
+      "workflow": [
+        "Materialize the orphan-end fixture and run $bridge-sync.",
+        "Compare the marker-anomaly zero-write plan."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "marker-source-mismatch-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "marker-source-mismatch-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/marker-source-mismatch.md",
+          "post_state": "marker-source-mismatch-input"
+        }
+      ],
+      "id": "marker-source-mismatch",
+      "input": "marker-source-mismatch-input",
+      "replay": "agent",
+      "safeguards": [
+        "marker-source-mismatch"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block the complete AGENTS map when a managed id names the wrong source path.",
+      "workflow": [
+        "Materialize the source-mismatch fixture and run $bridge-sync.",
+        "Compare the marker-anomaly zero-write plan."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "marker-unclosed-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "marker-unclosed-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/marker-unclosed.md",
+          "post_state": "marker-unclosed-input"
+        }
+      ],
+      "id": "marker-unclosed",
+      "input": "marker-unclosed-input",
+      "replay": "agent",
+      "safeguards": [
+        "marker-unclosed"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block the complete AGENTS region map when a start marker reaches EOF unclosed.",
+      "workflow": [
+        "Materialize the unclosed-block fixture and run $bridge-sync.",
+        "Compare the marker-anomaly zero-write plan."
+      ]
+    },
+    {
+      "baseline": "base-v1",
+      "coverage": [
+        "migration-ambiguous-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "migration-ambiguous-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/migration-ambiguous-dag.md",
+          "commit_refs": {
+            "1111111111111111111111111111111111111111": "history:left",
+            "2222222222222222222222222222222222222222": "history:right",
+            "3333333333333333333333333333333333333333": "history:root"
+          },
+          "post_state": "base-v1"
+        }
+      ],
+      "history": {
+        "commits": [
+          {
+            "id": "root",
+            "message": "establish the v1 managed set",
+            "parents": [],
+            "tree": "base-v1"
+          },
+          {
+            "id": "left",
+            "message": "record the left synchronized candidate",
+            "parents": [
+              "root"
+            ],
+            "tree": "migration-ambiguous-left"
+          },
+          {
+            "id": "right",
+            "message": "record the right synchronized candidate",
+            "parents": [
+              "root"
+            ],
+            "tree": "migration-ambiguous-right"
+          },
+          {
+            "id": "merge",
+            "message": "merge incomparable v1 candidates",
+            "parents": [
+              "left",
+              "right"
+            ],
+            "tree": "base-v1"
+          }
+        ],
+        "head": "merge"
+      },
+      "id": "migration-ambiguous-dag",
+      "input": "base-v1",
+      "replay": "agent",
+      "safeguards": [
+        "covenant-migration-barrier",
+        "migration-dag-maximality"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block v1 migration when two reachable synchronized skill candidates are ancestry-incomparable.",
+      "workflow": [
+        "Materialize the real four-commit merge DAG and run $bridge-sync from its v1 merge head.",
+        "Confirm that no maximal candidate is chosen and compare the zero-write migration blocker."
+      ]
+    },
+    {
+      "baseline": "migration-v1-v2-expected",
+      "coverage": [
+        "migration-transition-rescan"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": {
+            "skills/fixture-legacy-carry": "initial",
+            "skills/fixture-legacy-repair": "initial"
+          },
+          "covers": [
+            "migration-transition-rescan"
+          ],
+          "id": "unchanged",
+          "plan": "expectations/migration-transition-rescan.md",
+          "post_state": "migration-v1-v2-expected"
+        }
+      ],
+      "history": {
+        "commits": [
+          {
+            "id": "legacy",
+            "message": "establish the v1 managed set",
+            "parents": [],
+            "tree": "base-v1"
+          },
+          {
+            "id": "transition",
+            "message": "record the closed v1 to v2 migration",
+            "parents": [
+              "legacy"
+            ],
+            "tree": "migration-v1-v2-expected"
+          }
+        ],
+        "head": "transition"
+      },
+      "id": "migration-transition-rescan",
+      "input": "migration-v1-v2-expected",
+      "replay": "agent",
+      "safeguards": [
+        "covenant-migration-barrier",
+        "migration-transition-history"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Use the user-recorded closed transition commit as the current baseline on a fresh rescan.",
+      "workflow": [
+        "Materialize the real v1 parent and closed v2 transition commit, then run $bridge-sync at the transition head.",
+        "Confirm that carried and repaired units bind to HEAD and remain unchanged without dual-reading v1."
+      ]
+    },
+    {
+      "baseline": "base-v1",
+      "coverage": [
+        "migration-carry-forward-applied",
+        "migration-release-applied",
+        "migration-repair-applied",
+        "migration-transition-uncommitted"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": {
+            "skills/fixture-legacy-carry": "initial",
+            "skills/fixture-legacy-release": "initial",
+            "skills/fixture-legacy-repair": "initial"
+          },
+          "covers": [
+            "migration-carry-forward-applied",
+            "migration-release-applied",
+            "migration-repair-applied",
+            "migration-transition-uncommitted"
+          ],
+          "id": "applied",
+          "plan": "expectations/migration-v1-v2.md",
+          "post_state": "migration-v1-v2-expected"
+        }
+      ],
+      "id": "migration-v1-v2",
+      "input": "migration-v1-input",
+      "decision_fixture": "decisions/confirm-migration.json",
+      "rendered_state": "migration-v1-v2-expected",
+      "write_capability_fixture": "capabilities/guarded-migration.json",
+      "replay": "agent",
+      "safeguards": [
+        "covenant-migration-barrier",
+        "migration-legacy-closed-set",
+        "migration-transition-history"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Migrate the exact v1 pair and complete carry-forward, release, and repair decisions as one closed set.",
+      "workflow": [
+        "Materialize the exact archived v1 pair with one converged, one missing, and one divergent legacy-owned skill.",
+        "Confirm release and repair, apply the complete migration closure, and preserve the uncommitted-transition warning until the user commits."
+      ]
+    },
+    {
+      "baseline": "base-two-units",
+      "coverage": [
+        "multi-unit-selected"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "multi-unit-selected"
+          ],
+          "id": "selected",
+          "plan": "expectations/multi-unit-partial-selection.md",
+          "post_state": "multi-unit-expected"
+        }
+      ],
+      "id": "multi-unit-partial-selection",
+      "input": "multi-unit-input",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "rendered_state": "multi-unit-expected",
+      "write_capability_fixture": "capabilities/guarded-agents.json",
+      "replay": "agent",
+      "safeguards": [
+        "manual-zone-guarded",
+        "multi-unit-selection"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Apply one selected block update while a different block remains an untouched conflict in the same file.",
+      "workflow": [
+        "Materialize the two-unit fixture and run $bridge-sync.",
+        "Confirm only the independent entry closure, leave beta conflicted, and compare the full-file result."
+      ]
+    },
+    {
+      "baseline": "base-protected",
+      "coverage": [
+        "protected-adopt-applied"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "protected-adopt-applied"
+          ],
+          "id": "applied",
+          "plan": "expectations/protected-adopt.md",
+          "post_state": "protected-adopt-expected"
+        }
+      ],
+      "id": "protected-adopt",
+      "input": "protected-adopt-input",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "rendered_state": "protected-adopt-expected",
+      "write_capability_fixture": "capabilities/guarded-python-rule.json",
+      "replay": "agent",
+      "safeguards": [
+        "protected-source-spans",
+        "pv2-reverse"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Adopt a mapped shared-body edit while preserving frontmatter and Claude-only source spans exactly.",
+      "workflow": [
+        "Materialize the projection-only Python rule edit and run $bridge-sync.",
+        "Confirm adoption, then compare the protected source spans and unchanged projection."
+      ]
+    },
+    {
+      "baseline": "base-old-rule",
+      "coverage": [
+        "rename-capability-blocked"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": {
+            "rules/old": "initial"
+          },
+          "covers": [
+            "rename-capability-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/rename-rule.md",
+          "post_state": "rename-input"
+        }
+      ],
+      "id": "rename-rule",
+      "input": "rename-input",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "write_capability_fixture": "capabilities/rename-unavailable.json",
+      "replay": "agent",
+      "safeguards": [
+        "rename-atomic-closure",
+        "strict-rename-capability"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block the complete old/new rename closure when strict delete and strict replacement are unavailable.",
+      "workflow": [
+        "Materialize the explicit old-to-new rule fixture and run $bridge-sync.",
+        "Confirm the strict-only rename gate blocks every step and compare the unchanged input tree."
+      ]
+    },
+    {
+      "activation_profile": "profiles/root-marker-unresolved.json",
+      "baseline": "base-entry-manual",
+      "coverage": [
+        "root-marker-blocked"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "root-marker-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/root-marker-unresolved.md",
+          "post_state": "root-marker-input"
+        }
+      ],
+      "id": "root-marker-unresolved",
+      "input": "root-marker-input",
+      "replay": "agent",
+      "safeguards": [
+        "root-marker-evidence"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block apply when the pinned root marker set cannot prove the fixture repository root.",
+      "workflow": [
+        "Materialize the fixture with a repository-local absent-marker profile.",
+        "Run $bridge-sync and compare the codex-root-unresolved zero-write plan."
+      ]
+    },
+    {
+      "baseline": "base-entry-manual",
+      "coverage": [
+        "root-override-blocked"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "root-override-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/root-override.md",
+          "post_state": "root-override-input"
+        }
+      ],
+      "id": "root-override",
+      "input": "root-override-input",
+      "replay": "agent",
+      "safeguards": [
+        "surface-shadowed"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block apply while root AGENTS.override.md shadows the managed carrier.",
+      "workflow": [
+        "Materialize the shadowed carrier and run $bridge-sync.",
+        "Compare the surface-shadowed zero-write plan."
+      ]
+    },
+    {
+      "baseline": "base-onboarded",
+      "coverage": [
+        "scoped-project-applied"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "scoped-project-applied"
+          ],
+          "id": "applied",
+          "plan": "expectations/scoped-project.md",
+          "post_state": "scoped-project-expected"
+        }
+      ],
+      "id": "scoped-project",
+      "input": "scoped-project-input",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "rendered_state": "scoped-project-expected",
+      "write_capability_fixture": "capabilities/guarded-agents.json",
+      "replay": "agent",
+      "safeguards": [
+        "manual-zone-guarded",
+        "pv2-render"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Project a valid ordered multi-pattern rule into an exact pv2 managed block.",
+      "workflow": [
+        "Materialize the scoped source-only rule and run $bridge-sync.",
+        "Confirm create and compare the exact pv2 preamble and full AGENTS image."
+      ]
+    },
+    {
+      "baseline": "base-scoped",
+      "coverage": [
+        "scoped-reverse-applied"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "scoped-reverse-applied"
+          ],
+          "id": "applied",
+          "plan": "expectations/scoped-reverse.md",
+          "post_state": "scoped-reverse-expected"
+        }
+      ],
+      "id": "scoped-reverse",
+      "input": "scoped-reverse-input",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "rendered_state": "scoped-reverse-expected",
+      "write_capability_fixture": "capabilities/guarded-docs-rule.json",
+      "replay": "agent",
+      "safeguards": [
+        "protected-source-spans",
+        "pv2-reverse"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Reverse-adopt an exact pv2 paths edit and mapped shared-body change into the scoped rule.",
+      "workflow": [
+        "Materialize the projection-only scoped edit and run $bridge-sync.",
+        "Confirm adoption and compare paths order, intent record, body, and rerender."
+      ]
+    },
+    {
+      "baseline": "base-semantic",
+      "coverage": [
+        "semantic-review-deferred"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "semantic-review-deferred"
+          ],
+          "id": "deferred",
+          "plan": "expectations/semantic-neutralization.md",
+          "post_state": "semantic-review-input"
+        }
+      ],
+      "id": "semantic-neutralization",
+      "input": "semantic-review-input",
+      "write_capability_fixture": "capabilities/guarded-claude.json",
+      "replay": "agent",
+      "safeguards": [
+        "semantic-review-required"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Defer a projection edit whose Codex-specific wording needs an explicit host-neutral source proposal.",
+      "workflow": [
+        "Materialize the Codex-specific projection edit and run $bridge-sync.",
+        "Do not approve a neutralization candidate; compare the semantic-review-required pre-write plan."
+      ]
+    },
+    {
+      "baseline": "base-dependency-skills",
+      "coverage": [
+        "delete-capability-blocked"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "delete-capability-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/skill-delete-unavailable.md",
+          "post_state": "skill-delete-input"
+        }
+      ],
+      "id": "skill-delete-unavailable",
+      "input": "skill-delete-input",
+      "decision_fixture": "decisions/confirm-skill-consumer.json",
+      "write_capability_fixture": "capabilities/skill-delete-unavailable.json",
+      "replay": "agent",
+      "safeguards": [
+        "strict-delete-capability"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Block a proven managed skill deletion before either projection file when strict delete-if-exact is unavailable.",
+      "workflow": [
+        "Review the pinned unavailable strict-delete capability and unique managed baseline.",
+        "Confirm both delete steps remain unavailable and the projection tree is untouched."
+      ]
+    },
+    {
+      "baseline": "base-entry",
+      "coverage": [
+        "source-reproject-applied"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "source-reproject-applied"
+          ],
+          "id": "applied",
+          "plan": "expectations/source-reproject.md",
+          "post_state": "base-entry"
+        }
+      ],
+      "id": "source-reproject",
+      "input": "source-reproject-input",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "rendered_state": "base-entry",
+      "write_capability_fixture": "capabilities/guarded-agents.json",
+      "replay": "agent",
+      "safeguards": [
+        "source-authority-reproject"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Explicitly choose the unchanged source to repair an accidental projection-only edit.",
+      "workflow": [
+        "Materialize the projection-only edit and run $bridge-sync.",
+        "Choose reproject rather than adopt, confirm, and compare the restored managed block."
+      ]
+    },
+    {
+      "baseline": "base-entry-manual",
+      "coverage": [
+        "source-update-applied"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "source-update-applied"
+          ],
+          "id": "applied",
+          "plan": "expectations/source-update.md",
+          "post_state": "source-update-expected"
+        }
+      ],
+      "id": "source-update",
+      "input": "source-update-input",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "rendered_state": "source-update-expected",
+      "write_capability_fixture": "capabilities/guarded-agents.json",
+      "replay": "agent",
+      "safeguards": [
+        "manual-zone-guarded"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Render a semantic source-only entry update while preserving every manual AGENTS byte.",
+      "workflow": [
+        "Materialize the source-only update and run $bridge-sync.",
+        "Confirm the complete plan and compare the exact source, managed block, and manual spans."
+      ]
+    },
+    {
+      "baseline": "base-entry-manual",
+      "coverage": [
+        "strict-compensation-unavailable-partial"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "strict-compensation-unavailable-partial"
+          ],
+          "id": "partial",
+          "plan": "expectations/verify-failure-no-compensation.md",
+          "post_state": "source-update-expected"
+        }
+      ],
+      "fault": {
+        "checkpoint": "after AGENTS write and before post-write verification",
+        "kind": "post-write-verification",
+        "operations": [
+          {
+            "op": "environment",
+            "setting": "verification-result",
+            "value": "forced-mismatch"
+          }
+        ]
+      },
+      "id": "verify-failure-no-compensation",
+      "input": "source-update-input",
+      "decision_fixture": "decisions/confirm-agents-md.json",
+      "write_capability_fixture": "capabilities/guarded-agents.json",
+      "replay": "declarative-only",
+      "replay_reason": "The agent workflow exposes no reliable post-write/pre-verification fault barrier; the harness validates that an unavailable strict inverse forbids automatic compensation.",
+      "safeguards": [
+        "strict-compensation-gate"
+      ],
+      "spec": "bridge-m3-rules-scenario/v2",
+      "summary": "Report partial without attempting an optimistic inverse after verification fails and strict compensation is unavailable.",
+      "workflow": [
+        "Review the declared verification checkpoint, guarded forward protocol, and unavailable inverse.",
+        "Validate that no automatic compensation runs and the exact applied value remains reviewable as partial."
+      ]
+    }
+  ],
+  "spec": "bridge-m3-rules-matrix/v2"
+}

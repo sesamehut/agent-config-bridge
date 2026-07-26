@@ -1,0 +1,24 @@
+{
+  "operations": [
+    {
+      "binding": null,
+      "closure": "closure/agents-md",
+      "inverse_binding": null,
+      "inverse_protocol": "unavailable",
+      "operation": "delete",
+      "path": ".claude/rules/old.md",
+      "protocol": "unavailable"
+    },
+    {
+      "binding": null,
+      "closure": "closure/agents-md",
+      "inverse_binding": null,
+      "inverse_protocol": "unavailable",
+      "operation": "replace",
+      "path": "AGENTS.md",
+      "protocol": "unavailable"
+    }
+  ],
+  "profiles": [],
+  "version": "write-capability-fixture/v1"
+}

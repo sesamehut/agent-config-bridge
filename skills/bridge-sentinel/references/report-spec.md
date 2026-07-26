@@ -1,6 +1,6 @@
 # Bridge sentinel report specification
 
-Spec version: report/v3.
+Spec version: report/v4.
 
 This file defines sentinel inputs, findings, observations, serialization, and
 expectation comparison. Its companion,
@@ -24,17 +24,37 @@ onboarding, rendering, hook ownership, and portability requirements.
 
 ## Input set
 
-**Repo bytes** are worktree bytes selected by `git ls-files` under the scan
-root. Repo mode uses the repository root. Fixture mode uses the fixture path
-within the outer repository's tracked set. Untracked files appear only in
-Local environment notes, with one safety exception: an untracked covenant
-half at either exact anchor path participates in onboarding validation and
-emits `covenant-anchor-anomaly`. The selected index modes are part of
-skill-tree observation; mode `120000`, gitlinks, and other non-regular entries
-are not silently read as ordinary file content. A complete skill-tree
-comparison uses a `git-tree-manifest/v1` snapshot on each side and compares
-relative path, entry type, raw-byte digest, and Git mode. A filesystem-only
-byte comparison cannot establish Git-tree identity.
+The report has two disjoint input domains:
+
+| Domain | Inputs | Permitted use |
+|---|---|---|
+| **repo ownership bytes** | worktree bytes selected by `git ls-files` under the scan root, plus the exact untracked-covenant-path safety exception below | source enumeration, managed-region comparison, onboarding carrier validation, and ownership-facing findings |
+| **live activation inputs** | resolved effective Codex root markers, `project_doc_fallback_filenames`, and `project_doc_max_bytes`; filesystem type/existence and, when needed, bytes for the exact root override, root `AGENTS.md`, configured same-directory fallbacks, and root-marker candidates | loadability, shadowing, root selection, and budget observations only |
+
+Repo mode uses the repository root. Fixture mode uses the fixture path within
+the outer repository's tracked set and must explicitly pin any live activation
+inputs that it expects to compare. Untracked files otherwise appear only in
+Local environment notes, with one ownership-domain safety exception: an
+untracked covenant half at either exact anchor path participates in onboarding
+validation and emits `covenant-anchor-anomaly`.
+
+Live activation candidates are inspected even when untracked or ignored, but
+only at the exact expected root child paths. Read bytes only from safe regular
+files with no symlink, reparse point, special type, or resolved path escape.
+If effective configuration or required carrier safety/selection cannot be
+resolved, emit the registered unresolved observation and block activation;
+never substitute an assumed default. A documented default is usable only
+after complete configuration resolution proves the key absent. Live carrier
+bytes and external/user configuration are never repo ownership bytes and
+never establish source units, managed regions, onboarding ownership, or Git
+baselines.
+
+The selected index modes are part of skill-tree observation; mode `120000`,
+gitlinks, and other non-regular entries are not silently read as ordinary file
+content. A complete skill-tree comparison uses a `git-tree-manifest/v1`
+snapshot on each side and compares relative path, entry type, raw-byte digest,
+and Git mode. A filesystem-only byte comparison cannot establish Git-tree
+identity.
 
 Filter repo bytes by expectation scope excludes before applying any rule.
 Patterns are scan-root-anchored gitignore/pathspec globs: `*` does not cross
@@ -44,7 +64,9 @@ Patterns are scan-root-anchored gitignore/pathspec globs: `*` does not cross
 
 Closed token registries in both specifications are immutable within a
 version. Any addition, removal, or semantic change requires a new spec
-version. Ignore reserved unknown `bridge.*` frontmatter subkeys.
+version. Unknown tokens are not silently accepted. Entry/rule source metadata
+follows the closed v4 control-comment and `paths` schemas in
+`source-tree-spec.md`.
 
 ## The states (closed set)
 
@@ -59,13 +81,19 @@ Evaluate onboarding once before emitting rows.
 | `declared-unsynced` | A hook target declares `surface: none` and tier `declared-unsynced` | `-` | both |
 | `not-projected` | A source unit lacks an equivalent projection before onboarding | `onboard` | not-onboarded |
 | `no-source-unit` | The surface has no source unit | `-` | both |
-| `semantic-mode-block` | A managed block carries a `mode` attribute; deterministic byte comparison is inapplicable | `defer-to-arbitration` | onboarded |
 | `blocked` | Safety or loadability prevents a trustworthy carrier comparison | `resolve-blocker` | both |
 
 Every `drift` row uses the neutral action `reconcile`. Current carrier bytes
 cannot establish source direction, adoption, or conflict; those decisions
 belong exclusively to `bridge-sync` and its Git baseline. Diff shape may
 appear in evidence but never changes the state or action.
+
+The same boundary applies to contract migration. Sentinel never serializes a
+single legacy oid as a substitute for history resolution. Bridge Sync must
+enumerate the complete per-unit ancestry-maximal legacy candidate set and
+serialize it in sync-plan/v2 Migration candidates. Multiple incomparable
+candidates remain write-blocking ambiguity; a report note or user
+confirmation cannot choose one.
 
 The unit model's `no-source-unit` rule and the decision tables are the sole
 detection rules. Intent records and Git evidence may appear in notes but do
@@ -123,19 +151,32 @@ Evaluate each source unit `u` and parsed block `b`.
 | Case | Condition | Result |
 |---|---|---|
 | A0 | covenant anchor is partial, malformed, modified, untracked, or version-mismatched | one `(agents-md, rules/bridge-covenant, codex)` row: `blocked`/`resolve-blocker`, tier `structural`; emit `covenant-anchor-anomaly` |
-| A1 | block(u.id) ∃, no `mode` attr, N(body) == N(render(u)) | `in-sync` |
-| A2 | block(u.id) ∃, no `mode` attr, bodies differ | `drift`/`reconcile` |
+| A-SURFACE | live activation input is unresolved; effective root cannot be proven; root override shadows `AGENTS.md`; a fallback would be shadowed by creating `AGENTS.md`; effective budget is zero; or current root `AGENTS.md` exceeds the positive budget | affected unit rows are `blocked`/`resolve-blocker`; emit the exact activation observation |
+| A-SOURCE | dual project entries, invalid/no-op/over-budget `paths`, active shared import, unsafe source type/path, misplaced/invalid control comment, or unrepresentable source | affected unit is `blocked`/`resolve-blocker` |
+| A-MARKER | marker malformation, duplicate id, or a legacy `mode=` start prevents a trustworthy region map | affected rows are `blocked`/`resolve-blocker`; a whole-file malformation blocks every would-be write-side unit |
+| A1 | block(u.id) ∃ and N(body) == N(render(u)) | `in-sync` |
+| A2 | block(u.id) ∃ and bodies differ | `drift`/`reconcile` |
 | A3 | block(u.id) ∄ | onboarded: `drift`/`reconcile`; not-onboarded: `not-projected` |
-| A4 | block b is unattributable because its id derives from a missing source or it is a later duplicate of an already paired id | onboarded: `drift`/`reconcile`; not-onboarded: `adoption-candidate`/`annex-or-keep`; unit = b.id for a missing-source orphan, otherwise `<b.id>#<ordinal>` in file order; tier `-` |
-| A5 | block with a `mode` attribute present | `semantic-mode-block`; no byte or LLM comparison |
+| A4 | block b is unattributable because its id derives from a missing source | onboarded: `drift`/`reconcile`; not-onboarded: `adoption-candidate`/`annex-or-keep`; unit = b.id; tier `-` |
 | A6 | root AGENTS.md absent | every source unit hits A3's absent branch; no adoption-candidate row |
 | A7 | not-onboarded, AGENTS.md ∃, zero well-formed blocks, not whitespace-only | one `adoption-candidate` row, unit `AGENTS.md`, plus one `not-projected` row per source unit |
 
-A4 governs unattributable blocks even when they carry `mode`; A5 applies only
-to a paired block. A0 replaces the ordinary covenant A1–A5 row but does not
-suppress observations for other units. These cases do not infer onboarding.
-In an onboarded project, content outside well-formed blocks is an unreported
-manual zone.
+A-SURFACE, A-SOURCE, and A-MARKER run before A1–A7. A legacy `mode=`
+marker is never a semantic mode in v4. A0 replaces the ordinary covenant row
+but does not suppress observations for other units. These cases do not infer
+onboarding. In an onboarded project, content outside well-formed and proven
+managed blocks is a protected manual zone; carrier reporting does not grant
+ownership.
+
+An exact archived-v1 pair therefore hits A0: report/v4 never interprets v1 as
+a second runtime contract. Conversely, current v2/v4 carrier equality says
+nothing about whether a closed v1-to-v2 ownership transition commit is
+reachable. Sentinel remains history-free; reconciliation/v2 may still report
+`contract-migration` and `migration-transition-uncommitted` until that
+transition carries every reachable-v1 proven unit.
+
+For duplicate ids, report the first as its authoritative id and later
+occurrences as `<id>#<ordinal>` in file order, all `blocked` under A-MARKER.
 
 ### Hooks
 
@@ -187,24 +228,38 @@ the current carriers only and never selects a write direction.
 ## Closed observation vocabulary
 
 Emit each observation as `- <token>: <repo-relative-path>` plus the specified
-detail. All v3 observations except `mode-limited` derive from repo bytes or
-the exact untracked covenant-path exception above. `mode-limited` records a
-host/filesystem evidence boundary and is the sole environment-dependent
-observation.
+detail. Provenance is binding:
+
+| Provenance | Observation tokens |
+|---|---|
+| repo ownership bytes (plus the exact covenant exception where specified) | `active-shared-import`, `dual-project-entry`, `invalid-rule-paths`, `legacy-managed-mode`, every `nested-*`, `legacy-commands-dir`, `legacy-codex-skills`, `undeclared-hooks-key`, `local-hooks-present`, `json-parse-error`, `marker-anomaly`, `covenant-anchor-anomaly`, `intent-doc-anomaly`, `unsafe-skill-tree`, `unrepresentable-source-path` |
+| live activation inputs only | `surface-shadowed`, `codex-activation-unresolved`, `codex-root-unresolved`, `fallback-shadow`, `codex-effective-budget`, `agents-md-budget-disabled`, `agents-md-budget-exceeded`, `agents-md-size` |
+| host/filesystem capability evidence | `mode-limited` |
+
+No token in the second or third row may contribute ownership or baseline
+evidence. In fixture mode those inputs must be pinned explicitly; otherwise
+their observation lines are environment-dependent.
 
 | Token | Emitted when | Detail |
 |---|---|---|
-| `surface-shadowed` | root `AGENTS.override.md` exists | none |
-| `agents-md-size` | root `AGENTS.md` size ≥ floor(7 × B / 8), where B is the effective combined Codex project-document budget: a positive integer `project_doc_max_bytes` from tracked `.codex/config.toml`, otherwise the v3 pinned default 32768; do not emit when B = 0 because the surface is disabled | `(<n> bytes of <B>)` with n the exact byte size |
-| `self-referential-import` | anywhere in the entry source, including code spans and fences, a token matches `(?<!\S)@[A-Za-z0-9_./~-]+` and its path component ends `AGENTS.md` | none |
+| `surface-shadowed` | a safe regular root `AGENTS.override.md` exists, whether tracked, untracked, or ignored | none |
+| `codex-activation-unresolved` | effective Codex configuration or an exact activation carrier cannot be resolved safely | `(<reason>)` |
+| `codex-root-unresolved` | effective root-marker evidence does not prove the scan root as Codex project root | `(<reason>)` |
+| `fallback-shadow` | root `AGENTS.md` is absent and a safe regular configured same-directory fallback file is currently selected, whether tracked, untracked, or ignored | `(<selected fallback path>)` |
+| `codex-effective-budget` | configuration resolution proves the effective non-negative project-document budget | `(project_doc_max_bytes=<value>; source=<resolved|documented-default>)` |
+| `agents-md-budget-disabled` | effective `project_doc_max_bytes` is zero | none |
+| `agents-md-budget-exceeded` | a safe regular current root `AGENTS.md` is larger than the resolved effective positive budget | `(<n> bytes of <B>)` |
+| `agents-md-size` | a safe regular root `AGENTS.md` size is at least floor(7 × B / 8), where B is the resolved effective positive project-document budget; do not emit when B = 0 | `(<n> bytes of <B>)` with n the exact byte size |
+| `active-shared-import` | after control/claude-only subtraction and code-span/fence exclusion, shared source matches `(?<!\S)@[A-Za-z0-9_./~-]+` | one line per source path and match: `(<token>)` |
 | `dual-project-entry` | both `CLAUDE.md` and `.claude/CLAUDE.md` exist at the scan root | none |
+| `invalid-rule-paths` | present `paths` violates v4 schema/pattern/no-op/duplicate/brace-budget rules | one line per rule shard: `(<reason>)` |
+| `legacy-managed-mode` | a marker-like start line contains the removed v3 `mode=` attribute | one line per offending line number |
 | `nested-claude-md` | a tracked `CLAUDE.md` exists at any non-root directory | one line per file |
 | `nested-agents-md` | a tracked `AGENTS.md` or `AGENTS.override.md` exists at any non-root directory | one line per file |
 | `nested-claude-skills` | a tracked `.claude/skills/` directory exists at any non-root directory | one line per directory |
 | `nested-agents-skills` | a tracked `.agents/skills/` directory exists at any non-root directory | one line per directory |
 | `legacy-commands-dir` | `.claude/commands/` contains ≥ 1 tracked `.md` file | none |
 | `legacy-codex-skills` | a tracked `.codex/skills/` directory exists | none |
-| `config-toml-budget` | `.codex/config.toml` is tracked, readable TOML, and sets `project_doc_max_bytes` to a non-negative integer (value 0 disables the whole surface) | `(project_doc_max_bytes=<value>)` |
 | `undeclared-hooks-key` | see the hooks decision table's reverse direction above | `(<Event> matcher=<matcher or omitted>)` |
 | `local-hooks-present` | a TRACKED `.claude/settings.local.json` carries a `hooks` key (untracked ones go to Local environment notes instead) | none |
 | `json-parse-error` | a hooks projection file exists but is not valid JSON | none |
@@ -214,6 +269,17 @@ observation.
 | `mode-limited` | a required executable mode cannot be proved or realized for a proposed skill-tree operation | one line per entry with `(explicit-executable-unrealizable)`, `(worktree-mode-unobservable)`, or `(target-mode-unpreservable)` |
 | `unsafe-skill-tree` | a skill tree contains a Git symlink/gitlink, filesystem symlink/reparse point, special file, case-fold collision, or path escape | one line per entry with its kind |
 | `unrepresentable-source-path` | a would-be source path violates the marker source-path grammar | one line per file |
+
+Closed `codex-activation-unresolved` reasons are `config-unresolved`,
+`override-carrier-unsafe`, `agents-carrier-unsafe`,
+`fallback-carrier-unsafe`, `fallback-selection-unknown`, and
+`budget-unknown`. Closed `codex-root-unresolved` reasons are
+`effective-root-unknown`, `empty-markers`, and `root-marker-excluded`.
+Either unresolved token blocks affected agents-md rows under A-SURFACE.
+Closed `invalid-rule-paths`
+reasons are `schema`, `empty`, `unsafe`, `invalid-bracket`,
+`no-op-universal`, `duplicate`, `expansion-count`, `expansion-bytes`, and
+`expansion-unproved`.
 
 For nested-file observations, notes must include: “may take positional
 precedence over root content in subdirectory sessions”.
@@ -233,8 +299,8 @@ Use these tokens directly, without numeric aliases:
 | Row kind | Tier |
 |---|---|
 | agents-md `entry` unit | `structural` |
-| agents-md rule-shard unit WITHOUT non-empty `paths` frontmatter | `structural` |
-| agents-md rule-shard unit WITH non-empty `paths` frontmatter | `semantic` |
+| agents-md rule-shard unit without frontmatter | `structural` |
+| agents-md rule-shard unit with valid scoped `paths` frontmatter | `semantic` |
 | agents-md orphan block (case A4) and marked-orphan hook rows | `-` |
 | skills unit rows except adoption-candidate | `native`; express behavioral degradation with lints |
 | hooks rows | entry `targets.<host>.tier`, verbatim |
@@ -282,7 +348,7 @@ runtime blocker by itself.
 - scan root: <path as invoked>
 - scope excludes: <comma+space-separated globs, or (none)>
 - date: <YYYY-MM-DD>
-- spec: report/v3
+- spec: report/v4
 - scan surfaces: agents-md, hooks, skills
 - onboarding: <onboarded|not-onboarded|blocked>
 
@@ -321,8 +387,7 @@ the report as session output.
   (pinned in the lint list above) go in "Evidence and notes", never in the
   cell.
 - Use registered state and tier tokens. Actions are `-`, `reconcile`,
-  `annex-or-keep`, `onboard`, `defer-to-arbitration`, and
-  `resolve-blocker`.
+  `annex-or-keep`, `onboard`, and `resolve-blocker`.
 - Observation lines use `- <token>: <repo-relative-path>` plus optional
   ` (<detail>)`, sorted byte-wise by the whole line; emit `- (none)` when
   empty.
@@ -332,9 +397,10 @@ the report as session output.
 An expectation contains:
 
 ```markdown
-- expectation: report/v3
+- expectation: report/v4
 - scan root: <path relative to the directory containing this file>
 - scope excludes: <comma+space-separated globs, or (none)>
+- activation profile: <path relative to the directory containing this file, or environment-dependent>
 - onboarding: <onboarded|not-onboarded|blocked>
 
 ## Findings
@@ -347,7 +413,24 @@ An expectation contains:
 ```
 
 Resolve `scan root` relative to the expectation file (`.` means its
-directory) and pass `scope excludes` as the run parameter.
+directory) and pass `scope excludes` as the run parameter. A pinned activation
+profile is UTF-8 JSON with this closed shape:
+
+```json
+{
+  "version": "activation-fixture/v1",
+  "root_markers": [".git"],
+  "fallback_filenames": ["AGENTS.fallback.md"],
+  "project_doc_max_bytes": 32768,
+  "budget_source": "resolved"
+}
+```
+
+The three values are respectively a string array, a string array, and a
+non-negative integer; use JSON `null` for an intentionally unresolved value.
+`budget_source` is `resolved` or `documented-default`. No other key is
+allowed. Carrier existence/type/bytes are still read from the exact paths
+under the fixture scan root; profile values never become ownership bytes.
 
 Comparison rule:
 
@@ -356,7 +439,7 @@ Comparison rule:
 2. Read both documents and apply normalization N (`source-tree-spec.md`) to
    each before parsing.
 3. Require produced `- spec:` to equal expected `- expectation:`
-   (`report/v3`).
+   (`report/v4`).
 4. Require equal `- scope excludes:` values.
 5. `- onboarding:` values must be equal.
 6. Require the produced Findings header row to byte-equal the expected header
@@ -366,9 +449,11 @@ Comparison rule:
    sequences: equal length, including duplicates, and
    pairwise byte-equal cells.
 7. Observations: compare the two line lists as sorted sequences
-   (byte-per-line, equal length), after first removing from BOTH sides any
-   line whose token is registered as environment-dependent
-   (`mode-limited` in v3).
+   (byte-per-line, equal length). When `activation profile` names a valid
+   profile, compare live-activation lines normally; host/filesystem capability
+   lines remain environment-dependent. For `environment-dependent`, first
+   remove from BOTH sides every line whose provenance is live activation or
+   host/filesystem capability under the table above.
 8. Everything else — `project`, `scan root` (produced side), `date`,
    evidence, notes, local environment notes — is free-form and never
    compared.

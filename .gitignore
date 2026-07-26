@@ -4,6 +4,8 @@ node_modules/
 dist/
 coverage/
 *.log
+__pycache__/
+*.py[cod]
 
 .env
 .env.*

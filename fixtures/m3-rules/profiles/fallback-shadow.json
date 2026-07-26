@@ -1,0 +1,11 @@
+{
+  "version": "activation-fixture/v1",
+  "root_markers": [
+    ".git"
+  ],
+  "fallback_filenames": [
+    "BRIDGE_FALLBACK.md"
+  ],
+  "project_doc_max_bytes": 32768,
+  "budget_source": "documented-default"
+}

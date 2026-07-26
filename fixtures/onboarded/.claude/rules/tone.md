@@ -1,11 +1,8 @@
 ---
 paths:
   - "docs/**/*"
-bridge:
-  intent:
-    - date: 2026-07-23
-      note: keep verbatim scoped-preamble coverage after style moved to semantic mode
 ---
+<!-- bridge:intent 2026-07-23 Keep scoped-preamble coverage in the M1 fixture -->
 
 # Tone
 

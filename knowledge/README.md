@@ -9,22 +9,44 @@ evidence.
 ## Scope boundary
 
 Content here is limited to HOST FACTS and per-unit-class fidelity mappings.
-The bridge's own normative prescriptions — marker grammar, rendering
-templates, frontmatter schemas, the report format — live in the sentinel
-skill's reference specs and are linked from here, never restated:
+The bridge's own normative prescriptions — covenant bytes, marker grammar,
+rendering templates, control-comment and path schemas, report states, and
+write decisions — live in the checked-in templates and skill reference specs.
+Knowledge files summarize the host facts and point to those authorities; they
+do not create a second contract.
+
+The single current writable contract tuple is:
+
+```text
+covenant/v2
+source-tree/v4
+report/v4
+reconciliation/v2
+sync-plan/v2
+```
+
+Its authorities are:
 
 - [`../skills/bridge-sentinel/references/source-tree-spec.md`](../skills/bridge-sentinel/references/source-tree-spec.md)
   — source-tree entry conventions, onboarding, and Git-tree identity
-  (spec version `source-tree/v3`)
+  (spec version `source-tree/v4`)
 - [`../skills/bridge-sentinel/references/report-spec.md`](../skills/bridge-sentinel/references/report-spec.md)
   — read-only report states, tiers, lints, and comparison rules
-  (spec version `report/v3`)
+  (spec version `report/v4`)
 - [`../skills/bridge-sync/references/reconciliation-spec.md`](../skills/bridge-sync/references/reconciliation-spec.md)
   — write-side ownership, baseline, safety, and transaction contract
-  (spec version `reconciliation/v1`)
+  (spec version `reconciliation/v2`)
 - [`../skills/bridge-sync/references/sync-plan-spec.md`](../skills/bridge-sync/references/sync-plan-spec.md)
   — deterministic write-plan states, actions, outcomes, and warnings
-  (spec version `sync-plan/v1`)
+  (spec version `sync-plan/v2`)
+- [`../templates/covenant/README.md`](../templates/covenant/README.md)
+  — exact current `covenant/v2` source and projection assets plus migration
+  routing.
+
+The exact former `covenant/v1` / `source-tree/v3` pair under
+[`../templates/covenant/v1/`](../templates/covenant/v1/) is archived migration
+evidence only. It is not an alternate readable or writable contract, and
+normal runtime has no dual-read compatibility.
 
 ## Files
 
@@ -52,8 +74,8 @@ Every entry follows this template:
 <enumeration table and/or prose>
 ```
 
-- `status: watch` marks facts with open re-verification items. Watch items
-  flagged "before M2 write work" gate the write-side milestone: re-check the
-  official host docs before implementing against those facts.
+- `status: watch` marks facts with open re-verification items. A watch item
+  that gates a host surface must be rechecked against official host docs
+  before write-side implementation relies on it.
 - Every entry carries its collection date; entries are updated (with a new
   date) as hosts evolve.

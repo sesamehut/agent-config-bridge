@@ -1,0 +1,1260 @@
+{
+  "spec": "bridge-fixture-tree-set/v1",
+  "trees": {
+    "active-import-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-active-import.md"
+        }
+      ]
+    },
+    "base-dependency-skills": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-consumer/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-consumer-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-consumer/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-consumer/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-consumer-intent-v1.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-prerequisite/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-prerequisite-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-prerequisite/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-prerequisite/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-prerequisite-intent-v1.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-settings.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-consumer/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-consumer-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-consumer/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-consumer/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-consumer-intent-v1.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-prerequisite/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-prerequisite-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-prerequisite/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-prerequisite/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-prerequisite-intent-v1.yaml"
+        }
+      ]
+    },
+    "base-empty": {
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "project.txt",
+          "source": "@shared/fixtures/m3-rules/shared/project.txt"
+        }
+      ]
+    },
+    "base-entry": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-v1-block.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v1.md"
+        }
+      ]
+    },
+    "base-entry-manual": {
+      "base": "base-entry",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-v1-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-tail.md"
+          ]
+        }
+      ]
+    },
+    "base-old-rule": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/old.md",
+          "source": "@shared/fixtures/m3-rules/shared/rename-old.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/rename-old-block.md"
+          ]
+        }
+      ]
+    },
+    "base-onboarded": {
+      "base": "base-empty",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/bridge-covenant.md",
+          "source": "@shared/templates/covenant/claude-rules-bridge.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "source": "@shared/templates/covenant/agents-md-covenant-block.md"
+        }
+      ]
+    },
+    "base-protected": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/python.md",
+          "source": "@shared/fixtures/m3-rules/shared/rule-protected-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/rule-protected-v1-block.md"
+          ]
+        }
+      ]
+    },
+    "base-scoped": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/docs.md",
+          "source": "@shared/fixtures/m3-rules/shared/rule-scoped-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/rule-scoped-v1-block.md"
+          ]
+        }
+      ]
+    },
+    "base-semantic": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-semantic-v1-block.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-semantic-v1.md"
+        }
+      ]
+    },
+    "base-two-units": {
+      "base": "base-entry",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/beta.md",
+          "source": "@shared/fixtures/m3-rules/shared/rule-beta-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-v1-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/rule-beta-v1-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-tail.md"
+          ]
+        }
+      ]
+    },
+    "base-v1": {
+      "base": "base-empty",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-carry/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-carry/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-carry/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-intent-v1.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-release/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-release-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-release/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-release/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-release-intent.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-repair/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-repair-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-repair/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-repair/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-repair-intent.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/bridge-covenant.md",
+          "source": "@shared/templates/covenant/v1/claude-rules-bridge.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-settings.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-carry/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-carry/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-carry/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-intent-v1.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-release/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-release-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-release/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-release/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-release-intent.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-repair/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-repair-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-repair/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-repair/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-repair-intent.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "source": "@shared/templates/covenant/v1/agents-md-covenant-block.md"
+        }
+      ]
+    },
+    "both-changed-input": {
+      "base": "base-entry",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-semantic-codex-block.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v2.md"
+        }
+      ]
+    },
+    "budget-boundary-expected": {
+      "base": "budget-boundary-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-v2-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-tail.md"
+          ]
+        }
+      ]
+    },
+    "budget-boundary-input": {
+      "base": "source-update-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/config.toml",
+          "source": "@shared/fixtures/m3-rules/shared/codex-budget-boundary.toml"
+        }
+      ]
+    },
+    "budget-insufficient-input": {
+      "base": "source-update-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/config.toml",
+          "source": "@shared/fixtures/m3-rules/shared/codex-budget-insufficient.toml"
+        }
+      ]
+    },
+    "budget-zero-input": {
+      "base": "source-update-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/config.toml",
+          "source": "@shared/fixtures/m3-rules/shared/codex-budget-zero.toml"
+        }
+      ]
+    },
+    "claude-first-expected": {
+      "base": "claude-first-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-claude-first-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-tail.md"
+          ]
+        }
+      ]
+    },
+    "claude-first-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/manual-tail.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-claude-first.md"
+        }
+      ]
+    },
+    "codex-first-confirmed": {
+      "base": "codex-first-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/entry-codex-adopted-block.md",
+            "@shared/fixtures/m3-rules/shared/codex-start-tail.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-codex-adopted.md"
+        }
+      ]
+    },
+    "codex-first-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/codex-start-manual.md"
+          ]
+        }
+      ]
+    },
+    "delete-expected": {
+      "base": "delete-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md"
+          ]
+        }
+      ]
+    },
+    "delete-input": {
+      "base": "base-entry",
+      "operations": [
+        {
+          "op": "delete",
+          "path": "CLAUDE.md"
+        }
+      ]
+    },
+    "dependency-skills-expected": {
+      "base": "dependency-skills-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-consumer/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-consumer-v2.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-consumer/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-consumer-intent-v2.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-prerequisite/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-prerequisite-v2.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-prerequisite/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-prerequisite-intent-v2.yaml"
+        }
+      ]
+    },
+    "dependency-skills-input": {
+      "base": "base-dependency-skills",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-consumer/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-consumer-v2.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-consumer/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-consumer-intent-v2.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-prerequisite/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-prerequisite-v2.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-prerequisite/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-prerequisite-intent-v2.yaml"
+        }
+      ]
+    },
+    "dual-entry-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/dual-entry-fallback.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v1.md"
+        }
+      ]
+    },
+    "empty-create-expected": {
+      "base": "base-onboarded",
+      "operations": []
+    },
+    "fallback-shadow-input": {
+      "base": "base-empty",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/config.toml",
+          "source": "@shared/fixtures/m3-rules/shared/codex-fallback.toml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "BRIDGE_FALLBACK.md",
+          "source": "@shared/fixtures/m3-rules/shared/fallback.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v1.md"
+        }
+      ]
+    },
+    "guarded-postverify-partial": {
+      "base": "source-update-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-v2-corrupt-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-tail.md"
+          ]
+        }
+      ]
+    },
+    "guarded-preflight-input": {
+      "base": "source-update-input",
+      "operations": []
+    },
+    "guarded-preflight-post": {
+      "base": "source-update-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-v1-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-concurrent-tail.md"
+          ]
+        }
+      ]
+    },
+    "intent-missing-input": {
+      "base": "base-entry",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-no-intent.md"
+        }
+      ]
+    },
+    "invalid-paths-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/invalid.md",
+          "source": "@shared/fixtures/m3-rules/shared/rule-invalid-paths.md"
+        }
+      ]
+    },
+    "legacy-mode-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/legacy-mode-block.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v1.md"
+        }
+      ]
+    },
+    "marker-duplicate-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/duplicate-entry-blocks.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v1.md"
+        }
+      ]
+    },
+    "marker-orphan-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/orphan-marker.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v1.md"
+        }
+      ]
+    },
+    "marker-source-mismatch-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/source-mismatch-block.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v1.md"
+        }
+      ]
+    },
+    "marker-unclosed-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/unclosed-entry-block.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v1.md"
+        }
+      ]
+    },
+    "migration-ambiguous-left": {
+      "base": "base-v1",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-carry/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-left.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-carry/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-intent-left.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-carry/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-left.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-carry/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-intent-left.yaml"
+        }
+      ]
+    },
+    "migration-ambiguous-right": {
+      "base": "base-v1",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-carry/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-right.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-carry/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-intent-right.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-carry/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-right.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-carry/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-intent-right.yaml"
+        }
+      ]
+    },
+    "migration-v1-input": {
+      "base": "base-v1",
+      "operations": [
+        {
+          "op": "delete",
+          "path": ".agents/skills/fixture-legacy-release/SKILL.md"
+        },
+        {
+          "op": "delete",
+          "path": ".agents/skills/fixture-legacy-release/agents/openai.yaml"
+        },
+        {
+          "op": "delete",
+          "path": ".agents/skills/fixture-legacy-release/bridge-intent.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-repair/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-repair-corrupt.md"
+        },
+        {
+          "op": "delete",
+          "path": ".claude/skills/fixture-legacy-release/SKILL.md"
+        },
+        {
+          "op": "delete",
+          "path": ".claude/skills/fixture-legacy-release/agents/openai.yaml"
+        },
+        {
+          "op": "delete",
+          "path": ".claude/skills/fixture-legacy-release/bridge-intent.yaml"
+        }
+      ]
+    },
+    "migration-v1-v2-expected": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-carry/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-carry/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-carry/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-intent-v1.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-repair/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-repair-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-repair/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".agents/skills/fixture-legacy-repair/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-repair-intent.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-settings.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-carry/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-carry/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-carry/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-carry-intent-v1.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-repair/SKILL.md",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-repair-v1.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-repair/agents/openai.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/fixture-skill-openai.yaml"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/skills/fixture-legacy-repair/bridge-intent.yaml",
+          "source": "@shared/fixtures/m3-rules/shared/skill-legacy-repair-intent.yaml"
+        }
+      ]
+    },
+    "multi-unit-expected": {
+      "base": "multi-unit-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-v2-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/rule-beta-projection-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-tail.md"
+          ]
+        }
+      ]
+    },
+    "multi-unit-input": {
+      "base": "base-two-units",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/beta.md",
+          "source": "@shared/fixtures/m3-rules/shared/rule-beta-source.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-v1-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/rule-beta-projection-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-tail.md"
+          ]
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v2.md"
+        }
+      ]
+    },
+    "protected-adopt-expected": {
+      "base": "protected-adopt-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/python.md",
+          "source": "@shared/fixtures/m3-rules/shared/rule-protected-adopted.md"
+        }
+      ]
+    },
+    "protected-adopt-input": {
+      "base": "base-protected",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/rule-protected-projection-block.md"
+          ]
+        }
+      ]
+    },
+    "rename-expected": {
+      "base": "rename-input",
+      "operations": [
+        {
+          "op": "delete",
+          "path": ".claude/rules/old.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/rename-new-block.md"
+          ]
+        }
+      ]
+    },
+    "rename-input": {
+      "base": "base-old-rule",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/new.md",
+          "source": "@shared/fixtures/m3-rules/shared/rename-new.md"
+        }
+      ]
+    },
+    "root-marker-input": {
+      "base": "source-update-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/config.toml",
+          "source": "@shared/fixtures/m3-rules/shared/codex-root-marker.toml"
+        }
+      ]
+    },
+    "root-override-input": {
+      "base": "source-update-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.override.md",
+          "source": "@shared/fixtures/m3-rules/shared/root-override.md"
+        }
+      ]
+    },
+    "scoped-project-expected": {
+      "base": "scoped-project-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/rule-scoped-v2-block.md"
+          ]
+        }
+      ]
+    },
+    "scoped-project-input": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/docs.md",
+          "source": "@shared/fixtures/m3-rules/shared/rule-scoped-v2.md"
+        }
+      ]
+    },
+    "scoped-reverse-expected": {
+      "base": "scoped-reverse-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/docs.md",
+          "source": "@shared/fixtures/m3-rules/shared/rule-scoped-adopted.md"
+        }
+      ]
+    },
+    "scoped-reverse-input": {
+      "base": "base-scoped",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/rule-scoped-projection-block.md"
+          ]
+        }
+      ]
+    },
+    "semantic-review-input": {
+      "base": "base-semantic",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-semantic-codex-block.md"
+          ]
+        }
+      ]
+    },
+    "skill-delete-input": {
+      "base": "base-dependency-skills",
+      "operations": [
+        {
+          "op": "delete",
+          "path": ".claude/skills/fixture-consumer/SKILL.md"
+        },
+        {
+          "op": "delete",
+          "path": ".claude/skills/fixture-consumer/agents/openai.yaml"
+        },
+        {
+          "op": "delete",
+          "path": ".claude/skills/fixture-consumer/bridge-intent.yaml"
+        }
+      ]
+    },
+    "source-reproject-input": {
+      "base": "base-entry",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-semantic-codex-block.md"
+          ]
+        }
+      ]
+    },
+    "source-update-expected": {
+      "base": "source-update-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "sources": [
+            "@shared/templates/covenant/agents-md-covenant-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-interleaved.md",
+            "@shared/fixtures/m3-rules/shared/entry-v2-block.md",
+            "@shared/fixtures/m3-rules/shared/manual-tail.md"
+          ]
+        }
+      ]
+    },
+    "source-update-input": {
+      "base": "base-entry-manual",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m3-rules/shared/entry-v2.md"
+        }
+      ]
+    }
+  }
+}

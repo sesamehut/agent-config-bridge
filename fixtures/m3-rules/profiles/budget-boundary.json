@@ -1,0 +1,9 @@
+{
+  "version": "activation-fixture/v1",
+  "root_markers": [
+    ".git"
+  ],
+  "fallback_filenames": [],
+  "project_doc_max_bytes": 2600,
+  "budget_source": "resolved"
+}

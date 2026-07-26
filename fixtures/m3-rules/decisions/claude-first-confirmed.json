@@ -1,0 +1,16 @@
+{
+  "authorized_closures": [
+    "closure/agents-md"
+  ],
+  "intent": "Project Claude guidance into Codex.",
+  "motivation": "Project the exact Claude entry while preserving every AGENTS manual byte.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": "CLAUDE.md",
+      "sha256": "03a3b5365a7c6800c4d0c34351d3ebd9420be42bf4021cc0218dc51ef8791ad3"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

@@ -1,0 +1,29 @@
+{
+  "authorized_closures": [],
+  "intent": null,
+  "motivation": null,
+  "segments": [
+    {
+      "decision": "pending",
+      "destination": "entry",
+      "disposition": "shared-entry",
+      "id": "segment/1",
+      "lines": "42-44"
+    },
+    {
+      "decision": "pending",
+      "destination": "-",
+      "disposition": "manual",
+      "id": "segment/2",
+      "lines": "46-48"
+    }
+  ],
+  "source_bindings": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "727070be429e769b8ddb7e7f138e617209c590b144fb330d669286d9f0961724"
+    }
+  ],
+  "status": "pending",
+  "version": "replay-decision-fixture/v1"
+}

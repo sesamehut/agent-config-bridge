@@ -1,11 +1,8 @@
 ---
 paths:
   - "src/**/*"
-bridge:
-  intent:
-    - date: 2026-07-08
-      note: seed rule shard for the not-onboarded fixture
 ---
+<!-- bridge:intent 2026-07-08 Seed rule shard for the not-onboarded fixture -->
 
 # Style
 

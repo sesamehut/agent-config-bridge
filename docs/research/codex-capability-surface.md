@@ -1,9 +1,10 @@
 # Codex 能力面核验
 
-采集日期：2026-07-23。主要来源为 Codex 官方文档
-（developers.openai.com/codex）、Agent Skills 官方规范与 openai/codex 官方
-仓库实现。M2 技能结论只把官方文档和固定提交的实现作为事实依据；issue /
-discussion 只保留为待复核线索，不承担公共契约。哨兵观察项与注记的口径见
+采集日期：2026-07-24。主要来源为 Codex 官方文档
+（learn.chatgpt.com/docs）、Agent Skills 官方规范与 openai/codex 官方仓库。
+本文把官方文档记为 host contract，把固定提交源码记为带日期的 implementation
+observation；源码观察不能反向扩张公开契约。issue / discussion 只保留为待复核
+线索，不承担公共契约。哨兵观察项与注记的口径见
 [report-spec](../../skills/bridge-sentinel/references/report-spec.md)。
 
 这份核验梳理 Codex 的项目级配置能力面。结论：hooks、项目级技能、命令规则与
@@ -11,21 +12,25 @@ discussion 只保留为待复核线索，不承担公共契约。哨兵观察项
 
 ## Hooks：原生支持，已 GA
 
-来源：[developers.openai.com/codex/hooks](https://developers.openai.com/codex/hooks)、
+本节事件与 timeout 边界于 2026-07-25 局部复核；全文其余内容仍沿用文首的
+2026-07-24 采集边界。来源：
+[Codex Hooks](https://learn.chatgpt.com/docs/hooks)、
 [config-reference](https://developers.openai.com/codex/config-reference)。
 
 - **状态**：实验版随 CLI v0.114 引入（约 2026-03），GA 约 2026-05-14；采集日
   changelog（0.140.0 / 0.141.0，2026-06）中为稳定维护特性；feature flag
   `[features] hooks = true` 默认开启。
-- **事件模型**（10 个生命周期事件）：`SessionStart`、`SubagentStart`、
+- **事件模型**（11 个生命周期事件）：`SessionStart`、`SubagentStart`、
   `PreToolUse`、`PermissionRequest`、`PostToolUse`、`PreCompact`、`PostCompact`、
-  `UserPromptSubmit`、`SubagentStop`、`Stop`。10 个事件在 Claude Code 侧全部
-  同名存在，无 Codex 独有事件；Claude Code 另有约 20 个独有事件（`SessionEnd`、
-  `Notification`、`FileChanged` 等），挂在其上的钩子意图没有 Codex 原生承载面。
-- **PreToolUse 拦截范围**：可拦截 Bash、apply_patch 文件编辑和 MCP 工具调用，
-  matcher 为正则；官方定位为 guardrail 而非完整 enforcement boundary——复杂
-  shell 调用与 WebSearch 等非 shell / 非 MCP 工具不被拦截
-  （[openai/codex#20204](https://github.com/openai/codex/issues/20204)）。
+  `UserPromptSubmit`、`SubagentStop`、`Stop`、`SessionEnd`。11 个事件在
+  Claude Code 侧全部同名存在，无 Codex 独有事件；Claude Code 另有一组独有事件
+  （`Notification`、`FileChanged` 等），挂在其上的钩子意图没有 Codex 原生
+  承载面。`SessionEnd` 只作用于主线程，当前 matcher reason 只有 `other`；
+  command 默认 timeout 为 1 秒、最大为 3 秒。
+- **PreToolUse 拦截范围**：可拦截 Bash / unified exec、apply_patch 文件编辑、
+  MCP 工具调用及其他走标准 local function-tool hook path 的工具，matcher 为正则。
+  WebSearch 等 hosted tools 不走该路径，部分专用 local tool path 也可退出默认
+  hook path；因此官方仍将它定位为 guardrail，而非完整 enforcement boundary。
 - **配置形式**：`hooks.json` 顶层是带 `hooks` 键的包装对象（可选顶层
   `description` 字符串），`hooks` 内为事件名键，值与 Claude Code hooks 同族
   （事件 → matcher 分组 → `{type, command, timeout, statusMessage}`）；
@@ -186,34 +191,69 @@ gate，行为与开放规范及 runtime loader 都不完全相同：
 
 ## AGENTS.md：项目指令加载机制
 
-来源：[guides/agents-md](https://developers.openai.com/codex/guides/agents-md)、
-[config-reference](https://developers.openai.com/codex/config-reference)。
+公开契约来源：
+[AGENTS.md 指南](https://learn.chatgpt.com/docs/agent-configuration/agents-md)、
+[Advanced Configuration](https://learn.chatgpt.com/docs/config-file/config-advanced#project-root-detection)
+与
+[Worktrees](https://learn.chatgpt.com/docs/environments/git-worktrees#copy-ignored-local-files-into-managed-worktrees)。
+实现观察固定在 openai/codex 提交
+[`0dfa778dae6a94b2ff2c69176cbaf063a3bf18a1`](https://github.com/openai/codex/commit/0dfa778dae6a94b2ff2c69176cbaf063a3bf18a1)，
+主要证据为
+[`agents_md.rs`](https://github.com/openai/codex/blob/0dfa778dae6a94b2ff2c69176cbaf063a3bf18a1/codex-rs/core/src/agents_md.rs)、
+[`agents_md_manager.rs`](https://github.com/openai/codex/blob/0dfa778dae6a94b2ff2c69176cbaf063a3bf18a1/codex-rs/core/src/agents_md_manager.rs)
+与
+[`codex-home/src/instructions/mod.rs`](https://github.com/openai/codex/blob/0dfa778dae6a94b2ff2c69176cbaf063a3bf18a1/codex-rs/codex-home/src/instructions/mod.rs)。
 
-- **发现链**：项目根由 `project_root_markers`（默认 `.git`）从 cwd 向上定位，
-  随后从项目根到 cwd 逐目录收集指令文件；每目录按 `AGENTS.override.md` →
+- **发现链（host contract）**：项目根由 `project_root_markers`（默认 `.git`）
+  从 cwd 向上定位；空 marker 列表不搜索父目录，并把当前 cwd 当项目根。随后从
+  项目根到 cwd 逐目录收集指令文件；每目录按 `AGENTS.override.md` →
   `AGENTS.md` → `project_doc_fallback_filenames` 取第一个命中，**每目录至多
-  一个文件**。全局层另读 `~/.codex/AGENTS.override.md`（否则 `AGENTS.md`）。
-- **`AGENTS.override.md` 是同目录遮蔽**（2026-07-08）：根目录存在 override 时
-  它完整取代根 `AGENTS.md` 进链——整个规则投射面静默失效，哨兵将其作为一级
-  发现报告。官方文档对该文件是否建议 gitignore 仍无说明。
-- **拼接语义**：全部命中文件按根到 cwd 顺序原样拼接（全局指令在前），层级间无
-  替换 / 遮蔽；指令链按环境 cwd 构建（2026-07-08 更正，原记"会话启动时构建
-  一次"；当前 main 支持多环境，每环境各建一条链），cwd 之下与旁系目录不扫描，
-  也不随编辑位置动态加载。
-- **预算**（2026-07-08）：`project_doc_max_bytes`（默认 32768 字节，即
-  32 KiB）是项目根到 cwd 整条指令链的合并预算，按根在前的顺序消耗；越过剩余
-  额度的那个文件被从中间截断，TUI 无任何提示，其后的文件整体跳过。全局层
-  `~/.codex/AGENTS(.override).md` 不计入该预算、前置拼接。显式设
-  `project_doc_max_bytes = 0` 会关闭整个项目指令面，哨兵对此报观察项。
-  config-reference 上按逐文件预算的表述已过时。
-- **无内嵌语义**：文件按原始字节拼进 prompt，不解析 frontmatter，不支持 glob /
-  条件作用域；**HTML 注释也不剥离**（与 Claude 相反）——受管区块标记在 Codex
-  侧进入模型上下文并占用预算，应保持精简。
+  一个文件**。全局层另读 `$CODEX_HOME/AGENTS.override.md`（否则
+  `AGENTS.md`）。
+- **override 与 fallback（host contract）**：`AGENTS.override.md` 完整遮蔽
+  同目录的 `AGENTS.md`；`AGENTS.md` 又遮蔽同目录 fallback。因此 root override
+  会使 Bridge 的 root target 不进入链，而新建 root `AGENTS.md` 可能使原先通过
+  fallback 生效的指导退出链。Bridge policy 是写前观察有效 root markers、
+  override 与 fallback，并在会丢失既有上下文时要求收编 / 用户决策；不是改写
+  用户级 config。
+- **ignored override 的 managed-worktree 特例（host contract）**：本地
+  ChatGPT desktop 管理的 worktree 会自动复制被 ignore 的
+  `AGENTS.override.md`，无需把它列入 `.worktreeinclude`。官方明确把该行为限定在
+  local managed worktree；remote worktree 与用户通过 CLI 自建的 worktree
+  不在保证范围内。官方没有给普通仓库一个普遍的 “override 应当 gitignore”
+  规范。
+- **拼接与生命周期（host contract）**：项目文件按 root→cwd 进入组合上下文，
+  deeper 文件因位置靠后获得软 precedence；cwd 以下和旁系目录不扫描，也不随
+  正在编辑的文件动态加载。官方文档明确指令链在每个 run 启动时构建，TUI 通常是
+  每个已启动 session 一次；配置变化需要新 command / restart。
+- **cache 细节（implementation observation，2026-07-24）**：固定提交在 session
+  初始化加载指令；每回合虽然调用 refresh，但 cache key 只包含 environment
+  selection 列表。列表不变时不会重读文件，selection 变化时才按每个 environment
+  cwd 重建一条链。该行为解释当前 main 的多环境实现，但不是 Bridge 可依赖的
+  host contract；写入后仍应提示新 run / session 才能验证 activation。同一固定
+  提交还在计算 root markers 时排除 project config layers；这是实现观察，公开
+  文档没有承诺项目 `.codex/config.toml` 能改变对其自身的根发现。
+- **预算（host contract + implementation observation）**：
+  `project_doc_max_bytes` 默认 32768 字节（32 KiB），是项目 root→cwd **组合**
+  guidance 的预算，而非每文件各一份。固定提交进一步证实预算按每个 selected
+  environment 的链独立计算、root-first 消耗；跨越剩余额度的文件按字节中途截断，
+  后续文件跳过；`0` 关闭整个项目指令面。全局
+  `$CODEX_HOME/AGENTS(.override).md` 独立读取、trim 后前置，不计 project
+  budget。当前源码写 tracing warning，但公开 UI 没有承诺可见的截断提示。
+  Advanced Configuration 同页仍写 “from each AGENTS.md file”，与更专门的
+  AGENTS.md 指南及固定提交实现冲突；本文采用后两者，并保留该文档漂移观察。
+- **字节与解码（implementation observation，2026-07-24）**：固定提交先按字节
+  读取 / 截断，再以 `String::from_utf8_lossy` 解码；合法 UTF-8 内容不解析
+  frontmatter，不展开 `@path`，不支持 glob / 条件作用域，也不剥离 HTML 注释。
+  截断若切开多字节字符会产生 U+FFFD，所以准确表述是“字节预算、无内嵌语义
+  预处理”，不是任意 raw bytes 原封不动进入 prompt。受管区块标记会进入模型
+  上下文并占用预算，应保持精简。
 - **没有分片机制**：Codex 没有 `.claude/rules/*.md` 的等价物（官方
   [customization](https://developers.openai.com/codex/concepts/customization)
   页枚举的模型面只有 AGENTS.md / Memories / Skills / MCP / Subagents）；嵌套
   AGENTS.md 是唯一原生多文件指令形态。规则分片注入 `AGENTS.md` 受管区块就是
-  投射到原生指令面，path-scoped 语义走适用性前言。
+  投射到原生指令面，path-scoped 语义走适用性前言。适用性前言是 Bridge 的
+  attention-scoping policy，不是 Codex 的机械 path enforcement。
 
 ## 其余机制速记
 
@@ -247,6 +287,17 @@ auth / notify 等机器本地键）、`hooks.json`、`rules/*.rules`、`agents/*
   `.agents/skills/` 合成未经官方证实的 host-trust 状态。
 - `[[skills.config]]` 保持用户本地所有权；M2 不生成或改写 Codex config。
 - execpolicy 权限映射在 MVP 维持声明不同步。
+- entry / rules 的 Bridge policy 同样把 repo bytes、host discoverability 与
+  live activation 分开：root `AGENTS.md` 中存在完整 managed block 只证明投射
+  bytes；有效 root markers、无同目录 override、非零且足够的组合预算才支撑
+  discoverability；新 run / session 的加载证据才支撑 activation。
+- 新建 `AGENTS.md` 会按 host priority 遮蔽同目录 fallback。Bridge 不改用户
+  `$CODEX_HOME/config.toml`；写前应把有效 fallback 和其内容丢失风险纳入同一
+  aggregate plan，必要时要求收编或用户决策。
+- 同一物理 `AGENTS.md` 的受管分片必须聚合计划并保护 manual zone；只有在按实际
+  文件顺序、marker bytes 与有效 `project_doc_max_bytes` 计算后，完整受管区块
+  仍位于可加载前缀内，才能声称该 target 可发现。该规则是由 host 预算推导出的
+  Bridge policy，不是 Codex 自带的事务保证。
 
 ## 实现前需要复核
 
@@ -262,7 +313,14 @@ auth / notify 等机器本地键）、`hooks.json`、`rules/*.rules`、`agents/*
 - hooks 信任流程的实际交互成本（首次信任、哈希变更重信任）对快路径体验的
   影响。
 - 受管区块与投射内容对 `project_doc_max_bytes` 合并预算的占用；警戒阈值的
-  标定留到有真实投射体量后进行。
-- `AGENTS.override.md` 的 gitignore 定位（官方仍无说明）。
+  标定与“区块不完整即阻断”的 contract-owner 决策。
+- 有效 `project_root_markers`、fallback names、root override 与 budget=0 对
+  当前 repo discoverability 的影响；只记录环境事实，不修改用户配置。
+- openai/codex 后续版本是否改变 session-init /
+  environment-selection cache 语义；公开契约仍以每 run / TUI session 为准。
+- ignored `AGENTS.override.md` 自动复制是否仍只限本地 ChatGPT desktop managed
+  worktree，不把该特例推广为普通 CLI / remote worktree 契约。
+- Advanced Configuration 的 per-file budget 措辞是否与 AGENTS.md 指南和实现
+  重新对齐。
 - 官方 skill 校验器与 Agent Skills 标准对 `compatibility` 键的差异是否消失；
   消失后再收窄对应兼容 lint。

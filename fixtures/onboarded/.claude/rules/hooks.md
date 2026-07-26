@@ -1,9 +1,4 @@
----
-bridge:
-  intent:
-    - date: 2026-07-08
-      note: seed hook intent document for the onboarded fixture
----
+<!-- bridge:intent 2026-07-08 Seed hook intent document for the onboarded fixture -->
 
 # Hook intents
 
