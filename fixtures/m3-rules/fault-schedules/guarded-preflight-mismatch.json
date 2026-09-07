@@ -1,6 +1,6 @@
 {
-  "expected_preimage_sha256": "ad377421fa38aafedfbe92f2d8851860e2cb23adbcc6a06aa2c30428f1cafa93",
-  "injected_sha256": "74b66cd17d3d59433db9ff91e6b46b5bd3f4070fd9f220c913b1f292353af27f",
+  "expected_preimage_sha256": "4c55cffa33e14ee3135dd796bd02f099712c0feef969a7ead6b89df594a69877",
+  "injected_sha256": "2e9952c1da628e40b6b13f34a798979b74d02a557172cb944ff0e287723dbd24",
   "injected_state": "guarded-preflight-post",
   "persistence": "persistent",
   "phase": "after-confirmation-before-final-preflight",

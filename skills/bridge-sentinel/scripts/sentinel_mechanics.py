@@ -68,8 +68,8 @@ INTENT_PATTERN = re.compile(
     rb"<!-- bridge:intent (\d{4}-\d{2}-\d{2}) (.+) -->"
 )
 COVENANT_CONTROL = (
-    b"<!-- bridge:covenant covenant/v2 source-tree/v4 report/v4 "
-    b"reconciliation/v2 sync-plan/v2 -->"
+    b"<!-- bridge:covenant covenant/v3 source-tree/v5 report/v5 "
+    b"reconciliation/v3 sync-plan/v3 -->"
 )
 PV2_PREFIX = (
     "Applies only while reading or editing files that match at least one "
@@ -78,7 +78,7 @@ PV2_PREFIX = (
 PV2_SUFFIX = ". (bridge:pv2)"
 UNIVERSAL_PATH_PATTERNS = {"**", "**/*"}
 ACTIVATION_PROFILE_SPEC = "activation-fixture/v1"
-REPORT_SPEC = "report/v4"
+REPORT_SPEC = "report/v5"
 FINDINGS_HEADER = (
     "| surface | unit | host | state | suggested action | tier | annotations |"
 )
@@ -2139,7 +2139,7 @@ def header_value(lines: list[str], key: str) -> Optional[str]:
 def validate_report_document(
     lines: list[str], *, expectation: bool
 ) -> dict[str, str]:
-    """Validate the closed report/v4 or expectation document skeleton."""
+    """Validate the closed report/v5 or expectation document skeleton."""
 
     heading_indexes = [
         index for index, line in enumerate(lines) if line.startswith("## ")
@@ -2305,7 +2305,7 @@ def parse_observations(lines: list[str]) -> list[str]:
 
 
 def validate_activation_profile(path: Path) -> dict[str, Any]:
-    """Validate the closed report/v4 fixture activation profile."""
+    """Validate the closed report/v5 fixture activation profile."""
 
     try:
         path_stat = path.lstat()
@@ -3057,7 +3057,7 @@ def run_self_test() -> dict[str, Any]:
                 "- scan root: .\n"
                 "- scope excludes: (none)\n"
                 "- date: 2026-07-24\n"
-                "- spec: report/v4\n"
+                "- spec: report/v5\n"
                 "- scan surfaces: agents-md, hooks, skills\n"
                 "- onboarding: onboarded\n\n"
                 + findings
@@ -3071,7 +3071,7 @@ def run_self_test() -> dict[str, Any]:
             observations: str, activation_header: str
         ) -> str:
             return (
-                "- expectation: report/v4\n"
+                "- expectation: report/v5\n"
                 "- scan root: .\n"
                 "- scope excludes: (none)\n"
                 f"- activation profile: {activation_header}\n"
@@ -3102,14 +3102,14 @@ def run_self_test() -> dict[str, Any]:
         invalid_version = root / "invalid-version.md"
         invalid_version.write_text(
             produced.read_text(encoding="utf-8").replace(
+                "- spec: report/v5",
                 "- spec: report/v4",
-                "- spec: report/v3",
             ),
             encoding="utf-8",
         )
         self_test_expect_value_error(
             lambda: compare_expectations(invalid_version, expected),
-            "non-v4 produced report",
+            "non-v5 produced report",
         )
         missing_section = root / "missing-section.md"
         missing_section.write_text(
@@ -3144,7 +3144,7 @@ def run_self_test() -> dict[str, Any]:
             lambda: compare_expectations(prose_observation, expected),
             "non-observation prose in Observations",
         )
-        checks.append("report-v4-strict-grammar")
+        checks.append("report-v5-strict-grammar")
 
         activation_profile = root / "activation-profile.json"
         activation_profile.write_text(

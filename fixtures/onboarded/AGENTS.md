@@ -1,8 +1,8 @@
 <!-- bridge:managed:start id=rules/bridge-covenant source=.claude/rules/bridge-covenant.md -->
 # Bridge covenant
 
-Bridge contract versions: `covenant/v2`, `source-tree/v4`, `report/v4`,
-`reconciliation/v2`, and `sync-plan/v2`.
+Bridge contract versions: `covenant/v3`, `source-tree/v5`, `report/v5`,
+`reconciliation/v3`, and `sync-plan/v3`.
 
 This project keeps each managed project skill as one canonical Git tree at
 `.claude/skills/<name>/` and one byte-identical Codex projection at
@@ -35,8 +35,15 @@ Preserve the root `AGENTS.md` manual zone byte-for-byte. A `keep` decision
 applies only to the current run and leaves the unit unresolved; it does not
 create an ignore rule.
 
-M3 projects skills, entry instructions, and rule shards. Hook intent
-installation and both native hook carriers remain disabled until M4.
+Bridge projects skills, entry instructions, rule shards, and hook intents.
+Hook intents live in `.claude/rules/hooks.md`. Bridge projects each declared
+hook only to the native carrier its entry declares, `.claude/settings.json`
+for Claude and `.codex/hooks.json` for Codex, and every plan states each
+hook's tier and reason for both hosts. Bridge never projects a `gate` or
+`side-effect` hook without a dated `enabled-by` record in the source. Hooks
+committed to this repository run for everyone who clones it; Bridge
+classification is review metadata, not a sandbox. Surfaces outside the
+contract tuple named above are not Bridge-managed.
 <!-- bridge:managed:end -->
 
 <!-- bridge:managed:start id=entry source=CLAUDE.md -->

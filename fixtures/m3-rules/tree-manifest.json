@@ -921,7 +921,7 @@
         }
       ]
     },
-    "migration-v1-v2-expected": {
+    "migration-v1-v3-expected": {
       "base": "base-onboarded",
       "operations": [
         {

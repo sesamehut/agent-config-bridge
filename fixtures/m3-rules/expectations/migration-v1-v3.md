@@ -1,10 +1,10 @@
 # Bridge Sync Plan
 
-- project: migration-v1-v2
+- project: migration-v1-v3
 - scan root: .
 - date: 2026-07-24
-- expectation: sync-plan/v2
-- contracts: covenant/v2, source-tree/v4, report/v4, reconciliation/v2
+- expectation: sync-plan/v3
+- contracts: covenant/v3, source-tree/v5, report/v5, reconciliation/v3
 - phase: post-write
 - onboarding: blocked
 - authorization: confirmed

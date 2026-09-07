@@ -3,8 +3,8 @@
 - project: budget-boundary
 - scan root: .
 - date: 2026-07-24
-- expectation: sync-plan/v2
-- contracts: covenant/v2, source-tree/v4, report/v4, reconciliation/v2
+- expectation: sync-plan/v3
+- contracts: covenant/v3, source-tree/v5, report/v5, reconciliation/v3
 - phase: post-write
 - onboarding: onboarded
 - authorization: confirmed
@@ -35,7 +35,7 @@
 
 ## Warnings
 
-- agents-md-near-budget: AGENTS.md (2495 bytes of 2600)
+- agents-md-near-budget: AGENTS.md (2997 bytes of 3100)
 - guarded-patch-non-cas: AGENTS.md
 - manual-zone-guarded: AGENTS.md
 - strict-compensation-unavailable: AGENTS.md

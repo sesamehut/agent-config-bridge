@@ -981,7 +981,7 @@
       ]
     },
     {
-      "baseline": "migration-v1-v2-expected",
+      "baseline": "migration-v1-v3-expected",
       "coverage": [
         "migration-transition-rescan"
       ],
@@ -996,7 +996,7 @@
           ],
           "id": "unchanged",
           "plan": "expectations/migration-transition-rescan.md",
-          "post_state": "migration-v1-v2-expected"
+          "post_state": "migration-v1-v3-expected"
         }
       ],
       "history": {
@@ -1013,13 +1013,13 @@
             "parents": [
               "legacy"
             ],
-            "tree": "migration-v1-v2-expected"
+            "tree": "migration-v1-v3-expected"
           }
         ],
         "head": "transition"
       },
       "id": "migration-transition-rescan",
-      "input": "migration-v1-v2-expected",
+      "input": "migration-v1-v3-expected",
       "replay": "agent",
       "safeguards": [
         "covenant-migration-barrier",
@@ -1054,14 +1054,14 @@
             "migration-transition-uncommitted"
           ],
           "id": "applied",
-          "plan": "expectations/migration-v1-v2.md",
-          "post_state": "migration-v1-v2-expected"
+          "plan": "expectations/migration-v1-v3.md",
+          "post_state": "migration-v1-v3-expected"
         }
       ],
-      "id": "migration-v1-v2",
+      "id": "migration-v1-v3",
       "input": "migration-v1-input",
       "decision_fixture": "decisions/confirm-migration.json",
-      "rendered_state": "migration-v1-v2-expected",
+      "rendered_state": "migration-v1-v3-expected",
       "write_capability_fixture": "capabilities/guarded-migration.json",
       "replay": "agent",
       "safeguards": [

@@ -1,4 +1,4 @@
-- expectation: report/v4
+- expectation: report/v5
 - scan root: ../..
 - scope excludes: fixtures/**
 - activation profile: activation-profile.json

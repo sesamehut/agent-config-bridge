@@ -8,20 +8,20 @@
       "destination": "entry",
       "disposition": "shared-entry",
       "id": "segment/1",
-      "lines": "42-44"
+      "lines": "49-51"
     },
     {
       "decision": "pending",
       "destination": "-",
       "disposition": "manual",
       "id": "segment/2",
-      "lines": "46-48"
+      "lines": "53-55"
     }
   ],
   "source_bindings": [
     {
       "path": "AGENTS.md",
-      "sha256": "727070be429e769b8ddb7e7f138e617209c590b144fb330d669286d9f0961724"
+      "sha256": "cca738dcadbc31773ae7bf8df5c8d52f80296b6c5f73ee2ef6b63e9683b19641"
     }
   ],
   "status": "pending",

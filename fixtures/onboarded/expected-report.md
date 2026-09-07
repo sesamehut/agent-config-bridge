@@ -1,4 +1,4 @@
-- expectation: report/v4
+- expectation: report/v5
 - scan root: .
 - scope excludes: (none)
 - activation profile: activation-profile.json

@@ -86,8 +86,8 @@ from sentinel_mechanics import (  # noqa: E402
 SUITE = "m3-rules"
 MATRIX_SPEC = "bridge-m3-rules-matrix/v2"
 SCENARIO_SPEC = "bridge-m3-rules-scenario/v2"
-PLAN_SPEC = "sync-plan/v2"
-PLAN_CONTRACTS = "covenant/v2, source-tree/v4, report/v4, reconciliation/v2"
+PLAN_SPEC = "sync-plan/v3"
+PLAN_CONTRACTS = "covenant/v3, source-tree/v5, report/v5, reconciliation/v3"
 TREE_MANIFEST = HERE / "tree-manifest.json"
 MATRIX_PATH = HERE / "scenario-matrix.json"
 JOURNAL_VALIDATOR_TESTS_PATH = HERE / "journal_validator_tests.py"
@@ -5452,7 +5452,7 @@ def _formal_adversarial_plans(
                 "legacy-incomplete-warning-set",
                 _replace_once(
                     plan_bytes,
-                    b"- marker-anomaly: AGENTS.md (line 49)\n",
+                    b"- marker-anomaly: AGENTS.md (line 56)\n",
                     b"",
                     label="legacy marker warning",
                 ),
@@ -5493,7 +5493,7 @@ def _formal_adversarial_plans(
                 ),
             )
         )
-    elif key == ("migration-v1-v2", "applied"):
+    elif key == ("migration-v1-v3", "applied"):
         baseline = marker["baseline_commit"].encode("ascii")
         mutations.append(
             (
@@ -8758,7 +8758,7 @@ def run_self_test() -> Dict[str, Any]:
                             marker=marker,
                         )
                     if (
-                        scenario_id == "migration-v1-v2"
+                        scenario_id == "migration-v1-v3"
                         and expectation["id"] == "applied"
                     ):
                         checks += _exercise_plan_diagnostic_contract(
@@ -8852,7 +8852,7 @@ def run_self_test() -> Dict[str, Any]:
         "workflow_executed": False,
         "replay_boundary": (
             "The harness validates declarations, leased materialization, "
-            "expected trees, sync-plan/v2 shape, and the fixture-only "
+            "expected trees, sync-plan/v3 shape, and the fixture-only "
             "guarded-preflight fault adapter. It never runs bridge-sync; "
             "an agent must run $bridge-sync for agent scenarios."
         ),
@@ -10719,7 +10719,7 @@ def _rule_tier_from_public_source(
         source_byte_records(entry["bytes"]),
         kind="rule",
     )
-    # source-tree/v4 permits only the paths map in recognized rule
+    # source-tree/v5 permits only the paths map in recognized rule
     # frontmatter. YAML validity is an agent-supplied semantic fact and is not
     # reparsed here. A recognized but invalid scope remains the semantic
     # candidate blocked by invalid-rule-paths; it never becomes unscoped.

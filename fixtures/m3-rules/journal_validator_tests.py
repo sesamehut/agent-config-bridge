@@ -36,8 +36,8 @@ PLAN_TEXT = """# Bridge Sync Plan
 - project: codex-first-mixed
 - scan root: .
 - date: 2026-07-24
-- spec: sync-plan/v2
-- contracts: covenant/v2, source-tree/v4, report/v4, reconciliation/v2
+- spec: sync-plan/v3
+- contracts: covenant/v3, source-tree/v5, report/v5, reconciliation/v3
 - phase: pre-write
 - onboarding: onboarded
 - authorization: confirmed
@@ -87,8 +87,8 @@ PLAN_TEXT = """# Bridge Sync Plan
 
 | segment | lines | disposition | destination | decision |
 |---|---|---|---|---|
-| segment/1 | 42-44 | shared-entry | entry | confirmed |
-| segment/2 | 46-48 | manual | - | confirmed |
+| segment/1 | 49-51 | shared-entry | entry | confirmed |
+| segment/2 | 53-55 | manual | - | confirmed |
 """
 FORMAL_SCRATCH_PATTERNS = (
     "bridge-journal-formal-attestation-*",
@@ -1291,23 +1291,23 @@ def _exercise_cross_contexts(
     formal_scratch_before = _formal_scratch_entries(session_root)
     try:
         materialized, root, current_lease = materialize(
-            "migration-v1-v2"
+            "migration-v1-v3"
         )
         try:
             plan_path = bound_plan(
-                "migration-v1-v2-confirmed.md",
+                "migration-v1-v3-confirmed.md",
                 root=root,
-                replay_input="migration-v1-v2",
+                replay_input="migration-v1-v3",
                 lease=current_lease,
             )
             context, formal = context_and_formal(
-                replay_input="migration-v1-v2",
+                replay_input="migration-v1-v3",
                 root=root,
                 lease=current_lease,
                 plan_path=plan_path,
             )
             direct = harness._validate_plan_result(
-                replay_input="migration-v1-v2",
+                replay_input="migration-v1-v3",
                 root=root,
                 lease=current_lease,
                 plan_path=plan_path,

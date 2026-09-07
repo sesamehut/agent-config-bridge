@@ -1,7 +1,7 @@
 # M3 reconciliation fixtures
 
-These declarative vectors exercise `covenant/v2`, `source-tree/v4`,
-`report/v4`, `reconciliation/v2`, and `sync-plan/v2` entry/rule behavior.
+These declarative vectors exercise `covenant/v3`, `source-tree/v5`,
+`report/v5`, `reconciliation/v3`, and `sync-plan/v3` entry/rule behavior.
 The harness validates the matrix, named trees, exact plan grammar, fixture-only
 capability attestations, write protocols, rendered proposals, expected
 post-state, safeguards, lease-bound materialization, live-journal schema, and
@@ -201,7 +201,7 @@ named `bridge-fixture-tree-set/v1` graph. Trees may extend one earlier tree
 and apply ordered safe write, delete, or symlink operations resolved by the
 shared product-neutral helper in [`../_support/`](../_support/).
 
-Every expectation names one `sync-plan/v2` document and one exact post-state
+Every expectation names one `sync-plan/v3` document and one exact post-state
 tree. A budget warning also names `planned_state`; the harness derives the
 complete planned `AGENTS.md` byte count from that tree and checks the warning's
 threshold relation. A syntactically valid all-zero baseline in an expectation
