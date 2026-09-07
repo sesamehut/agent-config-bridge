@@ -1,0 +1,18 @@
+{
+  "description": "Project hooks reviewed by the team on 2026-08-30.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop fmt-on-save",
+            "timeout": 10,
+            "statusMessage": "[bridge:fmt-on-save]",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

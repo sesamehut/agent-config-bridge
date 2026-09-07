@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bridge-fixture-noop stop-note", "timeout": 10, "statusMessage": "[bridge:stop-note]" }
+        ]
+      }
+    ]
+  }
+}

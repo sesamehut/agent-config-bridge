@@ -1,0 +1,16 @@
+# Inert fixture Codex configuration for the inline-hooks read-side case.
+# The inline table below declares the same Stop hook that .codex/hooks.json
+# already carries. Codex merges both forms within one layer and keys per-hook
+# trust by source path plus positional indices, so the two declarations become
+# two distinct trust keys sharing one normalized hash and the hook runs twice.
+# report/v5 discloses the presence with codex-inline-hooks-present (Stop); the
+# write side blocks closure/hooks/codex with codex-inline-hooks-conflict.
+# The detector is a shallow byte scan of table headers and a top-level pointer
+# key, never a TOML parse, so no line below is read for its value.
+
+[hooks.Stop]
+
+[[hooks.Stop.hooks]]
+type = "command"
+command = "bridge-fixture-noop stop-note"
+timeout = 10

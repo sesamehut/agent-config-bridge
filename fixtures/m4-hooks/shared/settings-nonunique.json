@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": ["Read(//src/**)"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^(Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop fmt-on-save",
+            "timeout": 10,
+            "statusMessage": "[bridge:fmt-on-save]"
+          }
+        ]
+      },
+      {
+        "matcher": "^(Edit)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop fmt-on-save",
+            "timeout": 10,
+            "statusMessage": "[bridge:fmt-on-save]"
+          }
+        ]
+      }
+    ]
+  }
+}

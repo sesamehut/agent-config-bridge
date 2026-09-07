@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": ["Read(//src/**)"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop stale-check",
+            "timeout": 10,
+            "statusMessage": "[bridge:stale-check]"
+          }
+        ]
+      }
+    ]
+  }
+}

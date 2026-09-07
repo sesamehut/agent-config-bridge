@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": ["Read(//src/**)"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop fmt-on-save",
+            "timeout": 10,
+            "statusMessage": "[bridge:fmt-on-save]"
+          },
+          {
+            "type": "mcp_tool",
+            "server": "fixture-review",
+            "tool": "record_edit",
+            "input": {
+              "channel": "fixture"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

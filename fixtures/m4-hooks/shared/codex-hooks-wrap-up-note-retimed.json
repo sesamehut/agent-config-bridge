@@ -1,0 +1,17 @@
+{
+  "description": "Project hooks reviewed by the team on 2026-08-30.",
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop wrap-up-note",
+            "timeout": 3,
+            "statusMessage": "[bridge:wrap-up-note]"
+          }
+        ]
+      }
+    ]
+  }
+}

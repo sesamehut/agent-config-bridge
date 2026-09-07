@@ -1,0 +1,37 @@
+{
+  "description": "Project hooks reviewed by the team on 2026-08-30.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop stale-check",
+            "timeout": 10,
+            "statusMessage": "[bridge:stale-check]"
+          }
+        ]
+      },
+      {
+        "matcher": "^(Read)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop read-audit",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "^(Bash)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop shell-audit",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

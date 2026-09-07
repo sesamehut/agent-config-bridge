@@ -30,5 +30,7 @@
 ## Observations
 
 - codex-effective-budget: AGENTS.md (project_doc_max_bytes=32768; source=resolved)
+- hook-output-not-delivered: .claude/rules/hooks.md (entry sentinel-stop)
+- matcher-grammar-divergent: .claude/rules/hooks.md (entry fmt-on-save)
 - nested-agents-md: sub/AGENTS.md
 - undeclared-hooks-key: .claude/settings.json (SessionStart matcher=startup)

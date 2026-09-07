@@ -1,0 +1,18 @@
+{
+  "authorized_closures": [
+    "closure/hooks/claude",
+    "closure/hooks/codex",
+    "closure/hooks/source"
+  ],
+  "intent": "Record the dated enabled-by opt-in for journal-writer in the source document.",
+  "motivation": "Reviewed the exact command line bridge-fixture-noop journal-writer and accepted that every clone of this repository runs it at session end.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "f2da2ba29371c2fe4b4369c45a2444f9a4a2c088cc8708b5ac37cf98ebd9ec62"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

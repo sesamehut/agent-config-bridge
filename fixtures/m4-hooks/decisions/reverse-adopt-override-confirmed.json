@@ -1,0 +1,20 @@
+{
+  "authorized_closures": [
+    "closure/hooks/source"
+  ],
+  "intent": "Adopt the hand-edited Codex Windows command as a declared per-host override.",
+  "motivation": "Record the exact commandWindows override and its platform-command reason without collapsing it into the shared scalar.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "d6cc9d2bdd24d738c9e8377b23090e55c35bac75afe4cc75a1698fde47101c2b"
+    },
+    {
+      "path": ".codex/hooks.json",
+      "sha256": "28c7491c4dad4922da4eea73b8f27b25bc4395edca1571e50e6d729fcd7f369b"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

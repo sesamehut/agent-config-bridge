@@ -1,0 +1,28 @@
+{
+  "description": "Project hooks reviewed by the team on 2026-08-30.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop team-banner",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop session-banner",
+            "commandWindows": "bridge-fixture-noop session-banner-windows-v2",
+            "timeout": 5,
+            "statusMessage": "[bridge:session-banner]"
+          }
+        ]
+      }
+    ]
+  }
+}

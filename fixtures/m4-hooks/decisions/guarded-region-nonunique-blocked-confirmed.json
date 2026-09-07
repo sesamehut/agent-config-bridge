@@ -1,0 +1,16 @@
+{
+  "authorized_closures": [
+    "closure/hooks/claude"
+  ],
+  "intent": null,
+  "motivation": "Confirm the exact Claude hook carrier replacement before its write capability is resolved.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "fb783632423354cfbbdfeb594a2f5dd8fc0fe6289608df4da06f9d7df2539aee"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

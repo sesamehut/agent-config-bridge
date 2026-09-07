@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop wrap-up-a",
+            "command": "bridge-fixture-noop wrap-up-b",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

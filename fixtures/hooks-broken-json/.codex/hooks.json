@@ -1,0 +1,28 @@
+{
+  "description": "Fixture Codex hook carrier that is valid UTF-8 but not valid JSON.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop guard",
+            "timeout": 5,
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop wrap-up",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

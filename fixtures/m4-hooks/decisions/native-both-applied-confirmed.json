@@ -1,0 +1,25 @@
+{
+  "authorized_closures": [
+    "closure/hooks/claude",
+    "closure/hooks/codex"
+  ],
+  "intent": "Project the declared fmt-on-save observation hook into both native carriers.",
+  "motivation": "Confirm the exact serialized Claude and Codex hook carrier closures after reviewing the shared command line.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "3d921493f80aa31cb48d0f4489ebb17dbb038abd164c4a740382997056c2fc93"
+    },
+    {
+      "path": ".claude/settings.json",
+      "sha256": "265e55395217db9505bd19f821dd0d2e5426b4a2a8a3b66b55fcfa96e15100b8"
+    },
+    {
+      "path": ".codex/hooks.json",
+      "sha256": "19da6bb1fd367b0a2eb11798a1fc8a6e310de762ec0d4d265eab211db0266735"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

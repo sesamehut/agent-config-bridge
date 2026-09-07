@@ -1,0 +1,25 @@
+{
+  "authorized_closures": [
+    "closure/hooks/claude",
+    "closure/hooks/codex"
+  ],
+  "intent": "Propagate the updated shell-preview command to both native carriers.",
+  "motivation": "Reviewed the exact new command line bridge-fixture-noop shell-preview-v2 and the exact preimage of both carriers, and accepted that the host passthrough keys stay byte-identical and in place.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "903722bdc9c0b0d6ba98db19c88583e216a427a4d132bb833042bd25e298c88d"
+    },
+    {
+      "path": ".claude/settings.json",
+      "sha256": "0afe54c21340a09fb667f6d59bdc5fbb251889e3b87ffc3b2550e382b7b4d83f"
+    },
+    {
+      "path": ".codex/hooks.json",
+      "sha256": "054019f5624a5584182dd056b627966105cf1d465f1d65ad2cb77c5256889a0d"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

@@ -1,0 +1,936 @@
+{
+  "default_activation_profile": "profiles/default.json",
+  "default_write_capability_fixture": "capabilities/none.json",
+  "required_coverage": [
+    "codex-create-blocked",
+    "codex-hook-retrust-required",
+    "codex-inline-hooks-conflict",
+    "codex-trust-blind-change",
+    "gate-all-or-nothing",
+    "guarded-region-nonunique",
+    "hook-acknowledgement-missing",
+    "hook-both-changed-conflict",
+    "hook-declared-unsynced",
+    "hook-degraded-agents-md",
+    "hook-delete-event-emptied",
+    "hook-delete-reindex",
+    "hook-foreign-handler",
+    "hook-format-preserved",
+    "hook-intent-doc-claude",
+    "hook-opt-in-confirmed",
+    "hook-opt-in-pending",
+    "hook-passthrough-preserved",
+    "hook-reverse-adopt-command",
+    "hook-reverse-adopt-override",
+    "hook-semantics-divergent-keep",
+    "hook-semantics-divergent-pending",
+    "hooks-carrier-unusable",
+    "idempotent-rerun-unchanged",
+    "migration-v2-v3-blocked",
+    "native-both-applied",
+    "partial-two-carrier"
+  ],
+  "required_safeguards": [
+    "agents-md-step-order",
+    "asymmetric-enforcement-statement",
+    "baseline-required-for-delete",
+    "bridge-never-picks-a-host",
+    "class-gated-all-or-nothing",
+    "claude-hooks-shared-execution",
+    "closure-scoped-blocker",
+    "codex-status-message-untouched",
+    "codex-trust-identity",
+    "codex-trust-reindex",
+    "context-never-shortened",
+    "covenant-migration-barrier",
+    "declared-unsynced-state",
+    "double-execution-hazard",
+    "duplicate-key-fail-closed",
+    "guarded-patch-capability-gate",
+    "hook-format-preserved",
+    "hook-opt-in-gate",
+    "hook-shared-execution-record",
+    "idempotence-law",
+    "intent-record-required",
+    "manual-zone-guarded",
+    "migration-excludes-hooks",
+    "never-collapse-per-host-edit",
+    "never-delete-foreign-handler",
+    "never-delete-user-key",
+    "no-reformatting",
+    "not-a-sandbox-evidence",
+    "override-reason-required",
+    "passthrough-keys-preserved",
+    "rerender-shown-before-confirmation",
+    "source-first-step-order",
+    "strict-compensation-gate",
+    "strict-create-capability",
+    "unowned-bytes-preserved",
+    "zero-write-claude-surface"
+  ],
+  "scenarios": [
+    {
+      "baseline": "native-both-base",
+      "coverage": [
+        "native-both-applied"
+      ],
+      "decision_fixture": "decisions/native-both-applied-confirmed.json",
+      "expectations": [
+        {
+          "covers": [
+            "native-both-applied"
+          ],
+          "id": "applied",
+          "plan": "expectations/native-both-applied.md",
+          "post_state": "native-both-post"
+        }
+      ],
+      "id": "native-both-applied",
+      "input": "native-both-base",
+      "rendered_state": "native-both-post",
+      "replay": "agent",
+      "safeguards": [
+        "claude-hooks-shared-execution",
+        "unowned-bytes-preserved"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Project one declared hook into an existing hand-formatted Claude carrier and an existing Codex carrier without touching one unowned byte.",
+      "workflow": [
+        "Materialize the fixture and run $bridge-sync from its repository root.",
+        "Confirm both carrier closures and compare the plan and the exact post-state bytes of both carriers."
+      ],
+      "write_capability_fixture": "capabilities/guarded-both-carriers.json"
+    },
+    {
+      "baseline": "native-both-post",
+      "coverage": [
+        "idempotent-rerun-unchanged"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "idempotent-rerun-unchanged"
+          ],
+          "id": "unchanged",
+          "plan": "expectations/idempotent-rerun.md",
+          "post_state": "native-both-post"
+        }
+      ],
+      "id": "idempotent-rerun",
+      "input": "native-both-post",
+      "replay": "agent",
+      "safeguards": [
+        "idempotence-law"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Re-plan against the applied post-state and prove the idempotence law leaves both carriers byte-identical.",
+      "workflow": [
+        "Materialize the applied post-state and run $bridge-sync again.",
+        "Confirm that the plan is unchanged on both hosts and that no write capability row is serialized."
+      ],
+      "write_capability_fixture": "capabilities/none.json"
+    },
+    {
+      "baseline": "format-preserved-base",
+      "coverage": [
+        "hook-format-preserved"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "hook-format-preserved"
+          ],
+          "id": "unchanged",
+          "plan": "expectations/format-preserved-unchanged.md",
+          "post_state": "format-preserved-base"
+        }
+      ],
+      "id": "format-preserved-unchanged",
+      "input": "format-preserved-base",
+      "replay": "agent",
+      "safeguards": [
+        "hook-format-preserved",
+        "no-reformatting"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Leave a semantically equal but four-space, tab-mixed owned group exactly as the author wrote it.",
+      "workflow": [
+        "Materialize the differently formatted converged fixture and run $bridge-sync.",
+        "Confirm the unchanged plan and the informational hook-format-preserved warning, then compare the byte-identical tree."
+      ],
+      "write_capability_fixture": "capabilities/none.json"
+    },
+    {
+      "baseline": "codex-create-base",
+      "coverage": [
+        "codex-create-blocked"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "codex-create-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/codex-create-blocked.md",
+          "post_state": "codex-create-base"
+        }
+      ],
+      "id": "codex-create-blocked",
+      "input": "codex-create-base",
+      "replay": "agent",
+      "safeguards": [
+        "closure-scoped-blocker",
+        "strict-create-capability"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Block the absent Codex carrier on the missing strict create while the Claude carrier closure still proceeds.",
+      "workflow": [
+        "Materialize the fixture whose Codex carrier is absent and run $bridge-sync.",
+        "Confirm that planning stops for the Codex closure only and compare the zero-write plan."
+      ],
+      "write_capability_fixture": "capabilities/strict-create-unavailable.json"
+    },
+    {
+      "baseline": "gate-base",
+      "coverage": [
+        "gate-all-or-nothing"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "gate-all-or-nothing"
+          ],
+          "id": "not-selected",
+          "plan": "expectations/gate-all-or-nothing.md",
+          "post_state": "gate-base"
+        }
+      ],
+      "id": "gate-all-or-nothing",
+      "input": "gate-base",
+      "replay": "agent",
+      "safeguards": [
+        "class-gated-all-or-nothing"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Force both carrier closures of a class gate entry to zero writes when one carrier cannot be written.",
+      "workflow": [
+        "Materialize the class gate fixture whose Codex carrier is absent and run $bridge-sync.",
+        "Confirm that neither carrier closure is selected and compare the zero-write plan."
+      ],
+      "write_capability_fixture": "capabilities/none.json"
+    },
+    {
+      "baseline": "opt-in-base",
+      "coverage": [
+        "hook-opt-in-pending"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "hook-opt-in-pending"
+          ],
+          "id": "deferred",
+          "plan": "expectations/opt-in-pending.md",
+          "post_state": "opt-in-base"
+        }
+      ],
+      "id": "opt-in-pending",
+      "input": "opt-in-base",
+      "replay": "agent",
+      "safeguards": [
+        "hook-opt-in-gate",
+        "not-a-sandbox-evidence"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Ask for the dated opt-in record before projecting a side-effect entry that declares enabled true.",
+      "workflow": [
+        "Materialize the side-effect fixture without an enabled-by record and run $bridge-sync.",
+        "Confirm the selected zero-write decision closure and compare the plan and the unchanged tree."
+      ],
+      "write_capability_fixture": "capabilities/none.json"
+    },
+    {
+      "baseline": "opt-in-base",
+      "coverage": [
+        "hook-opt-in-confirmed"
+      ],
+      "decision_fixture": "decisions/opt-in-confirmed-source.json",
+      "expectations": [
+        {
+          "covers": [
+            "hook-opt-in-confirmed"
+          ],
+          "id": "applied",
+          "plan": "expectations/opt-in-confirmed.md",
+          "post_state": "opt-in-post"
+        }
+      ],
+      "id": "opt-in-confirmed",
+      "input": "opt-in-base",
+      "rendered_state": "opt-in-post",
+      "replay": "agent",
+      "safeguards": [
+        "hook-opt-in-gate",
+        "source-first-step-order"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Append the confirmed enabled-by record through the source closure and then project both carriers in step order.",
+      "workflow": [
+        "Materialize the side-effect fixture and run $bridge-sync.",
+        "Confirm the opt-in, let the source closure write the enabled-by record first, then compare the applied plan and tree."
+      ],
+      "write_capability_fixture": "capabilities/guarded-source-and-carriers.json"
+    },
+    {
+      "baseline": "ack-missing-base",
+      "coverage": [
+        "hook-acknowledgement-missing"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "hook-acknowledgement-missing"
+          ],
+          "id": "blocked",
+          "plan": "expectations/acknowledgement-missing-blocked.md",
+          "post_state": "ack-missing-base"
+        }
+      ],
+      "id": "acknowledgement-missing-blocked",
+      "input": "ack-missing-base",
+      "replay": "agent",
+      "safeguards": [
+        "closure-scoped-blocker",
+        "hook-shared-execution-record"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Block only the Claude carrier closure when the intent document carries no file-level shared-execution acknowledgement.",
+      "workflow": [
+        "Materialize the fixture without the acknowledgement comment and run $bridge-sync.",
+        "Confirm that the Claude closure is blocked while the Codex closure stays selected, then compare the zero-write plan."
+      ],
+      "write_capability_fixture": "capabilities/guarded-codex.json"
+    },
+    {
+      "baseline": "degrade-base",
+      "coverage": [
+        "hook-degraded-agents-md"
+      ],
+      "decision_fixture": "decisions/degrade-codex-agents-md-confirmed.json",
+      "expectations": [
+        {
+          "covers": [
+            "hook-degraded-agents-md"
+          ],
+          "id": "applied",
+          "plan": "expectations/degrade-codex-agents-md.md",
+          "post_state": "degrade-post"
+        }
+      ],
+      "id": "degrade-codex-agents-md",
+      "input": "degrade-base",
+      "rendered_state": "degrade-post",
+      "replay": "agent",
+      "safeguards": [
+        "agents-md-step-order",
+        "manual-zone-guarded"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Carry a Claude-only event reminder as one managed root AGENTS.md block while the Claude carrier stays native.",
+      "workflow": [
+        "Materialize the Claude-only event fixture and run $bridge-sync.",
+        "Confirm both closures, verify that the AGENTS.md manual zone is byte-identical, and compare the applied plan and tree."
+      ],
+      "write_capability_fixture": "capabilities/guarded-agents-and-claude.json"
+    },
+    {
+      "baseline": "intent-doc-base",
+      "coverage": [
+        "hook-intent-doc-claude"
+      ],
+      "decision_fixture": "decisions/intent-doc-claude-confirmed.json",
+      "expectations": [
+        {
+          "covers": [
+            "hook-intent-doc-claude"
+          ],
+          "id": "applied",
+          "plan": "expectations/intent-doc-claude.md",
+          "post_state": "intent-doc-post"
+        }
+      ],
+      "id": "intent-doc-claude",
+      "input": "intent-doc-base",
+      "rendered_state": "intent-doc-post",
+      "replay": "agent",
+      "safeguards": [
+        "zero-write-claude-surface"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Carry a Codex-only Interrupt observation as the unconditionally loaded intent document itself, with zero Claude writes.",
+      "workflow": [
+        "Materialize the Interrupt fixture and run $bridge-sync.",
+        "Confirm the Codex closure only and compare the applied plan and the unchanged Claude carrier bytes."
+      ],
+      "write_capability_fixture": "capabilities/guarded-codex.json"
+    },
+    {
+      "baseline": "declared-unsynced-base",
+      "coverage": [
+        "hook-declared-unsynced"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "hook-declared-unsynced"
+          ],
+          "id": "unchanged",
+          "plan": "expectations/declared-unsynced-gate.md",
+          "post_state": "declared-unsynced-base"
+        }
+      ],
+      "id": "declared-unsynced-gate",
+      "input": "declared-unsynced-base",
+      "replay": "agent",
+      "safeguards": [
+        "declared-unsynced-state"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Serialize a declared-unsynced Codex row for a PermissionRequest gate whose Claude carrier is already converged.",
+      "workflow": [
+        "Materialize the PermissionRequest fixture and run $bridge-sync.",
+        "Confirm that the Codex row is declared-unsynced in a zero-write decision closure and compare the plan."
+      ],
+      "write_capability_fixture": "capabilities/none.json"
+    },
+    {
+      "baseline": "passthrough-base",
+      "coverage": [
+        "hook-passthrough-preserved"
+      ],
+      "decision_fixture": "decisions/passthrough-preserved-confirmed.json",
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "hook-passthrough-preserved"
+          ],
+          "id": "applied",
+          "plan": "expectations/passthrough-preserved.md",
+          "post_state": "passthrough-post"
+        }
+      ],
+      "id": "passthrough-preserved",
+      "input": "passthrough-input",
+      "rendered_state": "passthrough-post",
+      "replay": "agent",
+      "safeguards": [
+        "passthrough-keys-preserved"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Update the shared command while both host passthrough keys survive byte-for-byte and in place.",
+      "workflow": [
+        "Materialize the passthrough fixture and run $bridge-sync.",
+        "Confirm both carrier closures and compare the applied plan and the exact post-state bytes of both carriers."
+      ],
+      "write_capability_fixture": "capabilities/guarded-both-carriers.json"
+    },
+    {
+      "baseline": "semantics-divergent-base",
+      "coverage": [
+        "hook-semantics-divergent-keep",
+        "hook-semantics-divergent-pending"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "hook-semantics-divergent-keep"
+          ],
+          "id": "keep",
+          "plan": "expectations/semantics-divergent-annex-keep.md",
+          "post_state": "semantics-divergent-base",
+          "replay_input": "semantics-divergent-annex-keep"
+        },
+        {
+          "covers": [
+            "hook-semantics-divergent-pending"
+          ],
+          "id": "pending",
+          "plan": "expectations/semantics-divergent-annex-pending.md",
+          "post_state": "semantics-divergent-base",
+          "replay_input": "semantics-divergent-annex-pending"
+        }
+      ],
+      "id": "semantics-divergent-annex",
+      "input": "semantics-divergent-base",
+      "replay": "agent",
+      "replay_inputs": [
+        {
+          "decision_fixture": "decisions/semantics-divergent-annex-keep.json",
+          "id": "semantics-divergent-annex-keep"
+        },
+        {
+          "id": "semantics-divergent-annex-pending"
+        }
+      ],
+      "safeguards": [
+        "never-delete-user-key"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Route an owned Codex handler carrying async true to annex-or-keep and leave the user key untouched.",
+      "workflow": [
+        "Materialize the async fixture and run $bridge-sync.",
+        "Compare the pending annex-or-keep plan, then confirm keep and compare the deferred zero-write plan."
+      ],
+      "write_capability_fixture": "capabilities/none.json"
+    },
+    {
+      "baseline": "foreign-handler-base",
+      "coverage": [
+        "hook-foreign-handler"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "hook-foreign-handler"
+          ],
+          "id": "pending",
+          "plan": "expectations/foreign-handler-keep.md",
+          "post_state": "foreign-handler-base"
+        }
+      ],
+      "id": "foreign-handler-keep",
+      "input": "foreign-handler-base",
+      "replay": "agent",
+      "safeguards": [
+        "never-delete-foreign-handler"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Route an mcp_tool handler inside an owned Claude group to annex-or-keep and never delete it.",
+      "workflow": [
+        "Materialize the foreign handler fixture and run $bridge-sync.",
+        "Confirm that the handler reaches the hook adoption decision table and compare the zero-write plan."
+      ],
+      "write_capability_fixture": "capabilities/none.json"
+    },
+    {
+      "baseline": "nonunique-base",
+      "coverage": [
+        "guarded-region-nonunique"
+      ],
+      "decision_fixture": "decisions/guarded-region-nonunique-blocked-confirmed.json",
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "guarded-region-nonunique"
+          ],
+          "id": "blocked",
+          "plan": "expectations/guarded-region-nonunique-blocked.md",
+          "post_state": "nonunique-input"
+        }
+      ],
+      "id": "guarded-region-nonunique-blocked",
+      "input": "nonunique-input",
+      "replay": "agent",
+      "safeguards": [
+        "context-never-shortened",
+        "guarded-patch-capability-gate"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Block a Claude carrier replacement whose guarded region cannot be made unique between two near-identical groups.",
+      "workflow": [
+        "Materialize the two-group fixture and run $bridge-sync.",
+        "Confirm that the guarded region cannot be made unique and compare the zero-write plan."
+      ],
+      "write_capability_fixture": "capabilities/guarded-patch-unavailable.json"
+    },
+    {
+      "baseline": "carrier-unusable-base",
+      "coverage": [
+        "hooks-carrier-unusable"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "hooks-carrier-unusable"
+          ],
+          "id": "blocked",
+          "plan": "expectations/carrier-unusable-blocked.md",
+          "post_state": "carrier-unusable-base"
+        }
+      ],
+      "id": "carrier-unusable-blocked",
+      "input": "carrier-unusable-base",
+      "replay": "agent",
+      "safeguards": [
+        "closure-scoped-blocker",
+        "duplicate-key-fail-closed"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Fail closed on a duplicate object key in the Codex carrier while the Claude carrier closure still proceeds.",
+      "workflow": [
+        "Materialize the duplicate-key fixture and run $bridge-sync.",
+        "Confirm that only the Codex closure is blocked and compare the zero-write plan."
+      ],
+      "write_capability_fixture": "capabilities/guarded-claude.json"
+    },
+    {
+      "baseline": "inline-conflict-base",
+      "coverage": [
+        "codex-inline-hooks-conflict"
+      ],
+      "expectations": [
+        {
+          "covers": [
+            "codex-inline-hooks-conflict"
+          ],
+          "id": "blocked",
+          "plan": "expectations/inline-hooks-conflict-blocked.md",
+          "post_state": "inline-conflict-base"
+        }
+      ],
+      "id": "inline-hooks-conflict-blocked",
+      "input": "inline-conflict-base",
+      "replay": "agent",
+      "safeguards": [
+        "closure-scoped-blocker",
+        "double-execution-hazard"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Block the Codex closure when the same Codex layer also declares hooks inline in config.toml.",
+      "workflow": [
+        "Materialize the inline hooks fixture and run $bridge-sync.",
+        "Confirm that only the Codex closure is blocked and compare the zero-write plan."
+      ],
+      "write_capability_fixture": "capabilities/guarded-claude.json"
+    },
+    {
+      "baseline": "native-both-post",
+      "coverage": [
+        "hook-reverse-adopt-command"
+      ],
+      "decision_fixture": "decisions/reverse-adopt-command-confirmed.json",
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "hook-reverse-adopt-command"
+          ],
+          "id": "applied",
+          "plan": "expectations/reverse-adopt-command.md",
+          "post_state": "reverse-adopt-post"
+        }
+      ],
+      "id": "reverse-adopt-command",
+      "input": "reverse-adopt-input",
+      "rendered_state": "reverse-adopt-post",
+      "replay": "agent",
+      "safeguards": [
+        "intent-record-required",
+        "rerender-shown-before-confirmation"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Adopt a hand-edited Claude command into the shared scalar and rerender the Codex carrier from the adopted source.",
+      "workflow": [
+        "Materialize the hand-edited Claude carrier and run $bridge-sync.",
+        "Review the rerendered Codex bytes, confirm the adoption, and compare the applied plan and tree."
+      ],
+      "write_capability_fixture": "capabilities/guarded-source-and-codex.json"
+    },
+    {
+      "baseline": "session-banner-base",
+      "coverage": [
+        "hook-reverse-adopt-override"
+      ],
+      "decision_fixture": "decisions/reverse-adopt-override-confirmed.json",
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "hook-reverse-adopt-override"
+          ],
+          "id": "applied",
+          "plan": "expectations/reverse-adopt-override.md",
+          "post_state": "reverse-override-post"
+        }
+      ],
+      "id": "reverse-adopt-override",
+      "input": "reverse-override-input",
+      "rendered_state": "reverse-override-post",
+      "replay": "agent",
+      "safeguards": [
+        "never-collapse-per-host-edit",
+        "override-reason-required"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Adopt a hand-edited Codex commandWindows as a per-host override instead of collapsing it into the shared scalar.",
+      "workflow": [
+        "Materialize the hand-edited Codex carrier and run $bridge-sync.",
+        "Confirm the per-host override with its reason and compare the applied plan and tree."
+      ],
+      "write_capability_fixture": "capabilities/guarded-source.json"
+    },
+    {
+      "baseline": "native-both-post",
+      "coverage": [
+        "hook-both-changed-conflict"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "hook-both-changed-conflict"
+          ],
+          "id": "deferred",
+          "plan": "expectations/both-carriers-conflict.md",
+          "post_state": "both-conflict-input"
+        }
+      ],
+      "id": "both-carriers-conflict",
+      "input": "both-conflict-input",
+      "replay": "agent",
+      "safeguards": [
+        "bridge-never-picks-a-host"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Defer a two-sided hook conflict in one entry-level decision closure and write neither carrier.",
+      "workflow": [
+        "Materialize the fixture whose carriers were hand-edited differently and run $bridge-sync.",
+        "Confirm that one entry-level decision closure is deferred and compare the zero-write plan."
+      ],
+      "write_capability_fixture": "capabilities/none.json"
+    },
+    {
+      "baseline": "stale-check-base",
+      "coverage": [
+        "hook-delete-reindex"
+      ],
+      "decision_fixture": "decisions/delete-group-reindex-confirmed.json",
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "hook-delete-reindex"
+          ],
+          "id": "applied",
+          "plan": "expectations/delete-group-reindex.md",
+          "post_state": "delete-post"
+        }
+      ],
+      "id": "delete-group-reindex",
+      "input": "delete-input",
+      "rendered_state": "delete-post",
+      "replay": "agent",
+      "safeguards": [
+        "baseline-required-for-delete",
+        "codex-trust-reindex"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Converge a proven managed deletion, remove the emptied event member whole, and disclose the positional trust shift.",
+      "workflow": [
+        "Materialize the removed-entry fixture and run $bridge-sync.",
+        "Confirm the destructive source-to-projection delete and compare the applied plan and the exact separator removal in both carriers."
+      ],
+      "write_capability_fixture": "capabilities/guarded-both-carriers.json"
+    },
+    {
+      "activation_profile": "profiles/codex-trusted.json",
+      "baseline": "wrap-up-base",
+      "coverage": [
+        "codex-hook-retrust-required"
+      ],
+      "decision_fixture": "decisions/retrust-required-confirmed.json",
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "codex-hook-retrust-required"
+          ],
+          "id": "applied",
+          "plan": "expectations/retrust-required.md",
+          "post_state": "retrust-post"
+        }
+      ],
+      "id": "retrust-required",
+      "input": "retrust-input",
+      "rendered_state": "retrust-post",
+      "replay": "agent",
+      "safeguards": [
+        "codex-status-message-untouched",
+        "codex-trust-identity"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Change a Codex timeout override and disclose that the handler goes dark until the user re-trusts it.",
+      "workflow": [
+        "Materialize the converged wrap-up fixture and run $bridge-sync.",
+        "Confirm the Codex closure and compare the applied plan and the untouched statusMessage bytes."
+      ],
+      "write_capability_fixture": "capabilities/guarded-codex.json"
+    },
+    {
+      "baseline": "migration-v2-base",
+      "coverage": [
+        "migration-v2-v3-blocked"
+      ],
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "migration-v2-v3-blocked"
+          ],
+          "id": "blocked",
+          "plan": "expectations/migration-v2-v3.md",
+          "post_state": "migration-v2-base"
+        }
+      ],
+      "history": {
+        "commits": [
+          {
+            "id": "v2-seed",
+            "message": "establish the covenant v2 pair",
+            "parents": [],
+            "tree": "migration-v2-seed"
+          },
+          {
+            "id": "v2-owned",
+            "message": "establish the v2 managed entry, rule, and hooks",
+            "parents": [
+              "v2-seed"
+            ],
+            "tree": "migration-v2-base"
+          }
+        ],
+        "head": "v2-owned"
+      },
+      "id": "migration-v2-v3",
+      "input": "migration-v2-base",
+      "replay": "agent",
+      "safeguards": [
+        "covenant-migration-barrier",
+        "migration-excludes-hooks"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Keep the covenant v2 migration closure limited to entry and rule units and carry zero hook units across the version barrier.",
+      "workflow": [
+        "Materialize the reachable v2 ownership history and run $bridge-sync.",
+        "Confirm that the migration closure carries no hook unit and that the incomplete legacy set blocks the migration under `migration-closure-incomplete`."
+      ],
+      "write_capability_fixture": "capabilities/none.json"
+    },
+    {
+      "baseline": "native-both-base",
+      "coverage": [
+        "partial-two-carrier"
+      ],
+      "decision_fixture": "decisions/partial-two-carrier-confirmed.json",
+      "expectations": [
+        {
+          "covers": [
+            "partial-two-carrier"
+          ],
+          "id": "partial",
+          "plan": "expectations/partial-two-carrier.md",
+          "post_state": "native-both-post"
+        }
+      ],
+      "fault": {
+        "checkpoint": "after the Codex carrier write and before post-write verification",
+        "kind": "post-write-verification",
+        "operations": [
+          {
+            "op": "environment",
+            "setting": "verification-result",
+            "value": "forced-mismatch"
+          }
+        ]
+      },
+      "id": "partial-two-carrier",
+      "input": "native-both-base",
+      "rendered_state": "native-both-post",
+      "replay": "declarative-only",
+      "replay_reason": "The agent workflow exposes no reliable post-write, pre-verification fault barrier inside the Codex guarded host call, so the harness validates the declared outcome instead of executing it.",
+      "safeguards": [
+        "asymmetric-enforcement-statement",
+        "strict-compensation-gate"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Report partial without attempting an optimistic inverse after the Codex post-write verification fails and strict compensation is unavailable.",
+      "workflow": [
+        "Review the declared verification checkpoint, both guarded forward protocols, and the unavailable inverses.",
+        "Validate that no automatic compensation runs and that the applied Claude closure stays reviewable beside the partial Codex closure."
+      ],
+      "write_capability_fixture": "capabilities/guarded-both-carriers.json"
+    },
+    {
+      "baseline": "session-banner-base",
+      "coverage": [
+        "codex-trust-blind-change"
+      ],
+      "decision_fixture": "decisions/codex-blind-change-confirmed.json",
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "codex-trust-blind-change"
+          ],
+          "id": "applied",
+          "plan": "expectations/codex-blind-change.md",
+          "post_state": "blind-change-post"
+        }
+      ],
+      "id": "codex-blind-change",
+      "input": "blind-change-input",
+      "rendered_state": "blind-change-post",
+      "replay": "agent",
+      "safeguards": [
+        "codex-trust-identity",
+        "never-collapse-per-host-edit"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Replace only the Codex commandWindows of a converged handler and disclose the change the trust identity does not cover.",
+      "workflow": [
+        "Materialize the retargeted Windows branch and run $bridge-sync.",
+        "Confirm the Codex closure and compare the applied plan, the single replaced value, and the absence of a re-trust line."
+      ],
+      "write_capability_fixture": "capabilities/guarded-codex.json"
+    },
+    {
+      "baseline": "stale-check-solo-base",
+      "coverage": [
+        "hook-delete-event-emptied"
+      ],
+      "decision_fixture": "decisions/delete-event-emptied-confirmed.json",
+      "expectations": [
+        {
+          "baseline_ref": "initial",
+          "covers": [
+            "hook-delete-event-emptied"
+          ],
+          "id": "applied",
+          "plan": "expectations/delete-event-emptied.md",
+          "post_state": "delete-solo-post"
+        }
+      ],
+      "id": "delete-event-emptied",
+      "input": "delete-solo-input",
+      "rendered_state": "delete-solo-post",
+      "replay": "agent",
+      "safeguards": [
+        "baseline-required-for-delete",
+        "never-delete-user-key"
+      ],
+      "spec": "bridge-m4-hooks-scenario/v1",
+      "summary": "Remove the only owned group of each carrier, drop both emptied event members whole, and leave each hooks object present and empty.",
+      "workflow": [
+        "Materialize the single-group carriers and run $bridge-sync.",
+        "Confirm the destructive source-to-projection delete and compare the applied plan against the two emptied hooks objects."
+      ],
+      "write_capability_fixture": "capabilities/guarded-both-carriers.json"
+    }
+  ],
+  "spec": "bridge-m4-hooks-matrix/v1"
+}

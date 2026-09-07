@@ -1,0 +1,794 @@
+{
+  "spec": "bridge-fixture-tree-set/v1",
+  "trees": {
+    "ack-missing-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-no-acknowledgement.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-handformatted.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-user.json"
+        }
+      ]
+    },
+    "base-empty": {
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "project.txt",
+          "source": "@shared/fixtures/m4-hooks/shared/project.txt"
+        }
+      ]
+    },
+    "base-onboarded": {
+      "base": "base-empty",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/bridge-covenant.md",
+          "source": "@shared/templates/covenant/claude-rules-bridge.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "source": "@shared/templates/covenant/agents-md-covenant-block.md"
+        }
+      ]
+    },
+    "base-onboarded-manual": {
+      "base": "base-empty",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/bridge-covenant.md",
+          "source": "@shared/templates/covenant/claude-rules-bridge.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "source": "@shared/fixtures/m4-hooks/shared/agents-md-manual.md"
+        }
+      ]
+    },
+    "blind-change-input": {
+      "base": "session-banner-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-session-banner-rewritten.md"
+        }
+      ]
+    },
+    "blind-change-post": {
+      "base": "blind-change-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-session-banner-rewritten.json"
+        }
+      ]
+    },
+    "both-conflict-input": {
+      "base": "native-both-post",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-fmt-hand-edited.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-fmt-hand-edited.json"
+        }
+      ]
+    },
+    "carrier-unusable-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-fmt-on-save.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-handformatted.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-duplicate-key.json"
+        }
+      ]
+    },
+    "codex-create-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-fmt-on-save.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-handformatted.json"
+        }
+      ]
+    },
+    "declared-unsynced-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-permission-gate.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-permission-gate.json"
+        }
+      ]
+    },
+    "degrade-base": {
+      "base": "base-onboarded-manual",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-degrade-notification.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-handformatted.json"
+        }
+      ]
+    },
+    "degrade-post": {
+      "base": "degrade-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "source": "@shared/fixtures/m4-hooks/shared/agents-md-degraded.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-notify-reminder.json"
+        }
+      ]
+    },
+    "delete-input": {
+      "base": "stale-check-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-stale-check-removed.md"
+        }
+      ]
+    },
+    "delete-post": {
+      "base": "delete-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-stale-check-deleted.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-stale-check-deleted.json"
+        }
+      ]
+    },
+    "delete-solo-input": {
+      "base": "stale-check-solo-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-stale-check-removed.md"
+        }
+      ]
+    },
+    "delete-solo-post": {
+      "base": "delete-solo-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-stale-check-deleted.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-stale-check-solo-deleted.json"
+        }
+      ]
+    },
+    "foreign-handler-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-fmt-on-save.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-foreign-handler.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-fmt-converged.json"
+        }
+      ]
+    },
+    "format-preserved-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-fmt-on-save.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-fmt-4space.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-fmt-4space.json"
+        }
+      ]
+    },
+    "gate-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-gate-enabled.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-handformatted.json"
+        }
+      ]
+    },
+    "inline-conflict-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-fmt-on-save.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-handformatted.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-user.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/config.toml",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-config-inline-hooks.toml"
+        }
+      ]
+    },
+    "intent-doc-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-interrupt-observation.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-handformatted.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-user.json"
+        }
+      ]
+    },
+    "intent-doc-post": {
+      "base": "intent-doc-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-interrupt.json"
+        }
+      ]
+    },
+    "migration-v2-base": {
+      "base": "migration-v2-seed",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "source": "@shared/fixtures/m4-hooks/shared/agents-md-migration-v2.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "CLAUDE.md",
+          "source": "@shared/fixtures/m4-hooks/shared/entry-migration.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/review.md",
+          "source": "@shared/fixtures/m4-hooks/shared/rule-review.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-migration.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-fmt-converged.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-fmt-converged.json"
+        }
+      ]
+    },
+    "migration-v2-seed": {
+      "base": "base-empty",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/bridge-covenant.md",
+          "source": "@shared/templates/covenant/v2/claude-rules-bridge.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": "AGENTS.md",
+          "source": "@shared/templates/covenant/v2/agents-md-covenant-block.md"
+        }
+      ]
+    },
+    "native-both-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-fmt-on-save.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-handformatted.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-user.json"
+        }
+      ]
+    },
+    "native-both-post": {
+      "base": "native-both-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-fmt-converged.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-fmt-converged.json"
+        }
+      ]
+    },
+    "nonunique-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-fmt-write-matcher-baseline.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-nonunique.json"
+        }
+      ]
+    },
+    "nonunique-input": {
+      "base": "nonunique-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-fmt-write-matcher.md"
+        }
+      ]
+    },
+    "opt-in-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-side-effect-pending.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-handformatted.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-user.json"
+        }
+      ]
+    },
+    "opt-in-post": {
+      "base": "opt-in-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-side-effect-confirmed.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-journal-writer.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-journal-writer.json"
+        }
+      ]
+    },
+    "passthrough-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-passthrough-baseline.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-passthrough.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-passthrough.json"
+        }
+      ]
+    },
+    "passthrough-input": {
+      "base": "passthrough-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-passthrough-updated.md"
+        }
+      ]
+    },
+    "passthrough-post": {
+      "base": "passthrough-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-passthrough-post.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-passthrough-post.json"
+        }
+      ]
+    },
+    "retrust-input": {
+      "base": "wrap-up-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-wrap-up-note-retimed.md"
+        }
+      ]
+    },
+    "retrust-post": {
+      "base": "retrust-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-wrap-up-note-retimed.json"
+        }
+      ]
+    },
+    "reverse-adopt-input": {
+      "base": "native-both-post",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-fmt-hand-edited.json"
+        }
+      ]
+    },
+    "reverse-adopt-post": {
+      "base": "reverse-adopt-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-fmt-adopted.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-fmt-adopted.json"
+        }
+      ]
+    },
+    "reverse-override-input": {
+      "base": "session-banner-base",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-session-banner-hand.json"
+        }
+      ]
+    },
+    "reverse-override-post": {
+      "base": "reverse-override-input",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-session-banner-adopted.md"
+        }
+      ]
+    },
+    "semantics-divergent-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-fmt-on-save.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-fmt-converged.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-async.json"
+        }
+      ]
+    },
+    "session-banner-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-session-banner.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-session-banner.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-session-banner.json"
+        }
+      ]
+    },
+    "stale-check-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-stale-check.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-stale-check.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-stale-check.json"
+        }
+      ]
+    },
+    "stale-check-solo-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-stale-check.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-stale-check.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-stale-check-solo.json"
+        }
+      ]
+    },
+    "wrap-up-base": {
+      "base": "base-onboarded",
+      "operations": [
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/rules/hooks.md",
+          "source": "@shared/fixtures/m4-hooks/shared/hooks-wrap-up-note.md"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".claude/settings.json",
+          "source": "@shared/fixtures/m4-hooks/shared/settings-wrap-up-note.json"
+        },
+        {
+          "mode": "100644",
+          "op": "write",
+          "path": ".codex/hooks.json",
+          "source": "@shared/fixtures/m4-hooks/shared/codex-hooks-wrap-up-note.json"
+        }
+      ]
+    }
+  }
+}

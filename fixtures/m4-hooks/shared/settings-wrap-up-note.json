@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": ["Read(//src/**)"]
+  },
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop wrap-up-note",
+            "timeout": 30,
+            "statusMessage": "[bridge:wrap-up-note]"
+          }
+        ]
+      }
+    ]
+  }
+}

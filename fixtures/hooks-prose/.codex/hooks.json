@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "Setup": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bridge-fixture-noop setup-native", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}

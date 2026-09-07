@@ -1,0 +1,16 @@
+{
+  "authorized_closures": [
+    "closure/decision/hooks/fmt-on-save"
+  ],
+  "intent": null,
+  "motivation": "Keep the user async key on the owned Codex handler and leave both carriers untouched.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".codex/hooks.json",
+      "sha256": "5cf671831bad9f56e98d8f039d169d476cd31e69b721bbffbf36fef8d3e4a714"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

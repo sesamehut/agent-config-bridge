@@ -1,0 +1,19 @@
+{
+  "description": "Project hooks reviewed by the team on 2026-08-30.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^(Bash)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop shell-preview",
+            "timeout": 20,
+            "statusMessage": "[bridge:shell-preview]",
+            "additionalContextLimit": 4096
+          }
+        ]
+      }
+    ]
+  }
+}

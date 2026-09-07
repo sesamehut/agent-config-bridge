@@ -305,6 +305,7 @@ Its warning section is exactly:
 - claude-hooks-shared-execution: .claude/settings.json
 - guarded-patch-non-cas: .claude/settings.json
 - guarded-patch-non-cas: AGENTS.md
+- hook-output-not-delivered: .claude/rules/hooks.md (entry context-note)
 - manual-zone-guarded: AGENTS.md
 - strict-compensation-unavailable: .claude/settings.json
 - strict-compensation-unavailable: AGENTS.md

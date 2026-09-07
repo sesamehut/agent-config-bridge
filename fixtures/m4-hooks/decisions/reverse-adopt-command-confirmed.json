@@ -1,0 +1,21 @@
+{
+  "authorized_closures": [
+    "closure/hooks/codex",
+    "closure/hooks/source"
+  ],
+  "intent": "Record that the hand-edited Claude command line is the intended shared command for entry fmt-on-save.",
+  "motivation": "Adopt the hand-edited Claude command into the shared scalar and rerender the Codex carrier from the adopted source.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "3d921493f80aa31cb48d0f4489ebb17dbb038abd164c4a740382997056c2fc93"
+    },
+    {
+      "path": ".claude/settings.json",
+      "sha256": "b15b11226367f66aef124a27da68d62df344d9492bacb1e62d7601c5109068c7"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

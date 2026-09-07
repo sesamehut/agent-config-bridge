@@ -1,0 +1,29 @@
+{
+  "description": "Project hooks reviewed by the team on 2026-08-30.",
+  "hooks": {
+    "Interrupt": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop interrupt-note",
+            "timeout": 2,
+            "statusMessage": "[bridge:interrupt-note]"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop team-banner",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "authorized_closures": [
+    "closure/hooks/claude",
+    "closure/hooks/codex"
+  ],
+  "intent": "Converge the proven managed deletion of the stale-check entry on both carriers.",
+  "motivation": "Confirm the destructive removal of the only owned group in each carrier and accept that both events are emptied.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "b2480980c80fd736ca55c5a98ca4d28ce98dc0ba8365b43063474e12cbf34971"
+    },
+    {
+      "path": ".claude/settings.json",
+      "sha256": "41395d874e376d5a0d69bae25e7f7ca7fecce2df0e7868db9e70357307fb4588"
+    },
+    {
+      "path": ".codex/hooks.json",
+      "sha256": "6c57f0c4d09edc2f578d9d7bbd190ef99bf082cc3741a103dc57b49be5c90944"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

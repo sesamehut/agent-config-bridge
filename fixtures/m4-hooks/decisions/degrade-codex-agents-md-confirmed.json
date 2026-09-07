@@ -1,0 +1,21 @@
+{
+  "authorized_closures": [
+    "closure/agents-md",
+    "closure/hooks/claude"
+  ],
+  "intent": "Carry the Notification reminder as one managed root AGENTS.md block on Codex.",
+  "motivation": "Reviewed the exact command line bridge-fixture-noop notify-reminder, accepted the committed Claude handler, and accepted that the Codex counterpart is a standing instruction that executes nothing.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "4038d3c956f470c4cd17d35eaa107cd3b4e1805c7b40dc66179ce321af77048b"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "b3411d0601119470cc7d45a538a91e16b594f890cc253d8045c2bdecadaaac37"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

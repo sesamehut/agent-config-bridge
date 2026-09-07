@@ -3,14 +3,14 @@
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "echo fixture-orphan", "statusMessage": "[bridge:fixture-orphan]" }
+          { "type": "command", "command": "bridge-fixture-noop fixture-orphan", "statusMessage": "[bridge:fixture-orphan]" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "git status --short", "timeout": 30 }
+          { "type": "command", "command": "bridge-fixture-noop sentinel-stop", "timeout": 30, "statusMessage": "[bridge:sentinel-stop]" }
         ]
       }
     ]

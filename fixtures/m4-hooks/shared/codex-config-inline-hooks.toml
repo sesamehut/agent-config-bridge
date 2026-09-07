@@ -1,0 +1,6 @@
+# Fixture Codex configuration for the inline-hooks conflict scenario.
+model = "fixture-model"
+
+[hooks.SessionStart]
+command = "bridge-fixture-noop inline-session-start"
+timeout = 5

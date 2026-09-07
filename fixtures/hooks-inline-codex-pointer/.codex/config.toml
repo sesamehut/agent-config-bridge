@@ -1,0 +1,9 @@
+# Inert fixture Codex configuration for the legacy pointer form of the same
+# hazard. The top-level pointer key below names the hooks file that Codex
+# already discovers on its own, so one handler registers twice under two
+# positional trust keys that share one normalized hash. openai/codex#17532
+# reproduced this shape with the deprecated features.codex_hooks alias.
+# report/v5 discloses it as codex-inline-hooks-present (pointer-key); the
+# write side blocks closure/hooks/codex with codex-inline-hooks-conflict.
+
+hooks = ".codex/hooks.json"

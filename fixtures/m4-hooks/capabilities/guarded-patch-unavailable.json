@@ -1,0 +1,15 @@
+{
+  "operations": [
+    {
+      "binding": null,
+      "closure": "closure/hooks/claude",
+      "inverse_binding": null,
+      "inverse_protocol": "unavailable",
+      "operation": "replace",
+      "path": ".claude/settings.json",
+      "protocol": "unavailable"
+    }
+  ],
+  "profiles": [],
+  "version": "write-capability-fixture/v1"
+}

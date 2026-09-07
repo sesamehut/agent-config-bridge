@@ -1,0 +1,16 @@
+{
+  "authorized_closures": [
+    "closure/hooks/codex"
+  ],
+  "intent": "Project the Interrupt observation onto the only host that fires the event.",
+  "motivation": "Reviewed the exact command line bridge-fixture-noop interrupt-note and accepted that the Codex carrier runs it for every clone while Claude keeps the intent document itself as the carrier.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "4a7687a27d775be9ed4db498dbef38563450155dd32b0793d8829101a7f2a782"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

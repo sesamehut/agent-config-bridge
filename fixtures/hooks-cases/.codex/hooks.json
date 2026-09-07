@@ -1,0 +1,17 @@
+{
+  "description": "Fixture Codex hook carrier; every command is the inert bridge-fixture-noop program.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop session-note",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

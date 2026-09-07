@@ -1,0 +1,20 @@
+{
+  "authorized_closures": [
+    "closure/hooks/codex"
+  ],
+  "intent": "Raise the Codex SessionEnd timeout override to the clamp maximum.",
+  "motivation": "Confirm the Codex carrier update and accept that the changed trust identity makes the handler wait for review.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "26d11b7276e6ff6a02bb08af8527dd2cce465fed38e9876c8c46f668e3abebf4"
+    },
+    {
+      "path": ".codex/hooks.json",
+      "sha256": "4fa42195fc55b5b4dd1100bc10c59ecd839c237ee16e2a4cf6b7ca185b3c0658"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}

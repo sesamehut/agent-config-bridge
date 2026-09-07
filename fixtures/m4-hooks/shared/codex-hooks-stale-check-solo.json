@@ -1,0 +1,17 @@
+{
+  "description": "Project hooks reviewed by the team on 2026-08-30.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop stale-check",
+            "timeout": 10,
+            "statusMessage": "[bridge:stale-check]"
+          }
+        ]
+      }
+    ]
+  }
+}

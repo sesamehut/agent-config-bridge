@@ -1,0 +1,29 @@
+{
+  "description": "Project hooks reviewed by the team on 2026-08-30.",
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop journal-writer",
+            "timeout": 3,
+            "statusMessage": "[bridge:journal-writer]"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop team-banner",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

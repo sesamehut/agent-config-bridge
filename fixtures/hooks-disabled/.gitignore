@@ -1,0 +1,6 @@
+# This fixture needs a TRACKED .claude/settings.local.json: report/v5 emits
+# local-hooks-present only for a tracked file, and an untracked one belongs in
+# Local environment notes instead. Many developers carry a global
+# core.excludesFile rule for that path, so re-include it here, where a
+# directory-level rule outranks the global one.
+!.claude/settings.local.json

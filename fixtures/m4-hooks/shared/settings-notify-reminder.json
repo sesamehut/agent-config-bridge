@@ -1,0 +1,59 @@
+{
+  "permissions": {
+    "allow": ["Read(//src/**)", "Bash(git status:*)"],
+    "deny": ["Read(//.env)"]
+  },
+  "env": {
+    "BRIDGE_FIXTURE_PROJECT": "m4-hooks",
+    "BRIDGE_FIXTURE_MODE": "inert"
+  },
+  "skillOverrides": {
+    "fixture-alpha": "off",
+    "fixture-beta": "off",
+    "fixture-gamma": "off",
+    "fixture-delta": "off",
+    "fixture-epsilon": "off",
+    "fixture-zeta": "off",
+    "fixture-eta": "off",
+    "fixture-theta": "off",
+    "fixture-iota": "off",
+    "fixture-kappa": "off",
+    "fixture-lambda": "off",
+    "fixture-mu": "off",
+    "fixture-nu": "off",
+    "fixture-xi": "off",
+    "fixture-omicron": "off",
+    "fixture-pi": "off",
+    "fixture-rho": "off",
+    "fixture-sigma": "off",
+    "fixture-tau": "off",
+    "fixture-upsilon": "off",
+    "fixture-phi": "off",
+    "fixture-chi": "off",
+    "fixture-psi": "off",
+    "fixture-omega": "off",
+    "fixture-north": "off",
+    "fixture-south": "off",
+    "fixture-east": "off",
+    "fixture-west": "off",
+    "fixture-inner": "off",
+    "fixture-outer": "off",
+    "fixture-upper": "off",
+    "fixture-lower": "off",
+    "fixture-middle": "off"
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bridge-fixture-noop notify-reminder",
+            "timeout": 5,
+            "statusMessage": "[bridge:notify-reminder]"
+          }
+        ]
+      }
+    ]
+  }
+}

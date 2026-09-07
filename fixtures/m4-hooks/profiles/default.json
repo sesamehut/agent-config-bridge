@@ -1,0 +1,11 @@
+{
+  "budget_source": "documented-default",
+  "codex_hooks_feature": "unknown",
+  "codex_project_trust": "unknown",
+  "fallback_filenames": [],
+  "project_doc_max_bytes": 32768,
+  "root_markers": [
+    ".git"
+  ],
+  "version": "activation-fixture/v2"
+}

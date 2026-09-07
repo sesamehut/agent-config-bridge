@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          { "type": "command", "command": "bridge-fixture-noop write-observe", "timeout": 10, "additionalContextLimit": 4000 }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "bridge-fixture-noop shell-observe", "timeout": 5 }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bridge-fixture-noop prompt-note", "onFailure": "ignore" }
+        ]
+      }
+    ]
+  }
+}

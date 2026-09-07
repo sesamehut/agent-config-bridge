@@ -1,0 +1,20 @@
+{
+  "authorized_closures": [
+    "closure/hooks/codex"
+  ],
+  "intent": "Retarget the Codex Windows branch of the session banner.",
+  "motivation": "Confirm the Codex carrier replacement and accept that the trust identity does not cover the replaced field.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "bf061024295107d1f0ebd049f58d0635a3401d46290bf578391d55324556e675"
+    },
+    {
+      "path": ".codex/hooks.json",
+      "sha256": "f2795554020964e3fe2396cca55b206bd4b317ab0201ca9f339a6560c13132f5"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}
