@@ -2739,14 +2739,27 @@ def _validate_confirmed_prewrite_plan(plan: Plan) -> None:
         raise FixtureError("journal requires an exact pre-write plan")
     if headers.get("authorization") != "confirmed":
         raise FixtureError("journal requires confirmed header authorization")
+    scoped_blocked = {
+        row[1]
+        for row in rows
+        if row[2] == "selected"
+        and row[5] in MUTATING_ACTIONS
+        and row[7] == "not-applicable"
+        and row[8] == "blocked"
+    }
     mutating_rows = [
         row
         for row in rows
-        if row[2] == "selected" and row[5] in MUTATING_ACTIONS
+        if row[2] == "selected"
+        and row[5] in MUTATING_ACTIONS
+        and row[1] not in scoped_blocked
     ]
     if not mutating_rows or not write_capabilities:
         raise FixtureError("journal plan has no selected physical mutation")
-    if any(row[7] != "confirmed" or row[8] != "planned" for row in mutating_rows):
+    if any(
+        row[7] != "confirmed" or row[8] != "planned"
+        for row in mutating_rows
+    ):
         raise FixtureError(
             "journal plan mutations must be confirmed and planned"
         )
@@ -2766,6 +2779,7 @@ def _validate_confirmed_prewrite_plan(plan: Plan) -> None:
     if any(
         row[1] not in mutating_closures or row[4] == "unavailable"
         for row in write_capabilities
+        if row[1] not in scoped_blocked
     ):
         raise FixtureError(
             "journal plan contains an unavailable or unrelated forward step"
@@ -5225,6 +5239,8 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
         "## Adoption decisions",
         "## Hook adoption decisions",
     ]
+    if not expectation:
+        expected_headings.append("## Evidence and notes")
     positions: List[int] = []
     for heading in expected_headings:
         try:
@@ -6791,6 +6807,16 @@ def _resolved_commit_refs(
     return resolved
 
 
+SYNTHESIZED_EVIDENCE = (
+    "\n"
+    "## Evidence and notes\n"
+    "\n"
+    "Synthesized from the bound fixture expectation, which may omit this\n"
+    "section; a serialized plan document may not, so the harness restores it\n"
+    "before parsing the document as an agent-produced plan.\n"
+)
+
+
 def _actual_plan_bytes(
     expectation: Plan,
     baseline_commit: str,
@@ -6835,7 +6861,10 @@ def _actual_plan_bytes(
         while row_end < len(lines) and lines[row_end].startswith("| "):
             row_end += 1
         lines[row_start:row_end] = sorted(lines[row_start:row_end])
-    return "".join(lines).encode("utf-8")
+    rendered = "".join(lines)
+    if "\n## Evidence and notes\n" not in rendered:
+        rendered = rendered.rstrip("\n") + "\n" + SYNTHESIZED_EVIDENCE
+    return rendered.encode("utf-8")
 
 
 def _confirmed_plan_bytes(plan: Plan, baseline_commit: str) -> bytes:

@@ -1,0 +1,15 @@
+{
+  "operations": [
+    {
+      "binding": null,
+      "closure": "closure/hooks/codex",
+      "inverse_binding": null,
+      "inverse_protocol": "unavailable",
+      "operation": "create",
+      "path": ".codex/hooks.json",
+      "protocol": "unavailable"
+    }
+  ],
+  "profiles": [],
+  "version": "write-capability-fixture/v1"
+}

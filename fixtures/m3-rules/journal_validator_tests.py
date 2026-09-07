@@ -97,6 +97,11 @@ PLAN_TEXT = """# Bridge Sync Plan
 ## Hook adoption decisions
 
 - (none)
+
+## Evidence and notes
+
+Inline journal-suite fixture plan. The journal validator tests bind these exact
+bytes; no live host call produced them.
 """
 FORMAL_SCRATCH_PATTERNS = (
     "bridge-journal-formal-attestation-*",

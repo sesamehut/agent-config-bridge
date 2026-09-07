@@ -57,7 +57,8 @@ shape, now `activation-fixture/v2`. It does not resolve live Codex
 configuration or inspect carriers.
 `inspect-hook-intents` returns `hook-intent-scan/v1`: entry spans and ids,
 bullet-label spans, the single `yaml` fence span per entry, the file-level
-`bridge:hooks-shared-execution` span, byte-decidable violations, and the
+`bridge:hooks-shared-execution` span, byte-decidable violations including a
+stray `yaml` block in the preamble before the first entry, and the
 authenticated per-target triple. It is a closed-grammar byte scanner, never a
 YAML parser; the agent parses the YAML and validates the complete v5 schema.
 `inspect-hooks-json` returns `hooks-json-inspection/v1`: byte spans for `hooks`,
@@ -159,6 +160,14 @@ emitting any normative token.
    `bridge:hooks-shared-execution` comment; parse that YAML with the agent and
    validate the complete v5 schema, emitting one `intent-doc-anomaly` per
    violation and naming its closed reason token in Evidence and notes only.
+   The scan itself reports a fenced `yaml` block that opens before the first
+   `## hook:` heading as reason `yaml-block-count` with no entry id; serialize
+   it as `intent-doc-anomaly` with `(line <n>)` for the opening fence and never
+   re-derive it. Emit `matcher-grammar-divergent` only under its closed
+   predicate: a shared `matcher` inside the Claude list class that contains
+   `|` or `,`, both targets on a host-executed JSON surface, and no per-host
+   `matcher` override. The scan's per-entry advisories already apply that
+   predicate, and a bare literal such as `Bash` never qualifies.
    Run `inspect-hooks-json` on each present carrier for spans, parsed scalars,
    duplicate keys, and the classified passthrough, semantics-changing, and
    unknown handler keys; always pass `--host` and always pass the carrier's own
@@ -171,7 +180,10 @@ emitting any normative token.
    `targets.codex.surface: agents-md` entry, compare
    `render-hook-degradation` against `N(body)` of the root `AGENTS.md` block
    `hooks/<id>`. Emit `undeclared-hooks-key` only for groups that are neither
-   owned nor marked. Shallow-scan a tracked `.codex/config.toml` for an inline
+   owned nor marked, in both regimes: a `surface: none` or prose-surface target
+   owns no group, so the group its H-T4-PRESENT or H-DEGRADED-NATIVE-PRESENT
+   candidate occupies is still reported unless a `[bridge:<id>]` marker claims
+   it. Shallow-scan a tracked `.codex/config.toml` for an inline
    `[hooks` table header or a top-level `hooks =` pointer key without parsing
    TOML, and read `disableAllHooks` and a tracked
    `.claude/settings.local.json` for their observations only. `locate-json-span`,

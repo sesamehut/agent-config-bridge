@@ -270,7 +270,9 @@ HOOK_YAML_KEY_PATTERN = re.compile(
     r"^(?P<key>[A-Za-z][A-Za-z0-9_-]*):(?: (?P<value>.*))?$"
 )
 HOOK_CLAUDE_LIST_MATCHER_CLASS = re.compile(r"^[A-Za-z0-9_ ,|-]*$")
-HOOK_BARE_MATCHER_PATTERN = re.compile(r"^[A-Za-z0-9_]+$")
+HOOK_CLAUDE_LIST_SEPARATORS = re.compile(r"[,|]")
+HOOK_REGEX_METACHARACTER_PATTERN = re.compile(r"[.^$*+?()\[\]{}|\\]")
+HOOK_RECORD_DATE_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}")
 HOOK_FENCE_COMMAND_PATTERN = re.compile(
     r"^bridge-fixture-noop( [a-z0-9-]+)?$"
 )
@@ -3242,7 +3244,7 @@ def _handler_record(
     scalars: dict[str, Any] = {}
     for member in node["members"]:
         value = member["value"]
-        scalar = value["kind"] in {"string", "integer", "number", "boolean"}
+        scalar = value["kind"] in {"string", "integer", "boolean"}
         keys.append(
             {
                 "name": member["name"],
@@ -4141,13 +4143,16 @@ def _handler_edits(
     *,
     host: str,
     style: Mapping[str, str],
+    preserve: Iterable[str] = (),
 ) -> list[dict[str, Any]]:
     edits: list[dict[str, Any]] = []
     keys = handler["keys"]
     names = [key["name"] for key in keys]
+    untouched = set(preserve)
     fields = sorted(HOOK_HOST_HANDLER_KEYS[host])
     if host == "codex":
-        fields = [name for name in fields if name != "statusMessage"]
+        untouched.add("statusMessage")
+    fields = [name for name in fields if name not in untouched]
     for name in fields:
         record = _handler_key_record(handler, name)
         desired = wanted.get(name)
@@ -4550,6 +4555,11 @@ def compose_hooks_json(
                     "matcher-mismatch",
                     f"{event} desired matcher does not match the entry",
                 )
+            if "command" not in model["handler"]:
+                raise _composition_refusal(
+                    "missing-command",
+                    f"{event} desired entry declares no command",
+                )
         if not found:
             if entry is None:
                 continue
@@ -4582,7 +4592,10 @@ def compose_hooks_json(
                 f"{event} owned group has {len(commands)} handlers",
             )
         wanted = dict(model["handler"])
-        if host == "claude":
+        preserve: tuple[str, ...] = ()
+        if _handler_key_record(commands[0], "statusMessage") is not None:
+            preserve = ("statusMessage",)
+        elif host == "claude":
             wanted["statusMessage"] = (
                 model["status_message"] or f"[bridge:{model['id']}]"
             )
@@ -4590,7 +4603,12 @@ def compose_hooks_json(
             wanted["statusMessage"] = model["status_message"]
         edits.extend(
             _handler_edits(
-                data, commands[0], wanted, host=host, style=style
+                data,
+                commands[0],
+                wanted,
+                host=host,
+                style=style,
+                preserve=preserve,
             )
         )
     pending_events: dict[tuple[int, int, str, str], list[str]] = {}
@@ -4893,6 +4911,49 @@ def _hook_prose_eligible(host: str, event: str) -> bool:
 
 
 
+def _valid_hook_record_date(value: Any) -> bool:
+    """Report whether one record date is a valid calendar date."""
+
+    if not isinstance(value, str):
+        return False
+    if HOOK_RECORD_DATE_PATTERN.fullmatch(value) is None:
+        return False
+    try:
+        datetime.date.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
+
+
+
+def _valid_hook_record_note(value: Any) -> bool:
+    """Report whether one fenced-block record note keeps the grammar."""
+
+    if not isinstance(value, str) or not value:
+        return False
+    if value != value.strip(" \t"):
+        return False
+    return not any(char in value for char in ("\n", "\r", "\x00"))
+
+
+
+def _hook_matcher_domain_names(host: str, matcher: str) -> list[str]:
+    """Resolve the exact names one matcher can select on that host."""
+
+    if host == "claude":
+        if HOOK_CLAUDE_LIST_MATCHER_CLASS.fullmatch(matcher) is None:
+            return []
+        names = [
+            element.strip(" ")
+            for element in HOOK_CLAUDE_LIST_SEPARATORS.split(matcher)
+        ]
+        return [name for name in names if name]
+    if HOOK_REGEX_METACHARACTER_PATTERN.search(matcher) is not None:
+        return []
+    return [matcher] if matcher else []
+
+
+
 def _validate_hook_entry(
     entry: dict[str, Any], acknowledged: bool
 ) -> None:
@@ -5031,14 +5092,12 @@ def _validate_hook_entry(
         ):
             fail("matcher-ignored")
         domain = HOOK_MATCHER_DOMAINS.get((host, event))
-        if (
-            domain is not None
-            and isinstance(effective_matcher, str)
-            and HOOK_BARE_MATCHER_PATTERN.fullmatch(effective_matcher)
-            is not None
-            and effective_matcher not in domain
-        ):
-            fail("matcher-domain")
+        if domain is not None and isinstance(effective_matcher, str):
+            selected = _hook_matcher_domain_names(
+                host, effective_matcher
+            )
+            if any(name not in domain for name in selected):
+                fail("matcher-domain")
         effective_timeout = target.get("timeout")
         if effective_timeout is None:
             effective_timeout = timeout
@@ -5077,19 +5136,37 @@ def _validate_hook_entry(
             codex_command, str
         ):
             fail("field-missing")
+    for context in ("enabled-by", "intent"):
+        records = fields.get(context) or []
+        reason = (
+            "enabled-by-malformed"
+            if context == "enabled-by"
+            else "field-invalid"
+        )
+        previous: Optional[str] = None
+        for item in records:
+            at = item.get("line", line)
+            date = item.get("date")
+            if not _valid_hook_record_date(date):
+                fail(reason, at)
+            else:
+                if previous is not None and date < previous:
+                    fail(reason, at)
+                previous = date
+            if not _valid_hook_record_note(item.get("note")):
+                fail(reason, at)
     if hook_class in {"gate", "side-effect"} and enabled is True:
-        records = fields.get("enabled-by")
-        if not records:
+        if not fields.get("enabled-by"):
             entry["opt_in_pending"] = True
             lint("enabled-by-missing")
-        elif any(
-            not isinstance(item.get("note"), str) for item in records
-        ):
-            fail("enabled-by-malformed")
     if (
         isinstance(matcher, str)
         and HOOK_CLAUDE_LIST_MATCHER_CLASS.fullmatch(matcher) is not None
         and ("|" in matcher or "," in matcher)
+        and all(
+            targets[host].get("surface") == HOOK_JSON_SURFACES[host]
+            for host in ("claude", "codex")
+        )
         and targets["claude"].get("matcher") is None
         and targets["codex"].get("matcher") is None
     ):
@@ -5127,13 +5204,40 @@ def inspect_hook_intents(data: bytes) -> dict[str, Any]:
     first_entry = headings[0][0] if headings else len(records)
     for index, record in enumerate(records[:first_entry]):
         match = HOOKS_SHARED_EXECUTION_PATTERN.fullmatch(record["content"])
-        if match is not None:
-            result["shared_execution"] = {
-                "present": True,
-                "date": match.group(1).decode("ascii"),
-                "span": _span(record["start"], record["end"]),
+        if match is None:
+            continue
+        acknowledged_date = match.group(1).decode("ascii")
+        if not _valid_hook_record_date(acknowledged_date):
+            continue
+        result["shared_execution"] = {
+            "present": True,
+            "date": acknowledged_date,
+            "span": _span(record["start"], record["end"]),
+        }
+        break
+    open_preamble: Optional[Any] = None
+    for record in records[:first_entry]:
+        content = record["content"].strip(b" \t")
+        if open_preamble is None:
+            if content == HOOK_YAML_FENCE_OPEN:
+                open_preamble = record
+        elif content == HOOK_YAML_FENCE_CLOSE:
+            result["anomalies"].append(
+                {
+                    "reason": "yaml-block-count",
+                    "entry": None,
+                    "line": open_preamble["line"],
+                }
+            )
+            open_preamble = None
+    if open_preamble is not None:
+        result["anomalies"].append(
+            {
+                "reason": "yaml-block-count",
+                "entry": None,
+                "line": open_preamble["line"],
             }
-            break
+        )
     acknowledged = result["shared_execution"]["present"]
     seen_ids: dict[str, int] = {}
     for position, (index, record) in enumerate(headings):
@@ -5259,7 +5363,10 @@ def inspect_hook_intents(data: bytes) -> dict[str, Any]:
             )
             entry["valid"] = False
             result["entries"][seen_ids[entry_id]]["anomalies"].append(
-                {"reason": "duplicate-id", "line": record["line"]}
+                {
+                    "reason": "duplicate-id",
+                    "line": headings[seen_ids[entry_id]][1]["line"],
+                }
             )
             result["entries"][seen_ids[entry_id]]["valid"] = False
         else:
@@ -7170,6 +7277,88 @@ def run_self_test() -> dict[str, Any]:
     )
     checks.append("hooks-json-composition-refusals")
 
+    suffix_carrier = hooks_carrier.replace(
+        b'"statusMessage": "[bridge:guard]"',
+        b'"statusMessage": "[bridge:guard] reviewed by the team"',
+        1,
+    )
+    suffix_desired = {
+        "host": "claude",
+        "groups": [
+            {"event": "PreToolUse", "matcher": "Bash", "entry": guard_entry}
+        ],
+    }
+    suffix_composed = compose_hooks_json(suffix_carrier, suffix_desired)
+    self_test_require(
+        not suffix_composed["changed"]
+        and not suffix_composed["edits"]
+        and base64.b64decode(suffix_composed["postimage"]["base64"])
+        == suffix_carrier,
+        "an unowned statusMessage suffix is carried forward: "
+        f"{suffix_composed['edits']}",
+    )
+    marker_free_carrier = suffix_carrier.replace(
+        b', "statusMessage": "[bridge:guard] reviewed by the team"', b"", 1
+    )
+    marker_composed = compose_hooks_json(marker_free_carrier, suffix_desired)
+    self_test_require(
+        marker_composed["changed"]
+        and [
+            (edit["kind"], edit["key"])
+            for edit in marker_composed["edits"]
+        ]
+        == [("add-key", "statusMessage")],
+        "a handler carrying no statusMessage still receives the marker",
+    )
+    checks.append("hooks-json-status-message-preserved")
+
+    incomplete_entry = {
+        key: value for key, value in guard_entry.items() if key != "command"
+    }
+    incomplete_desired = {
+        "host": "claude",
+        "groups": [
+            {
+                "event": "PreToolUse",
+                "matcher": "Bash",
+                "entry": incomplete_entry,
+            }
+        ],
+    }
+    for label, carrier in (
+        ("update", hooks_carrier),
+        ("create", b'{"hooks": {}}'),
+    ):
+        refusal = ""
+        try:
+            compose_hooks_json(carrier, incomplete_desired)
+        except ValueError as error:
+            refusal = str(error)
+        self_test_require(
+            refusal.startswith("composition-refused:missing-command"),
+            f"the {label} path refuses an entry with no command: {refusal}",
+        )
+    checks.append("hooks-json-missing-command-refusal")
+
+    float_scan = inspect_hooks_json(
+        b'{"hooks": {"Stop": [{"hooks": [{"type": "command",'
+        b' "command": "bridge-fixture-noop stop", "timeout": 1.5}]}]}}',
+        host="claude",
+    )
+    float_handler = float_scan["events"][0]["groups"][0]["handlers"][0]
+    self_test_require(
+        float_scan["ok"]
+        and not float_scan["anomalies"]
+        and [
+            (key["name"], key["scalar"]) for key in float_handler["keys"]
+        ]
+        == [("type", True), ("command", True), ("timeout", False)]
+        and float_handler["timeout"] is None,
+        "a floating-point handler member is outside the closed scalar set: "
+        f"{float_handler['keys']}",
+    )
+    checks.append("hook-handler-non-scalar-number")
+
     intent_document = (
         b"<!-- bridge:hooks-shared-execution 2026-09-07 acknowledged:"
         b" committed Claude hooks run for every clone without a trust"
@@ -7372,6 +7561,53 @@ def run_self_test() -> dict[str, Any]:
         == {"matcher-grammar-divergent", "hook-output-not-delivered"},
         "closed advisory tokens",
     )
+
+    def divergence_advisories(*edits: tuple[bytes, bytes]) -> set:
+        """Return entry advisories for a PreToolUse variant of the document."""
+
+        mutated = intent_document.replace(
+            b"event: SessionStart\n", b"event: PreToolUse\n", 1
+        )
+        for original, replacement in edits:
+            mutated = mutated.replace(original, replacement, 1)
+        return set(inspect_hook_intents(mutated)["entries"][0]["advisories"])
+
+    comma_list = divergence_advisories(
+        (b"timeout: 5\n", b"timeout: 5\nmatcher: Write,Edit\n")
+    )
+    pipe_list = divergence_advisories(
+        (b"timeout: 5\n", b"timeout: 5\nmatcher: Write|Edit\n")
+    )
+    bare_literal = divergence_advisories(
+        (b"timeout: 5\n", b"timeout: 5\nmatcher: Bash\n")
+    )
+    single_host_list = divergence_advisories(
+        (b"timeout: 5\n", b"timeout: 5\nmatcher: Write,Edit\n"),
+        (
+            b"    surface: codex-hooks-json\n    tier: native\n",
+            b"    surface: none\n    tier: declared-unsynced\n",
+        ),
+    )
+    overridden_list = divergence_advisories(
+        (b"timeout: 5\n", b"timeout: 5\nmatcher: Write|Edit\n"),
+        (
+            b"    surface: settings-json\n    tier: native\n",
+            b"    surface: settings-json\n    tier: native\n"
+            b"    matcher: Write|Edit\n"
+            b"    override-reason: matcher-grammar\n",
+        ),
+    )
+    self_test_require(
+        "matcher-grammar-divergent" in comma_list
+        and "matcher-grammar-divergent" in pipe_list
+        and "matcher-grammar-divergent" not in bare_literal
+        and "matcher-grammar-divergent" not in single_host_list
+        and "matcher-grammar-divergent" not in overridden_list,
+        "matcher-grammar-divergent closed predicate: "
+        f"{comma_list} {pipe_list} {bare_literal} "
+        f"{single_host_list} {overridden_list}",
+    )
+    checks.append("matcher-grammar-divergent-predicate")
     unverified_scan = inspect_hook_intents(
         intent_document.replace(
             b"event: SessionStart\n", b"event: FutureEvent\n", 1
@@ -7404,6 +7640,40 @@ def run_self_test() -> dict[str, Any]:
         "duplicate-id" in duplicate_reasons, "duplicate-id anomaly"
     )
     checks.append("hook-intent-scan-anomalies")
+
+    stray_scan = inspect_hook_intents(
+        intent_document.replace(
+            b"## hook: reminder-start\n",
+            b"```yaml\nid: preamble-stray\n```\n\n"
+            b"## hook: reminder-start\n",
+            1,
+        )
+    )
+    self_test_require(
+        not stray_scan["valid"]
+        and stray_scan["shared_execution"]["present"]
+        and stray_scan["entries"][0]["valid"]
+        and stray_scan["anomalies"]
+        == [{"reason": "yaml-block-count", "entry": None, "line": 5}],
+        f"stray preamble yaml block anomaly: {stray_scan['anomalies']}",
+    )
+    unclosed_scan = inspect_hook_intents(
+        intent_document.replace(
+            b"## hook: reminder-start\n",
+            b"```yaml\n\n## hook: reminder-start\n",
+            1,
+        )
+    )
+    self_test_require(
+        any(
+            anomaly["reason"] == "yaml-block-count"
+            and anomaly["entry"] is None
+            and anomaly["line"] == 5
+            for anomaly in unclosed_scan["anomalies"]
+        ),
+        f"unclosed preamble yaml fence anomaly: {unclosed_scan['anomalies']}",
+    )
+    checks.append("hook-intent-preamble-stray-block")
 
     opt_in_scan = inspect_hook_intents(
         intent_document.replace(b"class: reminder\n", b"class: gate\n", 1)
@@ -7449,6 +7719,129 @@ def run_self_test() -> dict[str, Any]:
         "non-invalidating lints stay inside the closed reason registry",
     )
     checks.append("hook-intent-non-invalidating-lints")
+
+    for malformed in (
+        b"class: gate\nenabled-by:\n  - date: 2026-02-31\n"
+        b"    note: reviewed the exact command line\n",
+        b"class: gate\nenabled-by:\n  - date: banana\n"
+        b"    note: reviewed the exact command line\n",
+        b"class: gate\nenabled-by:\n  - date: 2026-09-07\n"
+        b'    note: " reviewed the exact command line"\n',
+        b"class: gate\nenabled-by:\n  - date: 2026-09-07\n"
+        b"    note: first review\n  - date: 2026-09-06\n"
+        b"    note: second review\n",
+    ):
+        self_test_require(
+            "enabled-by-malformed"
+            in scan_reasons(malformed, b"class: reminder\n"),
+            f"malformed enabled-by record: {malformed!r}",
+        )
+    self_test_require(
+        not scan_reasons(
+            b"class: gate\nenabled-by:\n  - date: 2026-09-06\n"
+            b"    note: first review\n  - date: 2026-09-07\n"
+            b"    note: second review\n",
+            b"class: reminder\n",
+        ),
+        "two complete oldest-first enabled-by records stay valid",
+    )
+    self_test_require(
+        "field-invalid"
+        in scan_reasons(
+            b"  - date: 2026-13-45\n", b"  - date: 2026-09-07\n"
+        ),
+        "an intent record with an impossible date is field-invalid",
+    )
+    checks.append("hook-intent-record-grammar")
+
+    impossible_ack_scan = inspect_hook_intents(
+        intent_document.replace(
+            b"bridge:hooks-shared-execution 2026-09-07",
+            b"bridge:hooks-shared-execution 2026-13-45",
+            1,
+        )
+    )
+    self_test_require(
+        impossible_ack_scan["valid"]
+        and not impossible_ack_scan["shared_execution"]["present"]
+        and [item["reason"] for item in impossible_ack_scan["lints"]]
+        == ["shared-execution-unacknowledged"],
+        "an impossible acknowledgement date is no acknowledgement: "
+        f"{impossible_ack_scan['shared_execution']}",
+    )
+    checks.append("hook-acknowledgement-calendar-date")
+
+    claude_only_document = intent_document.replace(
+        b"  codex:\n    surface: codex-hooks-json\n    tier: native\n",
+        b"  codex:\n    surface: none\n    tier: declared-unsynced\n",
+        1,
+    )
+
+    def matcher_reasons(document: bytes, anchor: bytes, matcher: bytes) -> set:
+        mutated = document.replace(
+            anchor, anchor + b"matcher: " + matcher + b"\n", 1
+        )
+        return {
+            anomaly["reason"]
+            for anomaly in inspect_hook_intents(mutated)["anomalies"]
+        }
+
+    self_test_require(
+        "matcher-domain"
+        in matcher_reasons(
+            claude_only_document, b"timeout: 5\n", b"startup,bogus"
+        )
+        and "matcher-domain"
+        in matcher_reasons(
+            claude_only_document, b"timeout: 5\n", b"startup|bogus"
+        )
+        and not matcher_reasons(
+            claude_only_document, b"timeout: 5\n", b"startup, resume"
+        )
+        and not matcher_reasons(
+            claude_only_document, b"timeout: 5\n", b"startup"
+        )
+        and not matcher_reasons(
+            claude_only_document, b"timeout: 5\n", b"^start.*"
+        ),
+        "a Claude list matcher is checked element by element",
+    )
+    codex_end_document = intent_document.replace(
+        b"event: SessionStart\n", b"event: SessionEnd\n", 1
+    ).replace(b"timeout: 5\n", b"timeout: 2\n", 1)
+    self_test_require(
+        "matcher-domain"
+        in matcher_reasons(
+            codex_end_document, b"timeout: 2\n", b"other-x"
+        )
+        and not matcher_reasons(
+            codex_end_document, b"timeout: 2\n", b"other"
+        ),
+        "a hyphenated Codex literal outside the closed domain is caught",
+    )
+    checks.append("hook-matcher-domain-lists")
+
+    first_duplicate_scan = inspect_hook_intents(duplicate_document)
+    duplicate_lines = [
+        anomaly["line"]
+        for anomaly in first_duplicate_scan["anomalies"]
+        if anomaly["reason"] == "duplicate-id"
+    ]
+    self_test_require(
+        duplicate_lines
+        == [
+            duplicate_document[
+                : duplicate_document.index(b"## hook:")
+            ].count(b"\n")
+            + 1,
+            duplicate_document[
+                : duplicate_document.rindex(b"## hook:")
+            ].count(b"\n")
+            + 1,
+        ],
+        f"each duplicate-id anomaly cites its own heading: {duplicate_lines}",
+    )
+    checks.append("hook-duplicate-id-first-line")
 
     wrapped_document = intent_document.replace(
         b"- Purpose: state the branch.\n",

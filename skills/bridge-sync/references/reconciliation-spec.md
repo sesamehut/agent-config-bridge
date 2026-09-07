@@ -799,11 +799,12 @@ The `write capability`, `hook carrier`, and `hook opt-in` gates are the only
 gates whose prohibition is scoped to the matching closure and its dependents;
 `hook source` and every other gate stay project-wide. A scoped-blocked
 closure keeps `selected` with authorization `not-applicable` and outcome
-`blocked`, never `not-selected`, and the sibling carrier that proceeds emits
-the acknowledged `hook-projection-asymmetric`. For an entry whose `class` is
-`gate` the sibling does not proceed at all: a blocked or unavailable carrier
-forces the other carrier closure to `not-selected` with zero writes, because
-asymmetric enforcement is worse than no enforcement.
+`blocked`, never `not-selected`; when its sibling carrier proceeds, the
+acknowledged `hook-projection-asymmetric` is emitted on the blocked carrier.
+For an entry whose `class` is `gate` the sibling does not proceed at all: a
+blocked or unavailable carrier forces the other carrier closure to
+`not-selected` with zero writes, because asymmetric enforcement is worse than
+no enforcement.
 
 ## Writes, validation, and rollback
 
@@ -899,8 +900,9 @@ opaque `operation-id` for this live run and retain the exact journal path in
 memory; never discover journals by scanning a broad temporary directory. The
 journal may bind only an independently serialized, confirmed
 `phase: pre-write` plan whose selected mutations and closures are
-`confirmed` / `planned`; it must never digest a post-write result or
-expectation. The journal binds:
+`confirmed` / `planned`, apart from a scoped-blocked closure that stays
+`not-applicable` / `blocked` and contributes no journal step; it must never
+digest a post-write result or expectation. The journal binds:
 
 - `operation-id`, resolved repository path, starting `HEAD` object id (or
   `unborn`), and SHA-256 of the exact confirmed sync-plan/v3 bytes;

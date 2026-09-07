@@ -23,9 +23,8 @@ the corresponding report state lives in
 
 - The enforcement point of every surface above is the host runtime; prose
   simulation is forbidden.
-- These surfaces are declared not-synced — the only legitimate source of the
-  `unsupported` classification (state and sync-verb mapping in the report
-  spec).
+- These surfaces are declared not-synced, which is the only legitimate source
+  of the `declared-unsynced` state (closed state set in the report spec).
 - `notify` is user-level-only and is never a projection target.
 - Claude permissions ↔ Codex execpolicy is a future mapping candidate
   (post-MVP); no mapping is pinned.

@@ -20,9 +20,10 @@ are inert the same way; see [Hook fence](#hook-fence) below.
 |---|---|
 | [`not-onboarded/`](not-onboarded/) | A project the bridge has never onboarded: a hand-written `AGENTS.md` and a copy-only Codex skill reported as adoption candidates, unprojected entry and rule-shard units, a vacuous hooks surface, and zero drift by construction. |
 | [`onboarded/`](onboarded/) | A project carrying the exact two-part `covenant/v3` anchor and exercising the onboarded regime end to end: in-sync, neutral reconcile drift, adoption-candidate, blocked skill-loadability, representative portability lints and behavior degradation, neutral Codex live-activation annotations, claude-only subtraction, strict intent comments, pv2 scoped-rule rendering, and the nested-agents-md observation channel. Its `source-tree/v5` intent document carries the file-level `bridge:hooks-shared-execution` acknowledgement, a `class` on every entry, and a dated `enabled-by` record on its one `gate`. Hook coverage: one in-sync native pair on `sentinel-stop` plus a Claude-only in-sync native row on `sandbox-guard`, a drift/reconcile pair for the declared but unprojected `fmt-on-save`, the `declared-unsynced` Codex row of `sandbox-guard`, the marked orphan Codex handler, the user-owned undeclared `SessionStart` group, `awaiting-host-trust` on the in-sync Codex row, and the `hook-output-not-delivered` and `matcher-grammar-divergent` observations. |
-| [`hooks-cases/`](hooks-cases/) | Claude carrier discrimination on `.claude/settings.json`: H-EXTRA-KEYS, H-FIELD-ABSENT, H-FIELD-DIFF, and H-MULTI. Its pinned profile is the only read-side one that resolves both Codex live inputs (`codex_project_trust: untrusted`, `codex_hooks_feature: disabled`), so `codex-project-untrusted` and `codex-hooks-feature-disabled` are deterministically compared. |
+| [`hooks-cases/`](hooks-cases/) | Claude carrier discrimination on `.claude/settings.json`: H-EXTRA-KEYS, H-FIELD-ABSENT, H-FIELD-DIFF, and H-MULTI, plus H-T4-PRESENT on the Codex side of `t4-present`, whose `surface: none` target sits over an unmarked `.codex/hooks.json` group carrying its effective command. In this onboarded project that case replaces the `declared-unsynced` row with `drift`/`reconcile`, while the not-onboarded branch keeps the `declared-unsynced` row; only the row differs, because a `surface: none` target owns no group and the occupied `Stop` group is reported as `undeclared-hooks-key` in both regimes. Its pinned profile is the only read-side one that resolves both Codex live inputs (`codex_project_trust: untrusted`, `codex_hooks_feature: disabled`), so `codex-project-untrusted` and `codex-hooks-feature-disabled` are deterministically compared. |
 | [`hooks-broken-json/`](hooks-broken-json/) | Unreadable and unmodelled hook carriers: a `.codex/hooks.json` that is valid UTF-8 but invalid JSON, which emits `json-parse-error` and drives the Codex rows to H-NOFILE while the Claude rows are still evaluated, plus a sibling carrier with a duplicate object key, which emits `hooks-carrier-unmodelled (duplicate-key)`. |
-| [`hooks-doc-anomalies/`](hooks-doc-anomalies/) | Intent-document schema violations in one document: a missing prose bullet, two `yaml` blocks in one entry, a duplicate id, a duplicate `(event, effective-matcher, host)` ownership triple, an override without `override-reason`, a `native` tier on `Interrupt` for Claude, and a `class: side-effect` entry with `enabled: true` and no `enabled-by`. Every invalidating violation emits one `intent-doc-anomaly` line and its entry emits no unit row. |
+| [`hooks-unmodelled/`](hooks-unmodelled/) | The other `hooks-carrier-unmodelled` detail: a `.claude/settings.json` that parses as JSON yet maps its `Stop` event to an object where the closed hooks shape admits only an array of matcher groups, which emits `hooks-carrier-unmodelled (unmodelled-shape)`. The disclosure is not a refusal, so the decision table still runs on what is readable: `session-note` keeps its readable owned group and reports H-OK while `wrap-up` finds no readable owned group and reports H-MISSING. Both entries declare `surface: none` on Codex, so the project carries no `.codex/hooks.json`. |
+| [`hooks-doc-anomalies/`](hooks-doc-anomalies/) | Intent-document schema violations in one document: a missing prose bullet, two `yaml` blocks in one entry, a duplicate id, a duplicate `(event, effective-matcher, host)` ownership triple, an override without `override-reason`, a `native` tier on `Interrupt` for Claude, a `class: side-effect` entry with `enabled: true` and no `enabled-by`, and a stray fenced `yaml` block sitting before the first `## hook:` heading. Every invalidating violation emits one `intent-doc-anomaly` line and its entry emits no unit row; the stray block belongs to no entry, so `inspect-hook-intents` detects it under `yaml-block-count` and it is reported with the `(line <n>)` detail of its opening fence instead. |
 | [`hooks-disabled/`](hooks-disabled/) | Inertness signals side by side: H-DISABLED-OK and H-DISABLED-PRESENT, a tracked settings carrier whose global hook switch is off (`hooks-globally-disabled`), and a tracked `.claude/settings.local.json` carrying a `hooks` key (`local-hooks-present`). |
 | [`hooks-prose/`](hooks-prose/) | Both prose surfaces: `intent-doc` on Claude (H-DOC, zero carrier bytes) and `agents-md` on Codex (H-DEGRADED-OK, H-DEGRADED-DIFF, H-DEGRADED-MISSING, H-DEGRADED-NATIVE-PRESENT) with the closed `hd1` block template, plus an orphan `hooks/<id>` block in `AGENTS.md` that hits case A8. |
 | [`hooks-inline-codex/`](hooks-inline-codex/) | A tracked `.codex/config.toml` declaring an inline `[hooks.Stop]` table beside a valid `.codex/hooks.json` (`codex-inline-hooks-present (Stop)`). Detection is the shallow byte scan, never a TOML parse. |
@@ -34,14 +35,14 @@ are inert the same way; see [Hook fence](#hook-fence) below.
 | [`m4-hooks/`](m4-hooks/) | Declarative hook-projection vectors: the 26-scenario, 27-expectation `bridge-m4-hooks-matrix/v1` suite covering byte-stable `json-owned-span/v1` composition, both carrier closures, the opt-in and acknowledgement blockers, degradation, adoption and reverse adoption, and the Codex re-trust disclosures. `hooks_harness.py` imports `m3-rules/fixture_harness.py` for the plan grammar, validator, comparison, materialization, and replay machinery instead of reimplementing them, binds `bridge-live-operation-journal/v2` by reference rather than re-running its suite, and adds `check-hook-fence` over the complete fixture tree. |
 | [`_support/`](_support/) | Shared product-neutral harness helpers: named tree-manifest materialization, disposable Git repositories, exact post-tree and structural plan comparison, and no-follow root-child access. Imported by `m3-rules/fixture_harness.py` and, through it, by the M4 harness; `m2-sync/` predates it and stays self-contained. Not a fixture project and never scanned as one. |
 
-The two M1 projects and the eight hook projects together exercise every
-`report/v5` Sentinel state, every H-case except `H-T4-PRESENT`, and every
-read-side hook observation token. Two read-side gaps stay open and are
-tracked here rather than claimed as covered: no fixture pairs a
-`surface: none` target with a carrier handler that occupies its candidate
-group, so the `H-T4-PRESENT` branch that turns a `declared-unsynced` row into
-`drift`/`reconcile` is never taken; and `hooks-carrier-unmodelled` is
-exercised only in its `(duplicate-key)` detail, never `(unmodelled-shape)`.
+The two M1 projects and the nine hook projects together exercise every
+`report/v5` Sentinel state, every H-case, both `hooks-carrier-unmodelled`
+details, and every read-side hook observation token. No read-side coverage gap
+remains: `hooks-cases/` pairs a `surface: none` target with a carrier handler
+that occupies its candidate group, so the `H-T4-PRESENT` branch that turns a
+`declared-unsynced` row into `drift`/`reconcile` is taken, and
+`hooks-unmodelled/` supplies the `(unmodelled-shape)` detail beside the
+`(duplicate-key)` detail of `hooks-broken-json/`.
 M2, M3, and M4 mutation coverage is inventoried separately in
 [`m2-sync/README.md`](m2-sync/README.md),
 [`m3-rules/README.md`](m3-rules/README.md), and
@@ -127,8 +128,15 @@ than a proof. `scan_hook_fence()` in `sentinel_mechanics.py`, run over the
 whole tree by `m4-hooks/hooks_harness.py check-hook-fence`, reads
 `.claude/settings.json`, `.claude/settings.local.json`, `.codex/hooks.json`,
 `.codex/config.toml`, and `.claude/rules/hooks.md`, plus every
-`m3-rules/shared/` and `m4-hooks/shared/` authoring file mirrored under the
-carrier name its bytes stand for. Two classes stay outside it and are reviewed
-by hand: a carrier it cannot parse, which it reports as unreadable rather than
-as a violation, such as the deliberately invalid JSON in `hooks-broken-json/`;
-and carrier snippets quoted inside `m4-hooks/expectations/*.md`.
+`<suite>/shared` authoring file it discovers under `fixtures/` (`m2-sync/`,
+`m3-rules/` and `m4-hooks/` today) mirrored under the carrier name its bytes
+stand for. `check-hook-fence` then runs a second, byte-level scan over every
+one of those carrier files, including the ones the structured scan reported
+as unreadable, and a value outside the no-op grammar from either scan fails
+the fence. That fallback is what keeps three kinds of bytes fenced that the
+structured scan alone never sees: the deliberately invalid JSON in
+`hooks-broken-json/.codex/hooks.json`, the value shadowed by the duplicate
+`command` key in its sibling Claude carrier, and the command inside the
+unmodelled `Stop` node of `hooks-unmodelled/.claude/settings.json`.
+One class stays outside both scans and is reviewed by hand: carrier snippets
+quoted inside `m4-hooks/expectations/*.md`.

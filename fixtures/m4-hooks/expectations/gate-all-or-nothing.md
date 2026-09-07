@@ -7,21 +7,21 @@
 - contracts: covenant/v3, source-tree/v5, report/v5, reconciliation/v3
 - phase: pre-write
 - onboarding: onboarded
-- authorization: not-applicable
+- authorization: confirmed
 
 ## Units
 
 | unit | closure | selection | baseline | state | action | direction | authorization | outcome | tier | annotations |
 |---|---|---|---|---|---|---|---|---|---|---|
 | hooks/repo-guard/claude | closure/hooks/claude | not-selected | - | no-baseline | create | source-to-projection | not-applicable | not-selected | native | - |
-| hooks/repo-guard/codex | closure/hooks/codex | not-selected | - | no-baseline | create | source-to-projection | not-applicable | not-selected | native | - |
+| hooks/repo-guard/codex | closure/hooks/codex | selected | - | no-baseline | create | source-to-projection | not-applicable | blocked | native | - |
 
 ## Closures
 
 | closure | members | depends on | selection | authorization | outcome |
 |---|---|---|---|---|---|
 | closure/hooks/claude | hooks/repo-guard/claude | - | not-selected | not-applicable | not-selected |
-| closure/hooks/codex | hooks/repo-guard/codex | - | not-selected | not-applicable | not-selected |
+| closure/hooks/codex | hooks/repo-guard/codex | - | selected | not-applicable | blocked |
 
 ## Capability profiles
 
@@ -29,10 +29,13 @@
 
 ## Write capabilities
 
-- (none)
+| step | closure | path | operation | protocol | binding | inverse protocol | inverse binding |
+|---|---|---|---|---|---|---|---|
+| 1 | closure/hooks/codex | .codex/hooks.json | create | unavailable | - | unavailable | - |
 
 ## Warnings
 
+- conditional-write-unavailable: .codex/hooks.json
 - hook-carrier-absent: .codex/hooks.json
 
 ## Hook tiers
@@ -73,42 +76,57 @@ matcher `^(Bash)$`, `class: gate`, `enabled: true`, shared command
 record from 2026-09-07 that states the reviewer accepted repository-wide
 execution. The opt-in gate is therefore satisfied and no
 `hook-opt-in-required` line applies; the class gate rule is the only thing that
-stops this plan.
+stops this plan. Both targets declare a native JSON carrier, so both host rows
+keep tier `native` with the `## Hook tiers` reason `shared-event-command`.
 
-Both targets declare a native JSON carrier, but `.codex/hooks.json` does not
-exist. An absent hooks carrier is a `create`, and `create` accepts only
+The Claude carrier file exists, but `.codex/hooks.json` does not. An absent
+hooks carrier is a `create`, and `create` accepts only
 `strict-create/v1`, which no attested live adapter supplies, so the Codex
-carrier of this entry is unavailable. The missing file is reported once as the
-informational `hook-carrier-absent: .codex/hooks.json`.
+carrier of this entry is unavailable. `closure/hooks/codex` is the closure that
+carries the failing row, so the closed `write capability` exception scopes the
+blocker to it: the closure keeps `selected` with authorization
+`not-applicable` and outcome `blocked`, and its unit row repeats that exact
+shape. A capability failure is never relabelled `not-selected`, because it has
+to stay inside header-authorization derivation and inside every gate. The
+missing file is reported once as the informational
+`hook-carrier-absent: .codex/hooks.json`, and the unwritable create is
+reported once as `conditional-write-unavailable: .codex/hooks.json` beside its
+`Write capabilities` row, whose forward and inverse protocols are both
+`unavailable`. Because that row's forward protocol is already `unavailable`,
+it emits no `strict-compensation-unavailable` line, and because it cites no
+protocol binding at all, `Capability profiles` is `- (none)`.
 
 For an entry whose `class` is `reminder`, `observation`, or `side-effect`, one
 carrier may apply while the sibling is blocked or unavailable, under the
 acknowledged `hook-projection-asymmetric`. For `class: gate` the entry is
 all-or-nothing, because a rule that vetoes a shell call on one host and
 silently permits it on the other is worse than no enforcement at all.
-Asymmetric enforcement is never shipped. The class gate rule is decided before
-selection, so the unavailable Codex carrier takes the whole entry out of this
-plan: `closure/hooks/claude` and `closure/hooks/codex` are both `not-selected`
-/ `not-applicable` / `not-selected`, and each unit row repeats its closure's
-shape. No carrier proceeds, so this plan emits no `hook-projection-asymmetric`
-line and neither host is projected.
+Asymmetric enforcement is never shipped. The blocked Codex carrier therefore
+forces the sibling carrier closure to zero writes:
+`closure/hooks/claude` is `not-selected` / `not-applicable` / `not-selected`
+and its unit row repeats that shape. The class gate rule moves the sibling,
+never the blocked carrier: relabelling `closure/hooks/codex` would erase the
+evidence of why nothing may be written here. No carrier proceeds, so this plan
+emits no `hook-projection-asymmetric` line and neither host is projected.
 
-Because neither carrier closure is selected, no operation reaches the `write
-capability` gate: the unavailable `strict-create/v1` create is never planned,
-no `conditional-write-unavailable` line is emitted, and `Write capabilities`
-is `- (none)`. That is what separates this plan from `codex-create-blocked`,
-where the same absent carrier belongs to a `class: observation` entry, the
-Codex closure stays `selected` / `not-applicable` / `blocked` under the
-closure-scoped gate with the matching `unavailable` capability row, and the
-Claude closure still applies.
+The user's confirmation of this exact serialized Codex closure is on record and
+cannot upgrade a protocol token. `closure/hooks/codex` is therefore a selected
+mutating closure that carries authorization `not-applicable` rather than
+`required`, and it is the only selected mutating closure in this plan, so the
+header authorization derives to `confirmed` and no `authorization-incomplete`
+line is emitted. Nothing is written even so: the derivation reports that no
+selected closure still waits for a user decision, not that a write is
+authorized. `.claude/settings.json` is not written, so no
+`claude-hooks-shared-execution` acknowledgement is required; that file carries
+`permissions`, `env`, and a 33-entry `skillOverrides` map with no `hooks` key
+and no unowned group, so no `undeclared-hooks-key` line applies either.
 
-No closure is selected, so no selected closure can mutate. Both `Capability
-profiles` and `Write capabilities` are `- (none)`, the header authorization
-derives to `not-applicable`, and no `authorization-incomplete` line is
-emitted. `.claude/settings.json` is not written, so no
-`claude-hooks-shared-execution` acknowledgement is required either; it carries
-no `hooks` key and no unowned group, so no `undeclared-hooks-key` line
-applies.
+That is also what separates this plan from `codex-create-blocked`. There the
+same absent carrier belongs to a `class: observation` entry, so the Codex
+closure is scoped-blocked in exactly this shape while the Claude closure still
+proceeds with a `guarded-patch/v1` replacement, an acknowledged
+`hook-projection-asymmetric` line, and header authorization `required`. Here
+the class of the entry, not the capability, is what removes the Claude closure.
 
 To create the missing carrier, paste exactly these bytes into
 `.codex/hooks.json`, as UTF-8 without a BOM, with LF line endings and one final

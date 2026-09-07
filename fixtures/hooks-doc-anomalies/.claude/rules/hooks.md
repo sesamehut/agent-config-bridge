@@ -6,10 +6,16 @@
 Every entry below is a deliberate `source-tree/v5` schema violation, except
 `opt-in-pending`. That last entry is schema-valid: `enabled-by-missing` is a
 non-invalidating lint, so the entry keeps both of its unit rows and the read
-side annotates them `opt-in-required` instead of emitting an anomaly line. Its
-one shared `matcher` is read as an exact string on Claude and compiled as an
-unanchored regular expression on Codex, so the entry also carries the advisory
-`matcher-grammar-divergent`.
+side annotates them `opt-in-required` instead of emitting an anomaly line. It
+also carries the advisory `matcher-grammar-divergent`, and it meets every
+clause of that closed predicate: its shared `matcher` is `Write,Edit`, a
+string inside the Claude list class that contains a comma; both targets
+declare a host-executed JSON surface, `settings-json` on Claude and
+`codex-hooks-json` on Codex; and neither target overrides `matcher`. Claude
+reads those bytes as a list of two exact tool names while Codex compiles the
+same bytes as one unanchored regular expression, which no tool name matches.
+A bare literal such as `Bash` never raises the advisory, so the comma form is
+what this entry declares.
 
 No carrier exists in this project. `.claude/settings.json` and
 `.codex/hooks.json` are both absent on purpose, so a surviving row reports the
@@ -18,11 +24,11 @@ absent carrier through H-NOFILE and no carrier observation can mask an
 
 The fenced block below belongs to no entry. It sits before the first
 `## hook:` heading, where the closed grammar admits no fenced `yaml` block at
-all, so it is a `yaml-block-count` violation whose observation detail is its
-own first line instead of an entry id. `inspect-hook-intents` reads the
-preamble only for the file-level acknowledgement comment and drops this block
-silently, so the agent that validates the complete v5 schema, not the scanner,
-is the source of that `(line <n>)` anomaly.
+all, so it is a `yaml-block-count` violation. `inspect-hook-intents` scans the
+preamble and reports that anomaly itself, carrying the line of the opening
+fence and no entry id, so the read side prints one `intent-doc-anomaly` line
+whose detail is `(line <n>)` and the scanner never disagrees with the agent
+that validates the rest of the v5 schema.
 
 ```yaml
 id: preamble-stray
@@ -235,7 +241,7 @@ targets:
 
 ## hook: opt-in-pending
 
-- Trigger: before a shell tool call (`PreToolUse`, matcher `Bash`).
+- Trigger: before a write tool call (`PreToolUse`, matcher `Write,Edit`).
 - Purpose: hold a side-effect intent until a dated opt-in record exists.
 - Command: a no-op fixture command.
 - Environment: any shell; reads nothing and writes nothing.
@@ -247,7 +253,7 @@ event: PreToolUse
 class: side-effect
 enabled: true
 command: bridge-fixture-noop opt-in
-matcher: Bash
+matcher: Write,Edit
 timeout: 5
 targets:
   claude:

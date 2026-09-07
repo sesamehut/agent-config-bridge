@@ -3,8 +3,8 @@
 ## 当前状态
 
 实现阶段已经完成 M1（源树声明与只读哨兵）、M2（技能投射与采纳）和
-M3（入口与规则投射）。M4（钩子意图与双侧投射）正在进行：设计已定稿、契约 tuple
-已整体升版，规范、机械层与夹具仍在落地。产品产物继续按
+M3（入口与规则投射）。M4（钩子意图与双侧投射）正在收口：设计已定稿、契约 tuple
+已整体升版，规范、机械层与夹具均已落地，收口计数记录在 M4 小节。产品产物继续按
 [分发模型](../implementation/distribution-model.md)声明的目录落地；CLI、npm
 package、插件清单与插件制品仍门控到 M5，CI 门禁仍是 M6 工作。
 
@@ -314,7 +314,8 @@ inputs 的真实 agent replay 是另一层独立证据；两类证据不得互�
 
 ### M4 检查命令与证据边界
 
-M4 收口后稳定、可复现的仓库内检查为（各条随对应实现步骤落地后逐条可运行）：
+M4 收口后稳定、可复现的仓库内检查为（下列各条均已可运行，计数取自同一轮完整
+执行）：
 
 ```text
 python -B skills/bridge-sentinel/scripts/sentinel_mechanics.py self-test
@@ -331,20 +332,42 @@ git diff --check
 M1 到 M3 的既有检查命令与计数全部保留在上面各自小节，不因 M4 重新基线化。M4 的
 证据计数如下：
 
-- M4 matrix 为 N scenarios、N expectations 与 N replay inputs，agent-replayable
-  与 declarative-only 的拆分单独记录； <!-- m4-counts-pending -->
-- 加入七个 hooks 子命令后的 Sentinel self-test 为 N checks； <!-- m4-counts-pending -->
-- M3 main harness 在 plan 文法扩展到 `sync-plan/v3` 后为 N checks，增量只来自新增
-  检查项，既有计数不重新基线化； <!-- m4-counts-pending -->
+- M4 matrix 为 26 scenarios、27 expectations 与 27 replay inputs。两侧拆分单独
+  记录：scenarios 拆成 25 个 agent-replayable 与 1 个 declarative-only
+  （`partial-two-carrier`），replay inputs 拆成 26 个 agent 与 1 个
+  declarative-only。`hooks_harness.py self-test` 为 281 checks，accounting 是
+  plan 108、replay 108、cleanup 27、contracts 26、fence 8、routing 3 与
+  matrix 1；另有 36 safeguards 与 27 coverage tokens；
+- 加入七个 hooks 子命令后的 Sentinel self-test 为 63 checks；M1 收口记录的
+  36 checks 仍作为里程碑证据保留，不重新基线化；
+- M3 main harness 在 plan 文法扩展到 `sync-plan/v3` 后为 868 checks，等于 M3
+  收口的 809 checks 加上两组显式新增检查：`_exercise_hook_section_contract`
+  贡献 54 项 hook-section 检查（含 hook decision shape 与 carrier trust
+  annotation timing 两个子组），`_formal_adversarial_plans` 为
+  `## Hook tiers` / `## Hook adoption decisions` 增加 5 项 adversarial 拒绝
+  （section missing、section misplaced、invented tier row、adoption file
+  order、adoption carrier order）。accounting 为 adapter 28、
+  hook_sections 54、stale_recovery 43、journal_suite_gate 1 与 other 742；
+  adapter、stale_recovery 与 journal_suite_gate 逐项不变，other 只由上面
+  5 项从 737 增长；
+- journal 三条命令按 M3 小节的口径重跑，结果一致：worker matrix 11/11，single
+  suite 66/66（22 个 failure id，session cleanup 通过），concurrent gate 为
+  2 workers、132 cases（66 cases/worker）、2 unique session roots 与
+  2 successful cleanups；
 - `check-hook-fence` 对整棵夹具树断言每个 `command` / `commandWindows` 都匹配
-  `^bridge-fixture-noop( [a-z0-9-]+)?$`；夹具 hook 永不执行，
-  `--dangerously-bypass-hook-trust` 不出现在任何夹具或 CI 路径中。
+  `^bridge-fixture-noop( [a-z0-9-]+)?$`：结构化扫描覆盖 173 个 carrier 文件、
+  134 个值，byte-level 兜底扫描覆盖同样 173 个文件、139 个值（含不可解析的
+  `fixtures/hooks-broken-json/.codex/hooks.json` 中的 2 个值），violations
+  为 0。夹具 hook 永不执行，`--dangerously-bypass-hook-trust` 不出现在任何
+  夹具或 CI 路径中。
 
 证据边界：
 
-- `bridge-live-operation-journal/v2` 按引用绑定，不由 M4 套件重新证明。它的
+- `bridge-live-operation-journal/v2` 按引用绑定，不由 M4 套件重新证明：M4
+  self-test 以 `journal_binding: by-reference` 声明这一点，只断言所引用的契约
+  token，journal 本身的证据仍由 M3 小节的三条 journal 命令承担。它的
   path-operations 字段与路径种类无关，`json-owned-span/v1` 没有新增 journal
-  字段；M4 self-test 只断言所引用的契约 token。
+  字段。
 - 平台边界：Codex 在 Windows 上用 pwsh 执行 `commandWindows`，Claude 在同一台
   机器上用 bash（Git Bash）执行 `command`，因此共享命令必须在两种 shell 下都
   成立，否则条目必须带 per-host 分支。

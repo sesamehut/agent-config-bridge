@@ -37,6 +37,11 @@ dual-host hook projection are in progress.
   (40 inputs) have accepted real workflow replay evidence;
   `guarded-postverify-race` and `verify-failure-no-compensation` remain
   explicitly declarative-only.
+- The [M4 fixture matrix](fixtures/m4-hooks/README.md) defines 26 hook
+  scenarios, 27 expectations, and 27 replay inputs over both native hook
+  carriers, the Claude `intent-doc` surface, and the Codex `agents-md`
+  degradation surface; `partial-two-carrier` is deliberately declarative-only,
+  and the accepted agent replay evidence is recorded at M4 closure.
 
 Reproduce the stable repository-local mechanical checks with:
 
@@ -47,6 +52,8 @@ python -B fixtures/m3-rules/fixture_harness.py self-test
 python -B fixtures/m3-rules/journal_validator_tests.py --mode worker-matrix
 python -B fixtures/m3-rules/journal_validator_tests.py --mode single
 python -B fixtures/m3-rules/journal_validator_tests.py --mode concurrent
+python -B fixtures/m4-hooks/hooks_harness.py self-test
+python -B fixtures/m4-hooks/hooks_harness.py check-hook-fence
 git diff --check
 ```
 
@@ -59,22 +66,44 @@ checks, one journal-suite gate, 737 other contract checks, and 43
 stale-recovery checks. Its independent journal evidence closes an 11/11 worker
 matrix and a 66/66 single suite; the concurrent gate closes two workers, 132
 cases, two unique session roots, and two successful cleanups. Three final
-independent concurrent runs passed on their first attempt without retry. The
-two closure counts above are milestone evidence, not the current totals: M4 is
-adding the `sync-plan/v3` plan grammar to the M3 harness and seven hooks
-subcommands to the sentinel mechanics, so both self-tests now report more
-checks, and the M4 numbers are recorded at M4 closure. <!-- m4-counts-pending -->
+independent concurrent runs passed on their first attempt without retry. Those
+two closure counts stay as milestone evidence and are never re-baselined; the
+M4 closure run measured the current totals on top of them. After the seven
+hooks subcommands the sentinel self-test closes 63 checks. The M3 main harness
+closes 868 checks: the M3 closure total of 809 plus two explicitly added
+groups, 54 hook-section checks for the two `sync-plan/v3` hook sections
+(including the hook decision-shape and carrier trust-annotation-timing
+subgroups) and five formal-plan adversarial rejections for `## Hook tiers` and
+`## Hook adoption decisions` (section missing, section misplaced, invented tier
+row, adoption file order, adoption carrier order), so its accounting reads 28
+adapter checks, 54 hook-section checks, 43 stale-recovery checks, one
+journal-suite gate, and 742 other contract checks, where only that last bucket
+moved, from 737. The journal commands rerun to the same 11/11 worker matrix,
+66/66 single suite, and two-worker 132-case concurrent gate. The M4 hooks
+harness closes 281 checks over 26 scenarios, 27 expectations, and 27 replay
+inputs (108 plan, 108 replay, 27 cleanup, 26 contracts, eight fence, three
+routing, one matrix), with 36 safeguards and 27 coverage tokens; its scenarios
+split 25 agent-replayable to one declarative-only, and its replay inputs split
+26 agent to one declarative-only. `check-hook-fence` scans 173 carrier files
+structurally for 134 command values and byte-scans the same 173 files for 139
+values, including the two values inside the deliberately unreadable
+`fixtures/hooks-broken-json/.codex/hooks.json`, with zero violations.
 
 These results prove repository contracts, isolated fixture behavior, and the
 recorded agent workflows; repository bytes do not prove Claude Code or Codex
 live-host discovery or activation, and they never prove that a projected hook
-is trusted or will run. M4 is in progress: the contract tuple is raised and the
-hook design is settled, but the hook specs, mechanics, and fixture suite are
-still landing, so the command list above stays at its M3 shape until the M4
-harness exists. There is no CLI, npm package, plugin manifest or payload, or CI
-release gate: packaging remains gated until M5, and CI remains M6 work. Product
-artifacts land milestone by milestone; the [roadmap](docs/phases/roadmap.md)
-owns that boundary.
+is trusted or will run. M4 is closing: the contract tuple is raised, the hook
+specs and the hooks subcommands of the sentinel mechanics are in place, and the
+M4 fixture suite and its harness have landed, so the command list above carries
+both M4 commands and the M4 closure counts above are measured, not pending. The
+live journal contract `bridge-live-operation-journal/v2` is bound by reference
+and is not re-proved by the M4 suite. Platform boundary: on Windows, Codex runs
+`commandWindows` under pwsh while Claude runs `command` under bash, so a shared
+command has to hold in both shells or the intent needs a per-host branch. There
+is no CLI, npm package, plugin manifest or payload, or CI release gate:
+packaging remains gated until M5, and CI remains M6 work. Product artifacts
+land milestone by milestone; the [roadmap](docs/phases/roadmap.md) owns that
+boundary.
 
 Start with:
 

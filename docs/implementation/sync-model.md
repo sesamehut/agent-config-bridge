@@ -330,8 +330,10 @@ closure 与顺序：`closure/hooks/source`、`closure/hooks/claude`、
 以免推迟一段散文说明就让可执行的 hook 不可执行。先后由步骤顺序保证：
 `.claude/rules/hooks.md`、`AGENTS.md`、`.claude/settings.json`、
 `.codex/hooks.json`。Bridge 不承诺跨 carrier 原子性，因此单侧被阻断时会发出需
-确认的 `hook-projection-asymmetric`；只有 `class: gate` 例外，它是全有或全无，
-一侧不可用就让两侧 `not-selected` 零写，因为半边生效的强制比不强制更糟。
+确认的 `hook-projection-asymmetric`；只有 `class: gate` 例外，它是全有或全无：
+一侧被阻断或不可用时，把兄弟 carrier closure 强制为 `not-selected` 零写，被阻断
+的那一侧仍保持 `selected` / `not-applicable` / `blocked` 及其 unavailable Write
+capabilities 行，因为半边生效的强制比不强制更糟。
 
 ### 档位与 declared-unsynced
 

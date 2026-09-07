@@ -228,8 +228,9 @@ Codex 项目 skills 没有已文档化的 project-trust gate，所以不用
 `awaiting-host-trust`。repo bytes 也不能证明当前 session 已重新发现 skill，故使用
 中性的 `live-activation-unknown` 与 restart hedge。hooks 的 trust annotation 是
 另一条 surface 的事实：Codex 的 `.codex/` 层只在项目被信任后加载，且逐 hook 绑定
-一个 normalized identity 哈希，所以 `awaiting-host-trust` 只在写后、只在 Codex
-hook 行出现，不能外推到 skills。
+一个 normalized identity 哈希，所以 `awaiting-host-trust` 只出现在 Codex hook 行
+上：报告把它挂在 `codex-hooks-json` surface 上 `in-sync` 的 Codex hook 行，计划里
+只出现在 post-write 结果中；两处都不外推到 skills。
 
 ## ownership 与写入护栏
 

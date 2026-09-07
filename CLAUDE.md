@@ -86,12 +86,10 @@ Never load skills under `fixtures/` as capabilities.
   must be a plain program invocation valid in both shells; otherwise declare a
   per-host override or a Codex `commandWindows` branch.
 - Never run a fixture hook. Every `command` and `commandWindows` value a change
-  writes under `fixtures/` must match `^bridge-fixture-noop( [a-z0-9-]+)?$`, the
-  pre-M4 commands still in `fixtures/onboarded` are converted with the M4
-  fixture suite, and `--dangerously-bypass-hook-trust` never appears in a
-  fixture or in any CI path. This repository's own carriers stay unarmed: never
-  add hooks to the root `.claude/settings.json` and never create a root
-  `.codex/`.
+  writes under `fixtures/` must match `^bridge-fixture-noop( [a-z0-9-]+)?$`, and
+  `--dangerously-bypass-hook-trust` never appears in a fixture or in any CI
+  path. This repository's own carriers stay unarmed: never add hooks to the root
+  `.claude/settings.json` and never create a root `.codex/`.
 - Never start a work session with cwd inside `fixtures/`; fixture hook keys are
   real host-native keys, and fixture authoring rules live in
   [`.claude/rules/fixtures.md`](.claude/rules/fixtures.md).

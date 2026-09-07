@@ -8,9 +8,10 @@
 Bridge 的主要产物是 skill 和知识库，代码只承担入口和辅助检查职责。仓库内部按角色分层：
 
 - `skills/`：skill 源，面向目标工具中智能体的 skill 内容，markdown 为主；可含
-  必要的 host metadata、reference specs 和过窄门的机械辅助脚本，入库。M3 继续
+  必要的 host metadata、reference specs 和过窄门的机械辅助脚本，入库。M4 继续
   保持严格只读的 `bridge-sentinel` 与独立写侧 `bridge-sync`；后者在技能树之外
-  承担 entry / rule managed-block reconciliation，两种权限不能重新合并。
+  承担 entry / rule managed-block 与 hook 意图的 reconciliation，两种权限不能
+  重新合并。
 - `templates/`：面向目标项目安装的约定模板等写入素材，与只读 skill 指令分离，
   入库；只有路线图开放相应写路径后才会安装。
 - `knowledge/`：工具映射知识，自然语言知识库，带采集日期，入库。
@@ -43,7 +44,7 @@ compensation 仍要求对应 strict primitive。缺少合格协议就阻断，�
 “先检查、再普通写入”替代，也不扩张为跨文件事务保证。Claude Code 插件与 Codex
 插件分别适配各自入口。
 
-截至 M3 的开发态仍不引入 plugin manifest、package files、CLI、bundled
+截至 M4 的开发态仍不引入 plugin manifest、package files、CLI、bundled
 JavaScript 或 distribution payload。仓库根 `CLAUDE.md` / `AGENTS.md` 只提供
 checked-in skill development entrypoint；到 M5 才生成 host-native plugin
 entrypoint。
@@ -88,9 +89,10 @@ Codex 已为插件 hook 进程注入插件根目录环境变量，hook 命令可
 
 - 目标工具清单：Claude Code 与 Codex 各自需要的插件元数据。
 - 技能：权限分离的 `bridge-sentinel` 与 `bridge-sync`。
-- covenant templates：M3 当前 tuple 的 exact source / managed block，以及只作
-  显式 migration evidence 的旧版 exact bytes；M4 hook-intent asset 保持不可由
-  M3 安装。
+- covenant templates：当前 tuple（`covenant/v3`）的 exact source / managed
+  block，以及只作显式 migration evidence 的归档 v1 / v2 exact bytes；hook 意图
+  不是 covenant bootstrap 资产，`templates/hook-intents.example.md` 只是示例
+  文档，任何流程都不安装它。
 - 工具映射知识：Claude Code / Codex 语义差异的自然语言知识，带采集日期。
 - 薄包装脚本：交付 skill、定位自带文件、执行 doctor 的可选 `bridge.mjs`；doctor
   应可离线运行。

@@ -411,8 +411,11 @@ Its warning section is exactly:
 
 The blocked Codex closure keeps `selected` with authorization
 `not-applicable`: a scoped `write capability` or `hook carrier` failure is
-never relabelled `not-selected`. Evidence prints the exact bytes to paste to
-create the carrier and states that Bridge provides no cross-carrier
+never relabelled `not-selected`. Header authorization is `confirmed`, because
+no selected mutating closure carries `required` and at least one exists; the
+scoped-blocked closure counts as a selected mutating closure even though it
+writes nothing. Evidence prints the exact bytes to paste to create the
+carrier and states that Bridge provides no cross-carrier
 atomicity, so the Claude hook is active while the Codex hook is absent. Had
 `class` been `gate`, the blocked Codex closure would keep `selected` /
 `not-applicable` / `blocked` and the Claude carrier closure would instead be

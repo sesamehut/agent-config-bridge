@@ -75,3 +75,10 @@
 ## Hook adoption decisions
 
 - (none)
+
+## Evidence and notes
+
+Declarative fixture input for the `migration-v1-v3` scenario. The M3 harness
+parses, validates, and replays this document against a leased
+materialization; it never runs the bridge-sync workflow, so this section
+records no live host evidence.

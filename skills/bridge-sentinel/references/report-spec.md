@@ -51,10 +51,12 @@ baselines.
 
 Claude skill-frontmatter and subagent-frontmatter hooks are a third hook
 carrier that `report/v5` does not scan. Absence of a hooks finding for those
-carriers is not evidence that none exist. This repository's own two project
-skills are exactly that shape, and the carrier has its own trust story: project
-skill-frontmatter hooks follow the settings-file rule, while project
-subagent-frontmatter hooks require the interactive trust dialog.
+carriers is not evidence that none exist. This repository's own two skills
+declare no frontmatter hooks today and are not host-discovered project skills,
+so the dogfood expectation's vacuous hooks surface is no evidence about that
+carrier either. The carrier has its own trust story: project skill-frontmatter
+hooks follow the settings-file rule, while project subagent-frontmatter hooks
+require the interactive trust dialog.
 
 The selected index modes are part of skill-tree observation; mode `120000`,
 gitlinks, and other non-regular entries are not silently read as ordinary file
@@ -123,7 +125,10 @@ Annotations are `lint:<token>`, `behavior-degraded`,
   current-session activation.
 - Attach `behavior-degraded` when any behavior-portability lint is present, and
   to every hook row whose owned handler carries a host passthrough key or an
-  unknown Codex handler key.
+  unknown Codex handler key. This read-side predicate deliberately omits the
+  tier-`semantic` clause that `sync-plan/v3` adds, so one unit legitimately
+  gains the annotation between this report and the plan; the reason is stated
+  in `sync-plan-spec.md`.
 - Attach `opt-in-required` to both host rows of an entry whose `class` is `gate`
   or `side-effect` with `enabled: true` and no covering `enabled-by` record. It
   is a policy condition, never a byte state, so it never changes the row's
@@ -219,7 +224,7 @@ available to a `surface: none` or prose-surface target that owns nothing.
 
 | Case | Condition | Result |
 |---|---|---|
-| H-T4-PRESENT | s = `none` and (F contains a handler marked `[bridge:<e.id>]`, or e.command is declared and the candidate group of F contains a command handler whose `command` equals the effective command) | onboarded: `drift`/`reconcile` (replaces the declared-unsynced row). not-onboarded: the `declared-unsynced` row stands; the occupied group is reported as `undeclared-hooks-key` |
+| H-T4-PRESENT | s = `none` and (F contains a handler marked `[bridge:<e.id>]`, or e.command is declared and the candidate group of F contains a command handler whose `command` equals the effective command) | onboarded: `drift`/`reconcile` (replaces the declared-unsynced row). not-onboarded: the `declared-unsynced` row stands. In both regimes a `surface: none` target owns no group, so the occupied group stays unowned and, unless a `[bridge:<id>]` marker claims it, unmarked, and is also reported as `undeclared-hooks-key` |
 | H-T4 | s = `none` and H-T4-PRESENT does not fire | `declared-unsynced` (both regimes) |
 | H-DISABLED-PRESENT | s ≠ `none`; e.enabled = false; a command handler exists in any owned group for e on F, or a `[bridge:<e.id>]`-marked handler exists in F | `drift`/`reconcile` |
 | H-DISABLED-OK | s ≠ `none`; e.enabled = false; no command handler exists in any owned group for e on F and no handler marked `[bridge:<e.id>]` exists in F | `in-sync` (vacuously consistent; reachable in either regime) |
@@ -313,10 +318,10 @@ their observation lines are environment-dependent.
 | `local-hooks-present` | a TRACKED `.claude/settings.local.json` carries a `hooks` key (untracked ones go to Local environment notes instead) | none |
 | `json-parse-error` | a hooks projection file exists but is not valid JSON | none |
 | `hooks-globally-disabled` | a tracked hooks projection file sets `"disableAllHooks": true` | none |
-| `codex-inline-hooks-present` | a tracked `.codex/config.toml` matches `^\s*\[\s*hooks(\.\|\s*\])` outside a TOML string, or carries a top-level `hooks =` pointer key; a shallow byte scan, never a TOML parse | `(<Event>)` or `(pointer-key)` |
+| `codex-inline-hooks-present` | a tracked `.codex/config.toml` matches `^\s*\[{1,2}\s*hooks(\.\|\s*\]{1,2})` outside a TOML string, which covers the table header `[hooks.<Event>]` and the array-of-tables header `[[hooks.<Event>]]`, or carries a top-level `hooks =` pointer key; a shallow byte scan, never a TOML parse | `(<Event>)`, taken from the first dotted segment after `hooks` and reported as `(unnamed)` for a bare `[hooks]` or `[[hooks]]` header with no event segment, or `(pointer-key)` |
 | `hooks-carrier-unmodelled` | a hooks carrier parses as JSON but contains a duplicate object key, or a node outside the closed `hooks` shape | `(duplicate-key)` or `(unmodelled-shape)` |
 | `codex-handler-unknown-key` | an owned Codex handler carries a key outside declared ∪ passthrough ∪ semantics-changing | `(<Event> group=<i> handler=<j> key=<name>)` |
-| `matcher-grammar-divergent` | one shared `matcher` string would select different interpretation modes on the two hosts and no per-host override exists | `(entry <id>)` |
+| `matcher-grammar-divergent` | the closed predicate of `source-tree-spec.md`: the entry's shared `matcher` sits inside the Claude list character class and contains a comma or a pipe, both targets declare a host-executed JSON surface (`settings-json` and `codex-hooks-json`), and neither target overrides `matcher`; a bare literal such as `Bash` never qualifies | `(entry <id>)` |
 | `hook-output-not-delivered` | a `class: reminder` entry declares a `native` tier on an event outside the shared stdout-delivering set `{SessionStart, UserPromptSubmit}` | `(entry <id>)` |
 | `codex-project-untrusted` | resolved Codex project trust for the scan root is `untrusted` and at least one hook row targets `codex-hooks-json` | none |
 | `codex-hooks-feature-disabled` | the effective Codex `hooks` feature resolves to disabled and at least one hook row targets `codex-hooks-json` | none |
@@ -327,6 +332,15 @@ their observation lines are environment-dependent.
 | `unsafe-skill-tree` | a skill tree contains a Git symlink/gitlink, filesystem symlink/reparse point, special file, case-fold collision, or path escape | one line per entry with its kind |
 | `unrepresentable-source-path` | a would-be source path violates the marker source-path grammar | one line per file |
 
+Observation paths are pinned, because step 7 of the comparison rule compares
+observation lines byte for byte. Use `.` for `codex-project-untrusted` and
+`codex-hooks-feature-disabled`; `AGENTS.md` for `codex-effective-budget`,
+`agents-md-budget-disabled`, `agents-md-budget-exceeded`, and `agents-md-size`;
+`.claude/rules/hooks.md` for `hook-output-not-delivered`,
+`matcher-grammar-divergent`, and `intent-doc-anomaly`;
+`.claude/settings.local.json` for `local-hooks-present`; and the offending
+carrier or source file for every other token.
+
 `hooks-globally-disabled`, `codex-inline-hooks-present`,
 `hooks-carrier-unmodelled`, `codex-handler-unknown-key`,
 `matcher-grammar-divergent`, and `hook-output-not-delivered` are the read-side
@@ -336,7 +350,13 @@ from them. `hooks-globally-disabled` sees only the same tracked settings file,
 so a user-level `disableAllHooks` that a project value overrides, or the
 reverse, is not resolvable from repository bytes. `hook-output-not-delivered`
 covers `class: reminder` only, because an `observation`'s effect does not depend
-on delivery. `hooks-carrier-unmodelled` is read-side disclosure only: the
+on delivery. `matcher-grammar-divergent` covers the list forms only: Claude
+reads such bytes as one exact name or a `|` or `,` separated list of exact
+names while Codex compiles the same bytes as one unanchored regular
+expression, so the comma form never matches on Codex and the pipe form matches
+substrings. A matcher outside that shape, an entry that reaches only one JSON
+carrier, and an entry with a per-host `matcher` override are all silent.
+`hooks-carrier-unmodelled` is read-side disclosure only: the
 sentinel still applies the hooks decision table to what it can read, and only
 the write side fails closed on the same condition, because a bridge that guesses
 which duplicate key it owns can silently drop a user's hook.

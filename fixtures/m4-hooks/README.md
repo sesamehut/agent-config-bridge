@@ -16,17 +16,21 @@ one implementation of the `sync-plan/v3` document grammar and it lives in
 suite belongs to M3 and is not re-run here, and `self-test` asserts the token
 instead.
 
-Four shared checks reject a hook shape M4 introduces. `hooks_harness.py` widens
-exactly those four from the specs for the duration of a call and edits nothing
+Five shared checks reject a hook shape M4 introduces. `hooks_harness.py` widens
+exactly those five from the specs for the duration of a call and edits nothing
 under `../m3-rules/`: it authenticates a hook row's tier against
 `targets.<host>.tier` in the same `.claude/rules/hooks.md` entry rather than
 the rule path a non-hook unit uses, admits the narrowed blocker scope
 `selected` / `not-applicable` / `blocked` on a hook carrier row, follows
 `live-activation-unknown` and `restart-may-be-required` to the root `AGENTS.md`
 degradation carrier of a `hooks/<entry-id>/codex` row, treats
-`behavior-degraded` as a neutral hook annotation, and lets a warning detail
-carry the parentheses of a declared regular-expression matcher such as
-`^(Edit)$`. A sibling rule the shared function already carries, such as
+`behavior-degraded` as a neutral hook annotation in the conflict-row check, and
+lets a warning detail carry the parentheses of a declared regular-expression
+matcher such as `^(Edit)$`. The same neutral annotation token widens the fifth
+check, the hook decision-shape gate: the `surface-none` shape `selected` /
+`not-applicable` / `unchanged` requires no annotation at all, so under the
+unwidened M3 set a row carrying `behavior-degraded` would resolve to no shape.
+A sibling rule the shared function already carries, such as
 `awaiting-host-trust` following the `.codex/hooks.json` write, is delegated
 rather than restated, and every non-hook row still reaches the shared function
 untouched.
@@ -118,7 +122,7 @@ deleting one named project, and never enumerates the temporary directory.
 | `idempotent-rerun` | Re-plan against the applied post-state and prove the idempotence law leaves both carriers byte-identical. | agent |
 | `format-preserved-unchanged` | Leave a semantically equal but four-space, tab-mixed owned group exactly as the author wrote it. | agent |
 | `codex-create-blocked` | Block the absent Codex carrier on the missing strict create while the Claude carrier closure still proceeds. | agent |
-| `gate-all-or-nothing` | Force both carrier closures of a class gate entry to zero writes when one carrier cannot be written. | agent |
+| `gate-all-or-nothing` | Force the sibling carrier closure of a class gate entry to zero writes while the blocked carrier closure keeps its scoped blocker. | agent |
 | `opt-in-pending` | Ask for the dated opt-in record before projecting a side-effect entry that declares enabled true. | agent |
 | `opt-in-confirmed` | Append the confirmed enabled-by record through the source closure and then project both carriers in step order. | agent |
 | `acknowledgement-missing-blocked` | Block only the Claude carrier closure when the intent document carries no file-level shared-execution acknowledgement. | agent |
@@ -128,7 +132,7 @@ deleting one named project, and never enumerates the temporary directory.
 | `passthrough-preserved` | Update the shared command while both host passthrough keys survive byte-for-byte and in place. | agent |
 | `semantics-divergent-annex` | Route an owned Codex handler carrying async true to annex-or-keep and leave the user key untouched. | agent |
 | `foreign-handler-keep` | Route an mcp_tool handler inside an owned Claude group to annex-or-keep and never delete it. | agent |
-| `guarded-region-nonunique-blocked` | Block a Claude carrier replacement whose guarded region cannot be made unique between two near-identical groups. | agent |
+| `guarded-region-nonunique-blocked` | Block a Claude carrier replacement whose resolved write capability attests no replace protocol, and keep that closure selected with its scoped blocker. | agent |
 | `carrier-unusable-blocked` | Fail closed on a duplicate object key in the Codex carrier while the Claude carrier closure still proceeds. | agent |
 | `inline-hooks-conflict-blocked` | Block the Codex closure when the same Codex layer also declares hooks inline in config.toml. | agent |
 | `reverse-adopt-command` | Adopt a hand-edited Claude command into the shared scalar and rerender the Codex carrier from the adopted source. | agent |
@@ -154,6 +158,16 @@ trust keys are per event, while `"hooks": {}` stays.
 exposes no reliable fault barrier inside the Codex guarded host call between the
 write and its post-write verification, so its plan, exact trees, declared fault
 and safeguards are schema-validated instead of executed.
+
+`guarded-region-nonunique-blocked` keeps a historical id. Its coverage token is
+`hooks-guarded-patch-unavailable`, and what blocks the closure is the resolved
+write capability, which attests neither a strict nor a guarded replace
+protocol, rather than a region the outward-only extension rule failed to make
+unique. The scenario still carries the `context-never-shortened` safeguard,
+because its evidence reaches that capability only after extending the region
+outward through the distinguishing matcher line, never by shortening context;
+no scenario in this suite blocks on region non-uniqueness itself, because
+outward extension over a finite carrier always terminates at a unique region.
 
 ## Contract data
 
@@ -199,18 +213,42 @@ an accidental run is a harmless ENOENT. `check-hook-fence` runs the public
 `.claude/settings.json`, `.claude/settings.local.json`, `.codex/hooks.json`,
 `.codex/config.toml`, and `.claude/rules/hooks.md`. A `shared/` tree file is
 stored under an authoring name rather than a carrier name, so the command also
-mirrors every `.json`, `.md` and `.toml` file under `m3-rules/shared/` and
-`m4-hooks/shared/` into a temporary tree under the carrier name its bytes stand
-for and scans that too. It exits non-zero on any command outside the grammar.
+discovers every `<suite>/shared` tree under `fixtures/` (`m2-sync/`,
+`m3-rules/` and `m4-hooks/` today) and mirrors every `.json`, `.md` and `.toml`
+file they hold into a temporary tree under the carrier name its bytes stand
+for, then scans that too. The suites are discovered rather than listed, so the
+shared tree of a new suite is inside the fence from its first run instead of
+from the day someone remembers to extend a list. It exits non-zero on any
+command outside the grammar.
+
+Every carrier is scanned twice. The structured scan reads a carrier through the
+reader its host would use, and a byte scan then re-reads the raw bytes of every
+carrier that scan visited or failed to read, matching JSON `"command"` and
+`"commandWindows"` string values, TOML `command`, `command_windows` and
+`commandWindows` string values, and yaml `command:` and `commandWindows:`
+lines. All three patterns run over every carrier, so a JSON command spelled
+inside an intent document is caught as well. `check-hook-fence` reports both
+value counts and the union of the violations, and fails when either scan finds
+one. The byte scan is what closes the holes a parser leaves: a carrier that is
+unreadable JSON contributes no structured value at all, a duplicate `command`
+key shadows every value but the last, and a node the structured reader does not
+model contributes nothing, yet in each case the bytes are still fenced.
 
 The fence fails closed rather than quietly shrinking. A shared tree that is
 missing, and a shared file whose suffix is neither mirrored nor in the explicit
-ignore set, are refusals, not skips. A carrier that cannot be read yields no
-command value at all, so `self-test` also pins the unreadable list to the one
-deliberately invalid JSON in `fixtures/hooks-broken-json/` and holds the scan
-to a carrier-count and value-count floor: losing most of the tree can no longer
-pass. Adding a second deliberately broken carrier is therefore an explicit edit
-of `FENCE_UNREADABLE_ALLOWLIST`. The Claude hook-trust bypass flag named in
+ignore set, are refusals, not skips. The unreadable list is an informational
+census rather than an allowlisted gap: `self-test` pins it to the one
+deliberately invalid JSON in `fixtures/hooks-broken-json/`, and separately
+requires that the byte scan still read command values out of that carrier, so
+the deliberately broken file stays fenced instead of exempt. Adding a second
+deliberately broken carrier is therefore an explicit edit of
+`FENCE_UNREADABLE_ALLOWLIST`. `self-test` also holds both scans to a
+carrier-count and value-count floor, requires the byte scan to reach every
+carrier the structured scan touched, and requires it to read at least as many
+values as the structured scan. Each floor equals what the closed fixture tree
+scans today, so a carrier that disappears fails the run instead of shrinking
+the scan silently, and a change that adds carriers raises the floors in the
+same change. The Codex hook-trust bypass flag named in
 [`../../.claude/rules/fixtures.md`](../../.claude/rules/fixtures.md) appears in
 no fixture and in no CI path.
 

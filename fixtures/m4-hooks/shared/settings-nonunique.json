@@ -10,8 +10,7 @@
           {
             "type": "command",
             "command": "bridge-fixture-noop fmt-on-save",
-            "timeout": 10,
-            "statusMessage": "[bridge:fmt-on-save]"
+            "timeout": 10
           }
         ]
       },
@@ -21,8 +20,7 @@
           {
             "type": "command",
             "command": "bridge-fixture-noop fmt-on-save",
-            "timeout": 10,
-            "statusMessage": "[bridge:fmt-on-save]"
+            "timeout": 10
           }
         ]
       }

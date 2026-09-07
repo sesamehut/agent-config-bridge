@@ -500,6 +500,12 @@ Their prose never affects carrier consistency, but `Trigger`, `Purpose`, and
 `Failure policy` are interpolated by the degradation render below, so all five
 values belong to the source unit's compared value.
 
+The file-level preamble before the first heading admits the control header and
+prose only, so a fenced `yaml` block there belongs to no entry and is a
+`yaml-block-count` violation. `inspect-hook-intents` scans that preamble and
+emits the anomaly itself, with the line of the opening fence and no entry id,
+so the scanner and the validating agent never disagree about a stray block.
+
 Machine fields:
 
 | Field | Type | Req | Meaning / constraints |
@@ -523,6 +529,14 @@ Machine fields:
 | `targets.codex.commandWindows` | string | optional | Codex only; compared only on the Codex surface |
 | `targets.<host>.override-reason` | enum | required iff that target declares at least one override key | `matcher-grammar`, `matcher-domain`, `platform-command`, `env-placeholder`, or `timeout-cap` |
 | `intent` | list of `{date, note}` | optional | entry-local intent records, oldest first |
+
+Both fenced-block record lists use one grammar. Each record is `- date:` with a
+valid calendar date, records are oldest first, and each carries one `note:`
+scalar that is non-empty, single-line, has no leading or trailing ASCII
+whitespace, and contains no NUL. The 1-120 scalar cap and the `--` prohibition
+of the `bridge:intent` comment are properties of the HTML-comment carrier and
+do not apply inside the fenced block. A violation is `enabled-by-malformed`
+for `enabled-by` and `field-invalid` for `intent`.
 
 `commandWindows` is not a top-level key in v5, and `structural` is reserved and
 invalid for hook rows. The fenced block must be valid YAML; quote scalars when
@@ -658,7 +672,7 @@ never appears in the observation line. The reason registry is closed:
 | Reason | Violation |
 |---|---|
 | `bullet-missing` | a required prose bullet is absent or carries one of the five labels in a form the closed grammar does not accept |
-| `yaml-block-count` | zero or more than one fenced `yaml` block in the entry |
+| `yaml-block-count` | zero or more than one fenced `yaml` block in the entry, or a fenced `yaml` block that belongs to no entry because it opens before the first `## hook:` heading; the stray-block case reports `(line <n>)` for the line of its opening fence and carries no entry id |
 | `unrecognized-field` | a line inside the fenced block that the closed grammar does not recognize, including a construct no closed scanner can read and a YAML parse failure |
 | `id-heading-mismatch` | `id` differs from the heading id |
 | `field-missing` | a required machine field is absent |
@@ -734,10 +748,21 @@ Matcher and delivery facts belong to the same dated registry:
 - The shared stdout-delivering set is exactly `{SessionStart, UserPromptSubmit}`.
   A `class: reminder` entry declaring a `native` tier on any other event emits
   the informational `hook-output-not-delivered`.
-- A single shared `matcher` that would select a different Claude interpretation
-  mode than the Codex regular expression is not a schema violation; it emits the
-  acknowledged `matcher-grammar-divergent` so the author sees the divergence and
-  may add per-host overrides.
+- `matcher-grammar-divergent` has a closed predicate. It is emitted exactly
+  when all three conditions hold: the entry's shared `matcher` is a string
+  inside the Claude list class `^[A-Za-z0-9_ ,|-]*$` that contains `|` or `,`;
+  both targets declare a host-executed JSON surface, that is `settings-json` on
+  `targets.claude` and `codex-hooks-json` on `targets.codex`; and neither
+  target overrides `matcher`. Claude then reads those bytes as one exact name
+  or a `|` or `,` separated list of exact names while Codex compiles the same
+  bytes as one unanchored regular expression, so the comma form never matches
+  on Codex and the pipe form matches substrings. A bare literal such as `Bash`
+  never emits it, because it is one exact name on Claude and an unanchored
+  pattern that still selects that name on Codex. An entry that projects into
+  only one JSON carrier never emits it either, because a single host cannot
+  disagree with itself. The divergence is not a schema violation: it emits the
+  acknowledged `matcher-grammar-divergent` so the author sees the divergence
+  and may add per-host overrides, and adding either override silences it.
 
 ### Declared keys and ownership derivation
 
@@ -752,6 +777,12 @@ Matcher absence matches only absence. `effective-command(h)` and
 For equality, strip leading and trailing ASCII whitespace from string fields,
 then compare code points. Compare `timeout` as an integer and require `type` to
 equal `command`. Passthrough keys are excluded from equality.
+`statusMessage` is excluded from equality as well. It has no source field, so
+the desired model takes its `statusMessage` from the existing handler on both
+hosts; a `[bridge:<entry-id>]`-prefixed value present on one side only, or
+carrying hand-added suffix text, is never a difference, an absent field, or an
+extra key. A `statusMessage` whose value does not begin `[bridge:<entry-id>]`
+stays undeclared and selects H-EXTRA-KEYS.
 
 Allowed handler keys are `{type, command}`, plus:
 

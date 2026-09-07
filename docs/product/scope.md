@@ -195,8 +195,8 @@ M4 完成时：
   重新规划为零写，未受管字节逐字节保持原状；
 - `gate` 与 `side-effect` 意图没有覆盖当前命令的 `enabled-by` 记录时不投射，只给
   零写决策，并把「这不是沙箱」的事实写进计划与报告；
-- 两侧都不可投射时以 `declared-unsynced` 独立呈现，计划逐 unit 给出 class、
-  surface、档位与封闭理由 token；
+- 某一侧声明不投射时，那一侧以 `declared-unsynced` 独立呈现，计划逐 unit 给出
+  class、surface、档位与封闭理由 token；
 - carrier 里未声明的组、外来 handler 类型与语义改变键只报告、只走 annex-or-keep，
   Bridge 绝不删除用户的 hook。
 

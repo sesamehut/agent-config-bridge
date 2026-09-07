@@ -5,8 +5,17 @@
 
 Every entry below targets the Claude carrier `.claude/settings.json` so one
 entry reaches exactly one `report/v5` hooks case, and `ok-both` also targets
-`.codex/hooks.json` as the two-host control. Every command is the inert
-`bridge-fixture-noop` program, which exists on no machine.
+`.codex/hooks.json` as the two-host control. `t4-present` is the one entry
+whose case under test sits on the Codex row instead: its Claude row is a
+converged H-OK like `ok-both`, while it declares `surface: none` on Codex and
+`.codex/hooks.json` already holds an unmarked command handler in that entry's
+candidate group, so the Codex row is H-T4-PRESENT. In this onboarded project
+that case replaces the `declared-unsynced` row with `drift`/`reconcile`, while
+the not-onboarded branch keeps the `declared-unsynced` row. Only the row
+differs: a `surface: none` target owns no group, and the occupied `Stop` group
+carries no `[bridge:t4-present]` marker, so it is neither owned nor marked and
+is reported as `undeclared-hooks-key` in both regimes. Every command is the
+inert `bridge-fixture-noop` program, which exists on no machine.
 
 ## hook: extra-keys
 
@@ -144,4 +153,31 @@ targets:
 intent:
   - date: 2026-09-07
     note: both carriers already match so this entry is the converged control
+```
+
+## hook: t4-present
+
+- Trigger: end of a turn (`Stop`, no matcher).
+- Purpose: exercise the H-T4-PRESENT branch of the hooks decision table.
+- Command: run the inert fixture no-op program.
+- Environment: none; the program exists on no machine and always fails to start.
+- Failure policy: best effort; the fixture never runs this command.
+
+```yaml
+id: t4-present
+event: Stop
+class: observation
+enabled: true
+command: bridge-fixture-noop wrap-up
+timeout: 30
+targets:
+  claude:
+    surface: settings-json
+    tier: native
+  codex:
+    surface: none
+    tier: declared-unsynced
+intent:
+  - date: 2026-09-08
+    note: the Codex carrier holds an unmarked handler whose command equals the effective command in this entry's candidate group, so the Codex row is H-T4-PRESENT instead of H-T4
 ```

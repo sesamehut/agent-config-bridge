@@ -159,6 +159,10 @@ Use only this contract tuple: `covenant/v3`, `source-tree/v5`, `report/v5`,
    and both carriers with `inspect-hooks-json`: capture each valid entry's
    byte span, normalized machine-field model and five prose bullets, the
    file-level `bridge:hooks-shared-execution` acknowledgement or its absence,
+   every scanner anomaly, including the `yaml-block-count` record with no
+   entry id that a stray fenced `yaml` block in the preamble produces and that
+   the plan serializes as an `intent-doc-anomaly` warning on
+   `.claude/rules/hooks.md` with detail `(line <n>)`,
    per host the owned `(event, effective-matcher)` group span with its
    normalized handler model or proven absence, the passthrough,
    semantics-changing and unknown keys, both complete carrier preimages with
@@ -207,8 +211,12 @@ Use only this contract tuple: `covenant/v3`, `source-tree/v5`, `report/v5`,
    `hook-projection-asymmetric`, `manual-zone-guarded`,
    `manual-zone-preserved`, `matcher-grammar-divergent`,
    `platform-branch-divergence`, and `strict-compensation-unavailable`; they
-   are not forward-apply blockers. Do not expand imports or degrade an invalid
-   scoped rule to unscoped content.
+   are not forward-apply blockers. Emit `matcher-grammar-divergent` only under
+   its closed predicate: a shared `matcher` inside the Claude list class that
+   contains `|` or `,`, both targets on a host-executed JSON surface, and no
+   per-host `matcher` override; a bare literal such as `Bash` never qualifies.
+   Do not expand imports or degrade an invalid scoped rule to unscoped
+   content.
 6. **Prove ownership and a DAG baseline per unit.** Evaluate only commits
    reachable from `HEAD`, require current-contract ownership evidence, and
    select the unique ancestry-maximal candidate. Compare skills against one
@@ -282,8 +290,14 @@ Use only this contract tuple: `covenant/v3`, `source-tree/v5`, `report/v5`,
    `not-applicable` and outcome `not-selected`; give a selected zero-write
    closure authorization `not-applicable`. Keep a selected mutating closure
    `required` until that exact serialized closure is confirmed, then mark it
-   `confirmed`. Derive header authorization from closure rows. Re-scan when
-   any relevant precondition changes.
+   `confirmed`; a scoped-blocked closure instead carries `not-applicable` with
+   outcome `blocked`. Derive header authorization from the selected mutating
+   closures only: `required` when one of them carries `required`, otherwise
+   `confirmed` when at least one exists, otherwise `not-applicable`. A
+   scoped-blocked closure still counts as a selected mutating closure, so a
+   plan that writes nothing because its only mutating closure is
+   scoped-blocked still derives `confirmed`. Re-scan when any relevant
+   precondition changes.
    Serialize only affected or explicitly request-scoped units; repository-wide
    covenant preflight does not add an unchanged covenant row. Allocate
    capability bindings contiguously by numeric suffix in first-use order,
@@ -316,10 +330,12 @@ Use only this contract tuple: `covenant/v3`, `source-tree/v5`, `report/v5`,
    with `compose-hooks-json`, and reject any postimage produced by
    reserializing the parsed document. An absent carrier is a `create` that
    accepts only `strict-create/v1`: keep the row `unavailable` / `blocked`,
-   emit `conditional-write-unavailable`, `hook-carrier-absent`, and
-   `hook-projection-asymmetric`, and print the exact bytes the user can paste
-   instead of writing the file unconditionally. Serialize `unavailable` and
-   block with the matching capability token rather than silently degrading.
+   emit `conditional-write-unavailable` and `hook-carrier-absent`, add
+   `hook-projection-asymmetric` only when the sibling carrier still proceeds
+   (never for a `class: gate` entry), and print the exact bytes the user can
+   paste instead of writing the file unconditionally. Serialize `unavailable`
+   and block with the matching capability token rather than silently
+   degrading.
    Admit only the
    attestation sources defined by reconciliation/v3; generic host file I/O
    and fixture-only profiles do not imply a strict live capability. A

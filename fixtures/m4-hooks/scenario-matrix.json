@@ -7,7 +7,6 @@
     "codex-inline-hooks-conflict",
     "codex-trust-blind-change",
     "gate-all-or-nothing",
-    "guarded-region-nonunique",
     "hook-acknowledgement-missing",
     "hook-both-changed-conflict",
     "hook-declared-unsynced",
@@ -25,6 +24,7 @@
     "hook-semantics-divergent-keep",
     "hook-semantics-divergent-pending",
     "hooks-carrier-unusable",
+    "hooks-guarded-patch-unavailable",
     "idempotent-rerun-unchanged",
     "migration-v2-v3-blocked",
     "native-both-applied",
@@ -197,12 +197,13 @@
       "coverage": [
         "gate-all-or-nothing"
       ],
+      "decision_fixture": "decisions/gate-all-or-nothing-confirmed.json",
       "expectations": [
         {
           "covers": [
             "gate-all-or-nothing"
           ],
-          "id": "not-selected",
+          "id": "sibling-not-selected",
           "plan": "expectations/gate-all-or-nothing.md",
           "post_state": "gate-base"
         }
@@ -211,15 +212,17 @@
       "input": "gate-base",
       "replay": "agent",
       "safeguards": [
-        "class-gated-all-or-nothing"
+        "class-gated-all-or-nothing",
+        "closure-scoped-blocker",
+        "strict-create-capability"
       ],
       "spec": "bridge-m4-hooks-scenario/v1",
-      "summary": "Force both carrier closures of a class gate entry to zero writes when one carrier cannot be written.",
+      "summary": "Force the sibling carrier closure of a class gate entry to zero writes while the blocked carrier closure keeps its scoped blocker.",
       "workflow": [
         "Materialize the class gate fixture whose Codex carrier is absent and run $bridge-sync.",
-        "Confirm that neither carrier closure is selected and compare the zero-write plan."
+        "Confirm that the blocked Codex closure stays selected and blocked, that the Claude sibling closure is not-selected, and compare the zero-write plan."
       ],
-      "write_capability_fixture": "capabilities/none.json"
+      "write_capability_fixture": "capabilities/strict-create-unavailable-codex.json"
     },
     {
       "baseline": "opt-in-base",
@@ -519,14 +522,14 @@
     {
       "baseline": "nonunique-base",
       "coverage": [
-        "guarded-region-nonunique"
+        "hooks-guarded-patch-unavailable"
       ],
       "decision_fixture": "decisions/guarded-region-nonunique-blocked-confirmed.json",
       "expectations": [
         {
           "baseline_ref": "initial",
           "covers": [
-            "guarded-region-nonunique"
+            "hooks-guarded-patch-unavailable"
           ],
           "id": "blocked",
           "plan": "expectations/guarded-region-nonunique-blocked.md",
@@ -537,14 +540,15 @@
       "input": "nonunique-input",
       "replay": "agent",
       "safeguards": [
+        "closure-scoped-blocker",
         "context-never-shortened",
         "guarded-patch-capability-gate"
       ],
       "spec": "bridge-m4-hooks-scenario/v1",
-      "summary": "Block a Claude carrier replacement whose guarded region cannot be made unique between two near-identical groups.",
+      "summary": "Block a Claude carrier replacement whose resolved write capability attests no replace protocol, and keep that closure selected with its scoped blocker.",
       "workflow": [
-        "Materialize the two-group fixture and run $bridge-sync.",
-        "Confirm that the guarded region cannot be made unique and compare the zero-write plan."
+        "Materialize the two-group fixture whose capability attests neither a strict nor a guarded replace protocol and run $bridge-sync.",
+        "Confirm that the guarded region rule alone does not block the replacement, that the resolved write capability does, and compare the zero-write plan."
       ],
       "write_capability_fixture": "capabilities/guarded-patch-unavailable.json"
     },

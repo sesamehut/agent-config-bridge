@@ -7,9 +7,12 @@ Every command below is the inert fixture no-op `bridge-fixture-noop <token>`, a
 program that exists on no machine, so an accidental run is a harmless ENOENT.
 The fence is binding on this fixture; see `.claude/rules/fixtures.md`.
 
-Each entry below is converged on its declared surfaces except for one host key
-outside the declared schema, so the carrier bytes alone decide whether the row
-is in-sync, drift, or degraded.
+Each entry below is converged on its declared surfaces apart from deliberate
+host extras that Bridge never wrote: an extra non-`command` handler inside an
+owned Claude group, a semantics-changing handler key, a passthrough key on
+either host, and an unknown Codex handler key. `session-note` is the fully
+converged control and carries no extra at all, so the carrier bytes alone
+decide whether a row is in-sync, drift, or degraded.
 
 ## hook: foreign-mcp
 

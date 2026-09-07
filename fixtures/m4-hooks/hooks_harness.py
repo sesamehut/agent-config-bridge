@@ -12,6 +12,7 @@ here with M4 parameters.
 from __future__ import annotations
 
 import argparse
+import ast
 import contextlib
 import json
 from pathlib import Path
@@ -141,26 +142,65 @@ FENCE_MIRROR_NAMES = {
     ".md": ".claude/rules/hooks.md",
     ".toml": ".codex/config.toml",
 }
-FENCE_SHARED_TREES = (
-    "m3-rules/shared",
-    "m4-hooks/shared",
-)
+# Which shared trees the mirror walks is discovered rather than listed, see
+# `_fence_shared_trees`: a hardcoded suite list is a fence hole, because a
+# carrier payload stored in an unlisted `<suite>/shared` tree under an
+# authoring name is read by neither the structured scan nor the mirror.
+#
 # A shared tree file whose suffix is neither mirrored nor listed here is a
 # fence hole, so the mirror refuses it instead of skipping it. Neither host
 # reads a hook command from these two suffixes: `.yaml` is skill
 # frontmatter and `.txt` is inert project payload.
 FENCE_IGNORED_SUFFIXES = {".txt", ".yaml"}
-# A carrier that fails to parse yields no command value at all, so an armed
-# command inside one would never reach the grammar. Exactly one fixture is
-# deliberately unparseable; anything else is a fence hole and the allowlist
-# keeps adding one an explicit edit.
+# A carrier that fails to parse yields no command value at all, so the
+# structured scan alone would let an armed command hide behind a parse error.
+# The byte scan below fences those bytes anyway, so this list is only the
+# informational census of carriers no host parser can read: exactly one
+# fixture is deliberately unparseable, and anything else is an explicit edit.
 FENCE_UNREADABLE_ALLOWLIST = ["fixtures/hooks-broken-json/.codex/hooks.json"]
+# Byte-level fallback grammar. The structured scan reads a carrier through the
+# reader its host would use, so a carrier that fails to parse contributes no
+# value at all and a duplicate `command` key contributes only the value the
+# parser keeps. The fallback re-reads the same bytes with one pattern per
+# carrier syntax and applies all three to every carrier: a JSON command
+# spelled inside an intent document is still a command under `fixtures/`.
+FENCE_BYTE_JSON_PATTERN = re.compile(
+    rb'"(?P<key>commandWindows|command)"[ \t\r\n]*:[ \t\r\n]*'
+    rb'"(?P<value>(?:[^"\\]|\\.)*)"'
+)
+FENCE_BYTE_TOML_PATTERN = re.compile(
+    rb"(?<![A-Za-z0-9_-])"
+    rb"(?P<key>commandWindows|command_windows|command)[ \t]*=[ \t]*"
+    rb"(?P<value>\"(?:[^\"\\]|\\.)*\"|'[^']*')"
+)
+# The trailing class absorbs `\r` as well as spaces and tabs: `$` in
+# multiline mode matches before the `\n` of a CRLF line, not before its `\r`,
+# so a pattern that cannot consume that byte silently reads zero values out of
+# a CRLF carrier and degrades the yaml half of the fallback to nothing.
+FENCE_BYTE_YAML_PATTERN = re.compile(
+    rb"^[ \t]*-?[ \t]*(?P<key>commandWindows|command):"
+    rb"[ \t]*(?P<value>[^\r\n]*?)[ \t\r]*$",
+    re.M,
+)
+FENCE_BYTE_PATTERNS = (
+    ("json", FENCE_BYTE_JSON_PATTERN),
+    ("toml", FENCE_BYTE_TOML_PATTERN),
+    ("yaml", FENCE_BYTE_YAML_PATTERN),
+)
 # Floors under the whole-tree scan. The fence is only worth its exit code
 # while it still reaches every carrier, and a renamed directory, a new
 # suffix or a typo silently shrinks the scan, so `self-test` refuses a run
-# that covers materially less than the tree it was written against.
-FENCE_MIN_CARRIERS = 165
-FENCE_MIN_VALUES = 121
+# that covers materially less than the tree it was written against. The byte
+# scan carries its own value floor because it reads more values than the
+# structured scan, and its own unreadable-carrier floor because the whole
+# point of the fallback is that the deliberately broken carrier stays fenced.
+# Each floor equals the count the closed M4 fixture tree scans today, so a
+# carrier that disappears is a failure rather than a silent shrink; a change
+# that adds carriers raises the floors in the same change.
+FENCE_MIN_CARRIERS = 173
+FENCE_MIN_VALUES = 134
+FENCE_MIN_BYTE_VALUES = 139
+FENCE_MIN_UNREADABLE_VALUES = 2
 
 _M4_BINDINGS: Dict[str, Any] = {
     "ACTIVATION_PROFILES_DIR": ACTIVATION_PROFILES_DIR,
@@ -235,39 +275,90 @@ def assert_bound_contracts() -> int:
     return len(bindings) + 9
 
 
-def _m3_closed_field_sets() -> Tuple[
-    Optional[frozenset], Optional[frozenset]
-]:
-    """Recover the shared validator's two closed field sets when visible.
+def _string_set_display(node: ast.AST) -> Optional[frozenset]:
+    """Read one non-empty set display of string literals, or None."""
 
-    Both sets are constant displays inside `m3._validate_scenario`, which
-    CPython folds into frozenset constants. They are matched by anchor
-    members rather than by position, and an interpreter that does not fold
-    them yields `None`, which leaves the behavioural probe below as the
-    only guarantee.
+    if not isinstance(node, ast.Set) or not node.elts:
+        return None
+    values = [
+        element.value
+        for element in node.elts
+        if isinstance(element, ast.Constant) and isinstance(element.value, str)
+    ]
+    if len(values) != len(node.elts):
+        return None
+    return frozenset(values)
+
+
+def _m3_closed_field_sets() -> Tuple[frozenset, frozenset]:
+    """Recover the shared validator's two closed field sets from its source.
+
+    Both sets are literal displays inside `m3._validate_scenario`. Reading
+    them out of `__code__.co_consts` finds them only where the interpreter
+    folds a set display into a frozenset constant, which would make the
+    number of assertions this module reports depend on the interpreter, so
+    they are read from the module source instead: every
+    `set(<subject>) - <display>` guard in that function is recovered,
+    including the one whose display is bound to a local first, and the two
+    are told apart by anchor members rather than by position. A shared
+    validator that no longer spells its closures that way is refused here
+    rather than silently dropping a check.
     """
 
-    candidates = [
-        value
-        for value in m3._validate_scenario.__code__.co_consts
-        if isinstance(value, frozenset)
-        and all(isinstance(item, str) for item in value)
+    module = ast.parse(Path(m3.__file__).read_bytes().decode("utf-8"))
+    functions = [
+        node
+        for node in ast.walk(module)
+        if isinstance(node, ast.FunctionDef)
+        and node.name == "_validate_scenario"
     ]
+    if len(functions) != 1:
+        raise FixtureError(
+            "the shared scenario validator source is not readable"
+        )
+    bound: Dict[str, frozenset] = {}
+    for node in ast.walk(functions[0]):
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        display = _string_set_display(node.value)
+        if isinstance(node.targets[0], ast.Name) and display is not None:
+            bound[node.targets[0].id] = display
+    recovered: List[frozenset] = []
+    for node in ast.walk(functions[0]):
+        if (
+            not isinstance(node, ast.BinOp)
+            or not isinstance(node.op, ast.Sub)
+            or not isinstance(node.left, ast.Call)
+            or not isinstance(node.left.func, ast.Name)
+            or node.left.func.id != "set"
+        ):
+            continue
+        display = _string_set_display(node.right)
+        if display is None and isinstance(node.right, ast.Name):
+            display = bound.get(node.right.id)
+        # `set(a) - set(b)` between two runtime values is an ordinary set
+        # difference, not a closed field set, so it is passed over; the
+        # anchored uniqueness test below is what refuses a validator whose
+        # closures stopped being literal displays.
+        if display is not None:
+            recovered.append(display)
     scenarios = [
         value
-        for value in candidates
+        for value in recovered
         if {"baseline", "expectations", "id", "input", "spec"} <= value
     ]
     replays = [
         value
-        for value in candidates
+        for value in recovered
         if {"decision_fixture", "id", "rendered_state"} <= value
         and "spec" not in value
     ]
-    return (
-        scenarios[0] if len(scenarios) == 1 else None,
-        replays[0] if len(replays) == 1 else None,
-    )
+    if len(scenarios) != 1 or len(replays) != 1:
+        raise FixtureError(
+            "the shared scenario validator no longer exposes exactly one "
+            "scenario field set and one replay input field set"
+        )
+    return scenarios[0], replays[0]
 
 
 def assert_scenario_field_closure() -> int:
@@ -279,8 +370,10 @@ def assert_scenario_field_closure() -> int:
     is a local inside `m3._validate_scenario`, so it is probed twice: a
     scenario document carrying one field and nothing else fails on the spec
     header, never on the closure, exactly when the shared validator admits
-    that field, and where the interpreter exposes the folded constants the
-    two closures are compared for exact equality in both directions.
+    that field. `_m3_closed_field_sets` then recovers both closures from
+    the shared module's source and they are compared for exact equality in
+    both directions, so the four assertions below are the same four on
+    every interpreter.
     """
 
     def admitted(field: str) -> bool:
@@ -304,8 +397,6 @@ def assert_scenario_field_closure() -> int:
     if admitted("not-a-scenario-field"):
         raise FixtureError("the shared scenario field set is not closed")
     scenario_fields, replay_fields = _m3_closed_field_sets()
-    if scenario_fields is None or replay_fields is None:
-        return 2
     if set(scenario_fields) != SCENARIO_FIELDS:
         raise FixtureError(
             "trees-only scenario fields differ from the shared closure: "
@@ -325,15 +416,16 @@ def assert_scenario_field_closure() -> int:
 # ---------------------------------------------------------------------------
 #
 # `fixtures/m3-rules/fixture_harness.py` owns the sync-plan/v3 document
-# grammar, and this suite never forks it. Four of its checks reject a hook
+# grammar, and this suite never forks it. Five of its checks reject a hook
 # shape M4 introduces: the public tier authentication, the mutating-action
-# authorization rule, the post-write carrier-touch predicate, and the
-# warning detail grammar. The rules below widen exactly those four and
-# nothing else. They are rebound onto the shared module for the duration of
-# a call, every non-hook row still reaches the shared function untouched,
-# and a sibling rule the shared function already carries, such as the
-# `awaiting-host-trust` predicate for a `hooks/<entry-id>/codex` row, is
-# delegated rather than restated.
+# authorization rule, the post-write carrier-touch predicate, the warning
+# detail grammar, and the hook decision-shape gate, which reads the same
+# neutral annotation set as the conflict-row check. The rules below widen
+# exactly those five and nothing else. They are rebound onto the shared
+# module for the duration of a call, every non-hook row still reaches the
+# shared function untouched, and a sibling rule the shared function already
+# carries, such as the `awaiting-host-trust` predicate for a
+# `hooks/<entry-id>/codex` row, is delegated rather than restated.
 
 _M3_VALIDATE_PUBLIC_UNIT_TIERS = m3._validate_public_unit_tiers
 _M3_VALIDATE_ROW_SEMANTICS = m3._validate_row_semantics
@@ -744,12 +836,32 @@ def assert_hook_rule_routing(before: Mapping[str, int]) -> int:
 # ---------------------------------------------------------------------------
 
 
+def _fence_shared_trees() -> Tuple[str, ...]:
+    """Discover every `<suite>/shared` tree the mirror has to walk.
+
+    The shared trees hold carrier payloads under authoring names, so the
+    structured scan never recognizes them and only the mirror reaches them.
+    Enumerating the suites keeps a new suite inside the fence the day it
+    lands instead of the day someone remembers to extend a tuple, and
+    `_mirror_shared_trees` still refuses a file whose suffix it cannot map,
+    so an unmapped payload in a newly discovered tree fails closed.
+    """
+
+    return tuple(
+        sorted(
+            path.relative_to(FIXTURES_ROOT).as_posix()
+            for path in FIXTURES_ROOT.glob("*/shared")
+            if path.is_dir() and not path.is_symlink()
+        )
+    )
+
+
 def _mirror_shared_trees(mirror: Path) -> Dict[str, str]:
     """Copy every shared tree file under the carrier name its bytes stand for."""
 
     mapping: Dict[str, str] = {}
     index = 0
-    for relative_tree in FENCE_SHARED_TREES:
+    for relative_tree in _fence_shared_trees():
         root = FIXTURES_ROOT / relative_tree
         if not root.is_dir():
             raise FixtureError(
@@ -776,18 +888,118 @@ def _mirror_shared_trees(mirror: Path) -> Dict[str, str]:
     return mapping
 
 
+def _fence_byte_scalar(syntax: str, text: str) -> str:
+    """Unquote one matched byte-scan value; never a general parser."""
+
+    if syntax == "json":
+        try:
+            value = json.loads(f'"{text}"')
+        except json.JSONDecodeError:
+            return text
+        return value if isinstance(value, str) else text
+    if len(text) >= 2 and text.startswith("'") and text.endswith("'"):
+        inner = text[1:-1]
+        return inner.replace("''", "'") if syntax == "yaml" else inner
+    if len(text) >= 2 and text.startswith('"') and text.endswith('"'):
+        try:
+            value = json.loads(text)
+        except json.JSONDecodeError:
+            return text
+        return value if isinstance(value, str) else text
+    return text
+
+
+def _fence_byte_values(data: bytes) -> List[Dict[str, Any]]:
+    """Read every command-shaped byte value out of one carrier's raw bytes."""
+
+    found: List[Tuple[int, str, Dict[str, Any]]] = []
+    for syntax, pattern in FENCE_BYTE_PATTERNS:
+        for match in pattern.finditer(data):
+            line = data.count(b"\n", 0, match.start()) + 1
+            key = match.group("key").decode("ascii")
+            found.append(
+                (
+                    line,
+                    syntax,
+                    {
+                        "location": f"{syntax} line {line}",
+                        "key": key,
+                        "value": _fence_byte_scalar(
+                            syntax,
+                            match.group("value").decode("utf-8", "replace"),
+                        ),
+                    },
+                )
+            )
+    return [
+        item
+        for _, _, item in sorted(
+            found, key=lambda entry: (entry[0], entry[1], entry[2]["key"])
+        )
+    ]
+
+
+def _fence_byte_scan(
+    root: Path, carriers: Iterable[str]
+) -> Dict[str, Any]:
+    """Fence the raw bytes of every carrier the structured scan touched."""
+
+    checked: List[str] = []
+    unreadable: List[str] = []
+    violations: List[Dict[str, Any]] = []
+    counts: Dict[str, int] = {}
+    values = 0
+    for relative in sorted(set(carriers)):
+        try:
+            data = (root / relative).read_bytes()
+        except OSError:
+            unreadable.append(relative)
+            continue
+        checked.append(relative)
+        items = _fence_byte_values(data)
+        counts[relative] = len(items)
+        values += len(items)
+        for item in items:
+            if HOOK_FENCE_COMMAND_PATTERN.fullmatch(item["value"]) is None:
+                violations.append(dict(item, path=relative))
+    return {
+        "checked": checked,
+        "counts": counts,
+        "ok": not violations,
+        "unreadable": unreadable,
+        "values": values,
+        "violations": violations,
+    }
+
+
 def check_hook_fence() -> Dict[str, Any]:
     """Assert the closed no-op grammar over the complete fixture tree."""
 
     tree = scan_hook_fence(FIXTURES_ROOT)
     contract = tree["contract"]
     violations = [
-        dict(item, path=f"fixtures/{item['path']}")
+        dict(item, scan="structured", path=f"fixtures/{item['path']}")
         for item in tree["violations"]
     ]
     unreadable = [f"fixtures/{item}" for item in tree["unreadable"]]
     checked = [f"fixtures/{item}" for item in tree["checked"]]
     values = tree["values"]
+    # A carrier the structured scan failed to read is still a carrier, so the
+    # byte scan takes the union of what that scan visited and what it could
+    # not read.
+    raw_tree = _fence_byte_scan(
+        FIXTURES_ROOT, list(tree["checked"]) + list(tree["unreadable"])
+    )
+    byte_checked = [f"fixtures/{item}" for item in raw_tree["checked"]]
+    byte_unreadable = [f"fixtures/{item}" for item in raw_tree["unreadable"]]
+    byte_values = raw_tree["values"]
+    unreadable_values = sum(
+        raw_tree["counts"].get(item, 0) for item in tree["unreadable"]
+    )
+    violations.extend(
+        dict(item, scan="bytes", path=f"fixtures/{item['path']}")
+        for item in raw_tree["violations"]
+    )
     with tempfile.TemporaryDirectory(prefix="bridge-m4-fence-") as raw:
         mirror = Path(raw)
         mapping = _mirror_shared_trees(mirror)
@@ -796,20 +1008,42 @@ def check_hook_fence() -> Dict[str, Any]:
             raise FixtureError("hook fence scans disagree on the contract")
         values += shared["values"]
         for item in shared["violations"]:
-            violations.append(dict(item, path=mapping[item["path"]]))
+            violations.append(
+                dict(item, scan="structured", path=mapping[item["path"]])
+            )
         for item in shared["unreadable"]:
             unreadable.append(mapping[item])
         for item in shared["checked"]:
             checked.append(mapping[item])
+        raw_shared = _fence_byte_scan(
+            mirror, list(shared["checked"]) + list(shared["unreadable"])
+        )
+        byte_values += raw_shared["values"]
+        unreadable_values += sum(
+            raw_shared["counts"].get(item, 0) for item in shared["unreadable"]
+        )
+        for item in raw_shared["violations"]:
+            violations.append(
+                dict(item, scan="bytes", path=mapping[item["path"]])
+            )
+        for item in raw_shared["checked"]:
+            byte_checked.append(mapping[item])
+        for item in raw_shared["unreadable"]:
+            byte_unreadable.append(mapping[item])
     return {
         "contract": contract,
         "root": "fixtures",
         "ok": not violations,
+        "byte_checked": sorted(byte_checked),
+        "byte_unreadable": sorted(byte_unreadable),
+        "byte_values": byte_values,
         "checked": sorted(checked),
         "unreadable": sorted(unreadable),
+        "unreadable_values": unreadable_values,
         "values": values,
         "violations": sorted(
-            violations, key=lambda item: (item["path"], item["location"])
+            violations,
+            key=lambda item: (item["path"], item["scan"], item["location"]),
         ),
     }
 
@@ -1227,19 +1461,23 @@ def run_self_test(
         + 1
     )
     fence = check_hook_fence()
+    # fence-grammar: no value from either scan leaves the no-op grammar.
     if not fence["ok"]:
         raise FixtureError(
             "fixture hook fence rejected "
             f"{len(fence['violations'])} command values: "
             + "; ".join(
-                f"{item['path']} {item['location']} {item['key']}"
+                f"{item['path']} {item['scan']} {item['location']} "
+                f"{item['key']}"
                 for item in fence["violations"][:5]
             )
         )
+    # fence-unreadable-census: the parser-unreadable list is the pinned one.
     if fence["unreadable"] != FENCE_UNREADABLE_ALLOWLIST:
         raise FixtureError(
             f"unexpected unreadable hook carriers: {fence['unreadable']}"
         )
+    # fence-structured-floor: the structured scan still reaches the tree.
     if (
         len(fence["checked"]) < FENCE_MIN_CARRIERS
         or fence["values"] < FENCE_MIN_VALUES
@@ -1249,7 +1487,57 @@ def run_self_test(
             f"{len(fence['checked'])} carriers and {fence['values']} "
             f"values, floors {FENCE_MIN_CARRIERS} and {FENCE_MIN_VALUES}"
         )
-    fence_checks = 3
+    # fence-byte-carrier-parity: the byte scan reads exactly the carriers the
+    # structured scan visited plus the ones it could not read.
+    expected_byte_carriers = sorted(
+        set(fence["checked"]) | set(fence["unreadable"])
+    )
+    if (
+        sorted(fence["byte_checked"] + fence["byte_unreadable"])
+        != expected_byte_carriers
+    ):
+        missed = sorted(
+            set(expected_byte_carriers)
+            - set(fence["byte_checked"])
+            - set(fence["byte_unreadable"])
+        )
+        raise FixtureError(
+            "the byte hook fence scan missed a carrier the structured scan "
+            f"touched: {missed[:5]}"
+        )
+    # fence-byte-readable: no carrier escapes the byte scan.
+    if fence["byte_unreadable"]:
+        raise FixtureError(
+            "the byte hook fence scan could not read "
+            f"{fence['byte_unreadable']}"
+        )
+    # fence-byte-floor: the byte scan still reaches the tree.
+    if (
+        len(fence["byte_checked"]) < FENCE_MIN_CARRIERS
+        or fence["byte_values"] < FENCE_MIN_BYTE_VALUES
+    ):
+        raise FixtureError(
+            "the byte hook fence scan lost coverage: "
+            f"{len(fence['byte_checked'])} carriers and "
+            f"{fence['byte_values']} values, floors {FENCE_MIN_CARRIERS} "
+            f"and {FENCE_MIN_BYTE_VALUES}"
+        )
+    # fence-byte-superset: bytes never see fewer commands than the parsers,
+    # because a shadowed or unparseable command is visible only in bytes.
+    if fence["byte_values"] < fence["values"]:
+        raise FixtureError(
+            f"the byte hook fence scan read {fence['byte_values']} values "
+            f"against {fence['values']} structured values"
+        )
+    # fence-unreadable-fenced: the deliberately broken carrier is fenced by
+    # its bytes even though no parser can reach it.
+    if fence["unreadable_values"] < FENCE_MIN_UNREADABLE_VALUES:
+        raise FixtureError(
+            "the byte hook fence scan found only "
+            f"{fence['unreadable_values']} values inside "
+            f"{fence['unreadable']}, floor {FENCE_MIN_UNREADABLE_VALUES}"
+        )
+    fence_checks = 8
     selected = _scenario_filter(scenarios)
     matrix, parsed = validate_matrix(scenarios=selected)
     matrix_checks = 1
@@ -1498,7 +1786,10 @@ def run_self_test(
             "ok": fence["ok"],
             "carriers": len(fence["checked"]),
             "values": fence["values"],
+            "byte_carriers": len(fence["byte_checked"]),
+            "byte_values": fence["byte_values"],
             "unreadable": fence["unreadable"],
+            "unreadable_values": fence["unreadable_values"],
         },
         "plan_spec": PLAN_SPEC,
         "plan_contracts": PLAN_CONTRACTS,

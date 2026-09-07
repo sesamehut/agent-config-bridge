@@ -103,9 +103,13 @@ Every unit row binds exactly one closure and repeats that closure's
 `selection` and `authorization`; disagreement is invalid. Closed selection
 tokens are `selected` and `not-selected`. Closed authorization tokens are
 `required`, `confirmed`, and `not-applicable`. The header authorization is
-derived: `required` when any selected mutating closure is not confirmed,
-`confirmed` when all selected mutating closures are confirmed, and
-`not-applicable` when no selected closure can mutate.
+derived from the selected mutating closures alone: `required` when any
+selected mutating closure carries authorization `required`; `confirmed` when
+at least one selected mutating closure exists and none of them carries
+`required`; and `not-applicable` when no selected closure can mutate. A
+scoped-blocked closure (`selected` / `not-applicable` / `blocked`) is still a
+selected mutating closure, so a plan whose only mutating closure is
+scoped-blocked derives `confirmed` although the plan writes nothing.
 
 `phase` is determined by operation lifecycle, not by whether the document is
 the last report the agent intends to emit. Use `pre-write` until the bound live
@@ -167,6 +171,9 @@ apply to the complete member set. A not-selected closure has authorization
 `not-applicable` and outcome `not-selected`. A selected zero-write closure
 also has authorization `not-applicable`; a selected mutating closure is
 `required` until the exact serialized closure is confirmed, then `confirmed`.
+The single exception is a scoped-blocked mutating closure, which carries
+authorization `not-applicable` with outcome `blocked` because nothing in it
+can be executed.
 
 `Capability profiles` is the closed `capability-profile/v1` binding schema.
 `binding` is `capability/<positive-decimal>`, allocated contiguously in first
@@ -361,13 +368,15 @@ blocked and an unexpected intermediate value yields `partial`.
 An absent hooks carrier is therefore a `create` that accepts only
 `strict-create/v1`, which no attested live adapter supplies today. Such a row
 keeps action `create` with `unavailable` forward and inverse protocols and
-outcome `blocked`, and the plan emits `conditional-write-unavailable`,
-`hook-carrier-absent`, and `hook-projection-asymmetric`. `Capability profiles`
-may be `- (none)` for that plan. Bridge does not create the carrier with an
-unconditional write and does not invent a create-after-check. Evidence and
-notes must print the exact bytes the user can paste to create the carrier,
-and must state that Bridge provides no cross-carrier atomicity, so one host
-can be active while the other carrier is still absent.
+outcome `blocked`, and the plan emits `conditional-write-unavailable` and
+`hook-carrier-absent`, plus `hook-projection-asymmetric` when the sibling
+carrier still proceeds (never for a `class: gate` entry; see Class-gated
+all-or-nothing). `Capability profiles` may be `- (none)` for that plan. Bridge
+does not create the carrier with an unconditional write and does not invent a
+create-after-check. Evidence and notes must print the exact bytes the user can
+paste to create the carrier, and must state that Bridge provides no
+cross-carrier atomicity, so one host can be active while the other carrier is
+still absent.
 
 ## Tier and annotation registries
 
@@ -467,7 +476,12 @@ attach it to every row whose declared tier is `semantic`, because a prose
 surface cannot execute the command, and to every row whose owned handler
 carries a host passthrough key (Codex `additionalContextLimit`, Claude `if`)
 or an unknown Codex handler key. A `native` or `declared-unsynced` hook row
-with no such key never carries it.
+with no such key never carries it. `report/v5` deliberately omits the
+tier-`semantic` clause: a read-side row states what the observed carrier holds,
+and a prose-surface row owns no handler there, so the read side leaves that
+degradation to the row's `semantic` tier column, while a plan row also states
+what the write will produce. The two predicates differ by design, and one unit
+legitimately gains the annotation between the report and the plan.
 
 ## Warning registry
 
@@ -486,7 +500,7 @@ this field.
 | `agents-md-budget-exceeded` | Exact planned root `AGENTS.md` bytes exceed the positive budget |
 | `agents-md-near-budget` | Exact planned root `AGENTS.md` bytes are at least seven eighths of the positive budget |
 | `ambiguous-baseline` | Reachable current-contract history has multiple incomparable ancestry-maximal ownership candidates |
-| `authorization-incomplete` | A selected mutating closure is not `confirmed` |
+| `authorization-incomplete` | A selected mutating closure carries authorization `required` |
 | `claude-hooks-shared-execution` | A selected write projects a hook handler into the committed `.claude/settings.json` |
 | `closure-dependency-unsatisfied` | A selected closure depends on a closure that is not selected and confirmed |
 | `codex-activation-unresolved` | Effective Codex configuration or an exact activation carrier cannot be resolved safely |
@@ -521,7 +535,7 @@ this field.
 | `manual-zone-guarded` | An `AGENTS.md` guarded patch includes all non-selected spans in the complete pre/post images but cannot prove absence of a lost concurrent edit |
 | `manual-zone-preserved` | An `AGENTS.md` write protects all non-selected byte spans in one full-file exact-precondition conditional edit |
 | `marker-anomaly` | Marker structure prevents a trustworthy managed/manual region map |
-| `matcher-grammar-divergent` | One shared `matcher` string would select different interpretation modes on the two hosts and no per-host override exists |
+| `matcher-grammar-divergent` | The closed `source-tree-spec.md` predicate holds: the shared `matcher` sits inside the Claude list character class and contains a comma or a pipe, both targets declare a host-executed JSON surface, and neither target overrides `matcher` |
 | `migration-closure-incomplete` | A reachable-v1 proven managed unit is absent from the closed migration set or lacks a confirmed repair/release decision |
 | `migration-transition-uncommitted` | Desired current-tuple bytes exist but no reachable Git transition commit establishes the complete carried set |
 | `mode-limited` | A proposed write requires an executable/worktree-only mode that Git/filesystem cannot prove or realize on the target |
@@ -653,7 +667,7 @@ must map to this table; adding a blocker requires a spec-version change.
 
 | Gate | Trigger | Serialized evidence |
 |---|---|---|
-| authorization | selected mutating closure authorization is not `confirmed` | `authorization-incomplete` plus closure authorization |
+| authorization | a selected mutating closure carries authorization `required` | `authorization-incomplete` plus closure authorization |
 | dependency | selected closure dependency is not selected and confirmed | `closure-dependency-unsatisfied` plus Closures row |
 | covenant | covenant path/type/tracking, pair coherence, template, or version is unresolved | `covenant-anchor-anomaly` |
 | activation | effective config/carrier is unknown, root is unproven, override/fallback shadows, budget is zero/exceeded | one or more of `codex-activation-unresolved`, `codex-root-unresolved`, `surface-shadowed`, `fallback-shadow`, `agents-md-budget-disabled`, `agents-md-budget-exceeded` |
@@ -798,9 +812,12 @@ and marker baseline. Missing or mismatched fixture fields invalidate the
 profile and the journal before execution.
 
 The bound document must have header authorization `confirmed`; every selected
-mutating unit and closure is `confirmed` / `planned`. A post-write result,
-expectation document, required authorization, or non-planned mutation cannot
-seed a journal, and any byte change invalidates the plan digest.
+mutating unit and closure the journal will execute is `confirmed` / `planned`.
+A scoped-blocked closure stays `not-applicable` / `blocked` and contributes no
+journal step, so its presence never keeps a plan out of a journal. A
+post-write result, expectation document, required authorization, or
+non-planned mutation cannot seed a journal, and any byte change invalidates
+the plan digest.
 
 Allocate the journal exclusively in an access-safe operation-id lease
 directory that is a no-follow, non-reparse direct child of the OS temporary

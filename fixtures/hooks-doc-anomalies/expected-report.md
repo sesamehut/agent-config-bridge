@@ -25,5 +25,5 @@
 - intent-doc-anomaly: .claude/rules/hooks.md (entry missing-bullet)
 - intent-doc-anomaly: .claude/rules/hooks.md (entry override-no-reason)
 - intent-doc-anomaly: .claude/rules/hooks.md (entry two-yaml-blocks)
-- intent-doc-anomaly: .claude/rules/hooks.md (line 27)
+- intent-doc-anomaly: .claude/rules/hooks.md (line 33)
 - matcher-grammar-divergent: .claude/rules/hooks.md (entry opt-in-pending)

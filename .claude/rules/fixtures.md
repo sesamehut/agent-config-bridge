@@ -66,17 +66,17 @@ Bridge skills. These are hard rules, binding on every change inside
   deliberately excludes all live and capability observations.
 - **Fixture hooks are inert by construction.** Every `command` and
   `commandWindows` value a change writes into any fixture
-  `.claude/settings.json`, `.codex/hooks.json`, `.codex/config.toml`, or
-  `.claude/rules/hooks.md` must match `^bridge-fixture-noop( [a-z0-9-]+)?$`, a
-  program that exists on no machine, so an accidental run is a harmless ENOENT.
-  `scan_hook_fence()` in
+  `.claude/settings.json`, `.claude/settings.local.json`, `.codex/hooks.json`,
+  `.codex/config.toml`, or `.claude/rules/hooks.md` must match
+  `^bridge-fixture-noop( [a-z0-9-]+)?$`, a program that exists on no machine, so
+  an accidental run is a harmless ENOENT. `scan_hook_fence()` in
   [`skills/bridge-sentinel/scripts/sentinel_mechanics.py`](../../skills/bridge-sentinel/scripts/sentinel_mechanics.py)
-  implements the check today, and `sentinel_mechanics self-test` asserts it over
-  synthetic trees; `fixtures/m4-hooks/hooks_harness.py check-hook-fence` runs it
-  over the complete fixture tree once the M4 harness lands. Converting the
-  pre-M4 commands still carried by `fixtures/onboarded` belongs to the M4
-  fixture suite, and the change that converts a command converts its
-  `expected-report.md` in the same change.
+  implements the structured scan, and `sentinel_mechanics self-test` asserts it
+  over synthetic trees; `fixtures/m4-hooks/hooks_harness.py check-hook-fence`
+  runs that scan over the complete fixture tree and then re-reads the raw bytes
+  of every carrier it visited or could not parse, so a value outside the
+  grammar from either scan fails the fence. The change that adds or edits a
+  fixture hook command converts its `expected-report.md` in the same change.
 - **Fixture hooks never execute.** The fixture hook carriers
   `.claude/settings.json` and `.codex/hooks.json` are inert file comparison
   inputs, never loaded by starting a host inside `fixtures/`. No fixture or

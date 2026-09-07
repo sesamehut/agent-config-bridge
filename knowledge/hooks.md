@@ -75,7 +75,7 @@ serializes; this table is the fact base behind that registry.
 | `SessionEnd` or `Interrupt` timeout | shared 1.5s budget, raisable to 60s | default 1s, hard-clamped to 1..3s with a warning | `native` | `native` | `timeout-cap-differs` |
 | matcher domain divergence (`SessionStart` source, `SessionEnd` reason) | 5-value reason domain, `fork` source | no `fork`; `SessionEnd` reason is the single value `other` | `native` | `native` | `matcher-domain` |
 | matcher declared for an event Codex ignores (`UserPromptSubmit`, `Stop`, `Interrupt`) | matcher honored where supported | matcher ignored | `native` | `native` | `codex-matcher-ignored` |
-| standing-instruction carrier (`agents-md` hook surface) | none | one managed block | `-` | `semantic` | `degraded-standing-instruction` |
+| standing-instruction carrier (`agents-md` hook surface) | none | one managed block | `declared-unsynced` | `semantic` | `degraded-standing-instruction` |
 
 ## Shared event set
 
@@ -466,9 +466,16 @@ invalid; the intent document keeps them valid and annotates them
   a reason domain of five values on Claude versus the single value `other` on
   Codex (live test J observed `reason: "other"`).
 - Consequence: `matcher: Write|Edit` is an exact two-item list on Claude and a
-  substring alternation on Codex. One shared string that selects different
-  interpretation modes on the two hosts is an acknowledged divergence, not a
-  schema violation, and per-host matcher overrides exist for exactly this.
+  substring alternation on Codex, and `matcher: Write,Edit` is an exact
+  two-item list on Claude but a regex that matches the literal text
+  `Write,Edit` on Codex, so it never fires there. One shared string that
+  selects different interpretation modes on the two hosts is an acknowledged
+  divergence, not a schema violation, and per-host matcher overrides exist for
+  exactly this. Bridge draws one closed advisory from these facts:
+  `matcher-grammar-divergent` fires exactly when a shared `matcher` inside the
+  Claude list class contains `|` or `,`, both targets declare a host-executed
+  JSON surface, and neither target overrides `matcher`; a bare literal such as
+  `Bash` is read the same way on both hosts and never fires it.
 
 ## Exit codes
 

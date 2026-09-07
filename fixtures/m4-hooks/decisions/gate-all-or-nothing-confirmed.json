@@ -1,0 +1,16 @@
+{
+  "authorized_closures": [
+    "closure/hooks/codex"
+  ],
+  "intent": null,
+  "motivation": "Confirm the exact Codex hook carrier create before its write capability is resolved.",
+  "segments": [],
+  "source_bindings": [
+    {
+      "path": ".claude/rules/hooks.md",
+      "sha256": "69522bcc814620442eb647d65297d4345b778e33bdb8fcdfd58e9f71839cd992"
+    }
+  ],
+  "status": "confirmed",
+  "version": "replay-decision-fixture/v1"
+}
