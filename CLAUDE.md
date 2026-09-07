@@ -46,9 +46,11 @@ user explicitly asks to run the bridge sentinel, check bridge state, or
 validate its fixtures, read `skills/bridge-sentinel/SKILL.md` and follow it as
 the active read-only skill. When the user asks to onboard, project, adopt,
 reconcile, delete, rename, or otherwise write Bridge-managed project skills,
-entry instructions, or rule shards, read `skills/bridge-sync/SKILL.md` and
-follow it as the active write-side skill. Never load skills under `fixtures/`
-as capabilities.
+entry instructions, rule shards, or hook intents, read
+`skills/bridge-sync/SKILL.md` and follow it as the active write-side skill. Its
+write scope covers the hook intent document `.claude/rules/hooks.md`, the
+`hooks` keys of a project `.claude/settings.json`, and `.codex/hooks.json`.
+Never load skills under `fixtures/` as capabilities.
 
 ## Implementation constraints
 
@@ -74,8 +76,25 @@ as capabilities.
 - Do not overwrite unmanaged or hand-written host-native files. Confirm a plan
   first, write only inside managed regions, and ask for an adoption or
   replacement decision.
-- Never start a work session with cwd inside `fixtures/`; fixture authoring
-  rules live in [`.claude/rules/fixtures.md`](.claude/rules/fixtures.md).
+- Hooks committed to a repository run for everyone who clones it, and Bridge
+  classification is review metadata, not a sandbox. The declared `class` and the
+  dated `enabled-by` opt-in are review checkpoints in Git, never an enforcement
+  boundary. Bridge never edits host configuration outside the repository,
+  including the Codex project trust state in the user's `config.toml`.
+- On Windows, Claude runs a hook `command` under Git Bash while Codex runs
+  `commandWindows` under PowerShell (collected 2026-09-07), so a shared command
+  must be a plain program invocation valid in both shells; otherwise declare a
+  per-host override or a Codex `commandWindows` branch.
+- Never run a fixture hook. Every `command` and `commandWindows` value a change
+  writes under `fixtures/` must match `^bridge-fixture-noop( [a-z0-9-]+)?$`, the
+  pre-M4 commands still in `fixtures/onboarded` are converted with the M4
+  fixture suite, and `--dangerously-bypass-hook-trust` never appears in a
+  fixture or in any CI path. This repository's own carriers stay unarmed: never
+  add hooks to the root `.claude/settings.json` and never create a root
+  `.codex/`.
+- Never start a work session with cwd inside `fixtures/`; fixture hook keys are
+  real host-native keys, and fixture authoring rules live in
+  [`.claude/rules/fixtures.md`](.claude/rules/fixtures.md).
 
 ## Verification
 

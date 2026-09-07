@@ -1,11 +1,12 @@
 # Bridge sync plan specification
 
-Spec version: sync-plan/v2.
+Spec version: sync-plan/v3.
 
-This file defines the deterministic M3 pre-write plan and post-write result
-for [`reconciliation/v2`](reconciliation-spec.md). It covers skills plus
-entry/rule managed blocks while keeping one write authority and one
-versioned write-protocol vocabulary. Minimal normative fragments live in
+This file defines the deterministic pre-write plan and post-write result
+for [`reconciliation/v3`](reconciliation-spec.md). It covers skills,
+entry/rule managed blocks, and hook units on both native hook carriers while
+keeping one write authority and one versioned write-protocol vocabulary.
+Minimal normative fragments live in
 [`canonical-plan-cases.md`](canonical-plan-cases.md); they illustrate this
 specification and do not relax its complete-document requirements.
 
@@ -19,8 +20,8 @@ Every document uses:
 - project: <directory name of repository root>
 - scan root: <path as invoked>
 - date: <YYYY-MM-DD>
-- spec: sync-plan/v2
-- contracts: covenant/v2, source-tree/v4, report/v4, reconciliation/v2
+- spec: sync-plan/v3
+- contracts: covenant/v3, source-tree/v5, report/v5, reconciliation/v3
 - phase: <pre-write|post-write>
 - onboarding: <onboarded|bootstrap-required|blocked>
 - authorization: <required|confirmed|not-applicable>
@@ -53,6 +54,10 @@ Every document uses:
 
 <warning lines or "- (none)">
 
+## Hook tiers
+
+<the exact table below, or "- (none)">
+
 ## Migration decisions
 
 <the exact table below, or "- (none)">
@@ -65,18 +70,34 @@ Every document uses:
 
 <the exact table below, or "- (none)">
 
+## Hook adoption decisions
+
+<the exact table below, or "- (none)">
+
 ## Evidence and notes
 
 <free-form>
 ```
 
 Unit ids are `onboarding/covenant`, `onboarding/agents-md`, `entry`,
-`rules/<source-relative-id>`, or `skills/<name>`. Sort rows byte-wise by unit.
+`rules/<source-relative-id>`, `skills/<name>`, or `hooks/<entry-id>/<host>`
+with `<host>` in `source`, `claude`, or `codex` and `<entry-id>` matching
+`[a-z0-9][a-z0-9-]*`. Sort rows byte-wise by unit.
 `baseline` is `-` or the full lowercase 40- or 64-hex Git object id. Empty
-cells use `-`. Cell padding and annotation sorting follow `report/v4`.
+cells use `-`. Cell padding and annotation sorting follow `report/v5`.
 Serialize only affected or explicitly request-scoped units. Repository-wide
 preflight evidence does not require a row for every inspected carrier, and an
 `onboarded` header does not automatically add an unchanged covenant row.
+
+The Units header stays at eleven columns; a hook row never adds a twelfth.
+`report/v5` keys the same hook as `hooks/<entry-id>` with a separate `host`
+column and has no row for the `source` host, so the two specifications key
+hook rows differently and neither derives the other. Serialize a
+`hooks/<entry-id>/source` row only when `.claude/rules/hooks.md` is itself
+written by this plan, that is for an `enabled-by` append, an intent record,
+an adoption, or a reverse adoption, or when the source unit is itself
+blocked. An entry whose source is unchanged and unwritten serializes only its
+declared host rows.
 
 Every unit row binds exactly one closure and repeats that closure's
 `selection` and `authorization`; disagreement is invalid. Closed selection
@@ -113,9 +134,30 @@ Stable closure ids are:
 - otherwise `closure/agents-md` for all selected operations that may change
   root `AGENTS.md` and their coupled source paths;
 - `closure/skill/<name>` for an ordinary skill closure;
-- `closure/skill-rename/<old-name>--to--<new-name>` for a skill rename; and
+- `closure/skill-rename/<old-name>--to--<new-name>` for a skill rename;
+- `closure/hooks/source` for all selected changes to `.claude/rules/hooks.md`;
+- `closure/hooks/claude` for all selected changes to the Claude hook carrier
+  `.claude/settings.json`;
+- `closure/hooks/codex` for all selected changes to the Codex hook carrier
+  `.codex/hooks.json`;
+- `closure/decision/hooks/<entry-id>` for the zero-write hook rows of one
+  entry; and
 - `closure/decision/<unit>` for a zero-write, blocked, deferred, unchanged, or
   explicitly not-selected unit that belongs to no physical write closure.
+
+A degraded Codex hook block in root `AGENTS.md` is an ordinary member of the
+existing `closure/agents-md`; hooks introduce no separate prose-carrier
+closure id. `closure/decision/hooks/<entry-id>` is an explicit documented
+exception to the `closure/decision/<unit>` rule so that an entry's two host
+rows never split across two decision closures.
+
+`closure/hooks/claude`, `closure/hooks/codex`, and `closure/agents-md` each
+depend on `closure/hooks/source` when it is selected. Hook carrier closures
+never depend on one another and never on `closure/agents-md`, because
+deferring a prose block must not make an executable carrier unexecutable.
+Source-first and carrier-last is enforced by step order instead:
+`.claude/rules/hooks.md`, then `AGENTS.md`, then `.claude/settings.json`,
+then `.codex/hooks.json`.
 
 The migration rule has precedence over every other id rule. Closure rows sort
 byte-wise by id. `members` is the byte-wise sorted unit list joined by `; `;
@@ -144,7 +186,7 @@ operation; no gap or unreferenced row is allowed.
 A row records admitted evidence; it does not create capability. Generic
 PowerShell/.NET, Claude Code `Edit`/`Write`, Codex `apply_patch`, and Python
 file/path I/O serialize no strict protocol without the explicit versioned
-adapter attestation required by reconciliation/v2. A profile sourced from
+adapter attestation required by reconciliation/v3. A profile sourced from
 `write-capability-fixture/v1` is valid only for the one fixture operation
 whose lease-bound materialization marker and capability-document hashes were
 formally validated. It uses the profile fields in that document, never the
@@ -173,6 +215,7 @@ a capability-blocked intent may have `- (none)` profiles plus one or more
 | `projection-only` | Only projection differs from the unique baseline |
 | `both-changed` | Both differ from the same baseline and current trees differ |
 | `intent-missing` | Payload carriers are converged but a required semantic source intent record is absent |
+| `declared-unsynced` | A hook target declares `surface: none`, so this host has no counterpart to converge |
 | `no-baseline` | No current-contract managed baseline is provable |
 | `contract-migration` | The exact archived-v1 pair, or a current pair without its reachable closed-set transition, requires explicit migration completion |
 | `offboarding` | Both covenant halves disappeared after provable onboarding |
@@ -194,6 +237,7 @@ a capability-blocked intent may have `- (none)` profiles plus one or more
 | `annex-or-keep` | Unknown occupancy requires an explicit ownership decision |
 | `annex` | User explicitly establishes ownership using the recorded authority |
 | `keep` | Leave unknown occupancy untouched for this run and unresolved |
+| `opt-in-or-skip` | A `gate` or `side-effect` hook entry with `enabled: true` has no covering `enabled-by` record; the user records the dated opt-in in the source or skips the entry |
 | `migrate` | Replace archived v1 and establish one closed current-tuple transition for every carried legacy-owned unit |
 | `offboard` | Explicitly remove the Bridge covenant and managed ownership |
 | `resolve-blocker` | No write until the named safety/evidence problem is resolved |
@@ -286,6 +330,27 @@ must match immediately before the call, and the complete postimage must match
 immediately after it. These checks filter and detect races; they do not close
 the race inside the host call.
 
+For a hooks carrier (`.claude/settings.json` or `.codex/hooks.json`) the
+postimage MUST be produced by `json-owned-span/v1` composition: the exact
+preimage with only the owned `(event, effective matcher)` group spans edited
+and only the located insertion points filled. A postimage produced by parsing
+the document and reserializing it is invalid even when it is semantically
+equal, and is rejected by the `hooks-carrier-composition` validator check.
+`json-owned-span/v1` is a postimage-derivation rule, not a capability claim:
+it mints no protocol token and supplies no attestation.
+
+A hooks carrier is eligible only when it also parses as a JSON object under a
+strict parser with no duplicate object key anywhere and no node outside the
+closed hooks shape. A duplicate key makes span-to-value correspondence
+non-unique, and a bridge that guesses which duplicate it owns can silently
+drop a user's hook, so this fails closed with `hooks-carrier-unusable` and
+blocks that closure.
+
+Hooks JSON is repetitive, so the derived guarded region may legitimately cover
+adjacent unowned bytes whose old and new values are identical. Context is
+never shortened to force a unique match; when the region cannot be made
+unique, emit `guarded-patch-unavailable` and block.
+
 Create accepts only `strict-create/v1`; delete accepts only
 `strict-delete/v1`. Rename is serialized as destination/source path
 operations and requires strict protocols for every step. Guarded patch is
@@ -293,15 +358,32 @@ never an inverse protocol. Automatic compensation is attempted only when
 every required inverse row is strict; otherwise the compensation attempt is
 blocked and an unexpected intermediate value yields `partial`.
 
+An absent hooks carrier is therefore a `create` that accepts only
+`strict-create/v1`, which no attested live adapter supplies today. Such a row
+keeps action `create` with `unavailable` forward and inverse protocols and
+outcome `blocked`, and the plan emits `conditional-write-unavailable`,
+`hook-carrier-absent`, and `hook-projection-asymmetric`. `Capability profiles`
+may be `- (none)` for that plan. Bridge does not create the carrier with an
+unconditional write and does not invent a create-after-check. Evidence and
+notes must print the exact bytes the user can paste to create the carrier,
+and must state that Bridge provides no cross-carrier atomicity, so one host
+can be active while the other carrier is still absent.
+
 ## Tier and annotation registries
 
 `tier` is `native` for managed skill rows, `structural` for entry and
 unscoped-rule rows, `semantic` for valid path-scoped rules, and `-` for
 onboarding or unresolved unmanaged rows.
 
+A `hooks/<entry-id>/<host>` row uses that entry's declared
+`targets.<host>.tier` verbatim: `native`, `semantic`, or `declared-unsynced`.
+`structural` is reserved and invalid for a hook row. A
+`hooks/<entry-id>/source` row uses tier `-`, because the source document is
+not a projection of itself.
+
 Formal validation derives this value from the authenticated public replay
 input and render documents. It does not trust the Units cell or consult an
-expectation. It uses source-tree/v4's exact raw-byte frontmatter recognizer,
+expectation. It uses source-tree/v5's exact raw-byte frontmatter recognizer,
 not a partial YAML parser. The proposed/rendered source takes precedence over
 the input source so a confirmed scope conversion is classified by its result;
 source deletion falls back to the authenticated input source or exact `pv2`
@@ -311,35 +393,81 @@ reclassified as an unscoped structural rule. An unresolved unmanaged skill
 using `annex-or-keep` or `keep` has tier `-`; other managed or resolved skill
 rows use `native`.
 
+For a hook row the validator authenticates the declared tier against the same
+entry in the authenticated `.claude/rules/hooks.md` source document and
+against that unit's `## Hook tiers` row. It never computes a hook tier from a
+host capability table; a declared tier that the dated event registry refutes
+is a `source-tree/v5` schema violation reported as `intent-doc-anomaly`, not
+a silent reclassification.
+
 Annotations are sorted byte-wise and joined by `; `:
 
+- `awaiting-host-trust`
 - `behavior-degraded`
 - `decision-required`
+- `event-unverified`
 - `intent-required`
 - `live-activation-unknown`
 - `migration-transition-required`
+- `opt-in-required`
 - `restart-may-be-required`
 - `semantic-review-required`
 
 `live-activation-unknown` is neutral: it is not a trust state. A pre-write
 plan never carries it. In a post-write result, attach it only to a skill row
 whose `.agents/skills/<name>/` carrier was written or may have been written,
-or to an entry/rule row whose root `AGENTS.md` carrier was written or may have
-been written. Do not attach it when execution never began, the row was
+to an entry/rule row whose root `AGENTS.md` carrier was written or may have
+been written, or to a `hooks/<entry-id>/codex` row on the `agents-md` surface
+whose degradation block was written or may have been written into root
+`AGENTS.md`. Do not attach it when execution never began, the row was
 blocked/deferred/not-selected, only a canonical source path could be touched,
 or complete-value verification proves the carrier retained its preimage.
 `migration-transition-required` is attached to `onboarding/covenant` and every
-carried migration row until the closed v1-to-v2 transition commit is reachable.
+carried migration row until the closed archived-to-current transition commit
+is reachable.
 A released migration row has Units baseline `-` and no transition annotation;
 its legacy oid remains evidence only in Migration decisions/candidates.
 `restart-may-be-required` follows the same post-write carrier-touch predicate:
 attach it only when a Codex skill carrier, or root `AGENTS.md` for the affected
-entry/rule, was written or may have been written. A pre-write blocker and
+entry/rule or for the affected degraded `hooks/<entry-id>/codex` row, was
+written or may have been written. A pre-write blocker and
 every other no-carrier-write case receive neither restart nor live-activation
 annotations. For each affected row, Evidence and notes must say: “Start a new
 Codex run/session before testing the updated project instructions or skill.”
-This is a required activation step for M3 outcomes, not a claim that
-current-main environment refresh will reload the carrier.
+This is a required activation step, not a claim that current-main environment
+refresh will reload the carrier.
+
+`awaiting-host-trust` is neutral and follows the same post-write carrier-touch
+predicate as `live-activation-unknown`: attach it only in a post-write result,
+and only to a `hooks/<entry-id>/codex` row whose `.codex/hooks.json` carrier
+was written or may have been written. A pre-write plan never carries it.
+Codex binds per-hook trust to a normalized handler identity, so a created or
+identity-changed handler is listed as new or modified and is silently skipped
+at dispatch until the user reviews it. The annotation records that fact; it is
+not a trust state and never selects a plan state.
+
+`opt-in-required` is attached to every hook row of an entry whose `class` is
+`gate` or `side-effect` with `enabled: true` and no covering `enabled-by`
+record. Remove it only after the confirmed dated record has actually been
+appended to `.claude/rules/hooks.md`, never because the user discussed the
+decision.
+
+`event-unverified` is attached to every hook row whose declared `event` is
+absent from the dated closed event registry named by `source-tree/v5`. An
+unknown event name stays valid because it may be newer than the registry
+date; the annotation records that Bridge cannot prove the host fires it. A
+Claude-only event is outside that registry too, so both host rows of such an
+entry carry it, including the row whose `## Hook tiers` reason is
+`claude-only-event`.
+
+`behavior-degraded` records a portability loss that stays loadable, never a
+load failure. On a skill or entry/rule row attach it whenever a
+behavior-portability lint is present. On a hook row the predicate is closed:
+attach it to every row whose declared tier is `semantic`, because a prose
+surface cannot execute the command, and to every row whose owned handler
+carries a host passthrough key (Codex `additionalContextLimit`, Claude `if`)
+or an unknown Codex handler key. A `native` or `declared-unsynced` hook row
+with no such key never carries it.
 
 ## Warning registry
 
@@ -359,30 +487,50 @@ this field.
 | `agents-md-near-budget` | Exact planned root `AGENTS.md` bytes are at least seven eighths of the positive budget |
 | `ambiguous-baseline` | Reachable current-contract history has multiple incomparable ancestry-maximal ownership candidates |
 | `authorization-incomplete` | A selected mutating closure is not `confirmed` |
+| `claude-hooks-shared-execution` | A selected write projects a hook handler into the committed `.claude/settings.json` |
 | `closure-dependency-unsatisfied` | A selected closure depends on a closure that is not selected and confirmed |
 | `codex-activation-unresolved` | Effective Codex configuration or an exact activation carrier cannot be resolved safely |
+| `codex-handler-unknown-key` | An owned Codex handler carries a key outside the declared, passthrough, and semantics-changing sets |
+| `codex-hook-retrust-required` | A selected Codex write changes the normalized trust identity of a handler that already exists |
+| `codex-inline-hooks-conflict` | The same Codex layer also declares hooks inline in `.codex/config.toml`, or their absence cannot be proven |
+| `codex-project-untrusted` | Resolved Codex project trust for the scan root is `untrusted` while a hook row targets `.codex/hooks.json` |
 | `codex-root-unresolved` | Root-marker evidence does not prove the intended Codex project root |
+| `codex-trust-blind-change` | A selected Codex write replaces only `commandWindows` of an existing handler, which the trust identity does not cover |
+| `codex-trust-reindex` | A Codex deletion removes a non-final element and shifts the positional trust keys of later elements in that event |
 | `conditional-write-unavailable` | A forward or mandatory rename/rollback/compensation operation whose policy requires strict semantics has no attested strict protocol |
 | `covenant-anchor-anomaly` | Covenant path/type/tracking, pair coherence, template, or version safety is unresolved |
 | `dual-project-entry` | Both supported Claude project-entry files exist |
-| `entry-rule-source-anomaly` | An entry/rule source has unsafe type/path, BOM, or invalid/unknown/misplaced v4 control metadata |
+| `entry-rule-source-anomaly` | An entry/rule source has unsafe type/path, BOM, or invalid/unknown/misplaced v5 control metadata |
 | `fallback-shadow` | Creating root `AGENTS.md` would shadow an active configured fallback |
 | `guarded-patch-non-cas` | A selected replacement uses `guarded-patch/v1`, whose preflight and postverification leave a residual race |
 | `guarded-patch-unavailable` | An existing-file replacement has neither an attested strict protocol nor an eligible exact-region guarded protocol |
+| `hook-acknowledgement-missing` | A Claude hook carrier write is selected while `.claude/rules/hooks.md` carries no file-level shared-execution acknowledgement |
+| `hook-carrier-absent` | The native carrier a selected hook row targets does not exist |
+| `hook-format-preserved` | An owned group already parses equal to its desired model while its bytes differ, so Bridge writes nothing |
+| `hook-opt-in-required` | A `gate` or `side-effect` entry with `enabled: true` has no covering `enabled-by` record |
+| `hook-output-not-delivered` | A `reminder` entry declares a `native` tier on an event outside the shared stdout-delivering set |
+| `hook-projection-asymmetric` | One host's hook carrier is blocked or unavailable while the sibling carrier proceeds |
+| `hooks-carrier-unusable` | A hooks carrier fails to parse, carries a duplicate object key, or holds a node outside the closed hooks shape |
+| `hooks-globally-disabled` | A tracked hooks projection file sets `"disableAllHooks": true` |
 | `ignored-files-excluded` | Relevant ignored paths were excluded and not read or copied |
 | `ignored-required-input` | A required unit input is ignored and therefore cannot participate safely |
+| `intent-doc-anomaly` | `.claude/rules/hooks.md` violates the `source-tree/v5` hook intent schema |
 | `invalid-rule-paths` | A `paths` list is invalid, no-op, duplicate, or over its expansion budget |
 | `legacy-managed-mode` | A removed v3 `mode=` marker requires explicit migration/repair |
+| `local-hooks-present` | A tracked `.claude/settings.local.json` carries a `hooks` key |
 | `manual-zone-guarded` | An `AGENTS.md` guarded patch includes all non-selected spans in the complete pre/post images but cannot prove absence of a lost concurrent edit |
 | `manual-zone-preserved` | An `AGENTS.md` write protects all non-selected byte spans in one full-file exact-precondition conditional edit |
 | `marker-anomaly` | Marker structure prevents a trustworthy managed/manual region map |
+| `matcher-grammar-divergent` | One shared `matcher` string would select different interpretation modes on the two hosts and no per-host override exists |
 | `migration-closure-incomplete` | A reachable-v1 proven managed unit is absent from the closed migration set or lacks a confirmed repair/release decision |
-| `migration-transition-uncommitted` | Desired v2/v4 bytes exist but no reachable Git transition commit establishes the complete carried set |
+| `migration-transition-uncommitted` | Desired current-tuple bytes exist but no reachable Git transition commit establishes the complete carried set |
 | `mode-limited` | A proposed write requires an executable/worktree-only mode that Git/filesystem cannot prove or realize on the target |
+| `platform-branch-divergence` | A Codex handler's `commandWindows` differs from its effective `command`, so Windows and POSIX run different code |
 | `sensitive-or-generated-blocked` | Suspected secret, credential, private key, or generated payload blocks copying |
-| `skill-loadability-blocked` | A skill fails a report/v4 identity, YAML, BOM, or definite host-loadability gate |
+| `skill-loadability-blocked` | A skill fails a report/v5 identity, YAML, BOM, or definite host-loadability gate |
 | `surface-shadowed` | Root `AGENTS.override.md` shadows the projection carrier |
 | `strict-compensation-unavailable` | At least one selected forward operation has no attested strict inverse; Bridge will not attempt guarded compensation |
+| `undeclared-hooks-key` | A hooks carrier group is neither owned by a valid entry nor marked with a Bridge id |
 | `unrelated-dirty-preserved` | The repository has out-of-scope dirty changes that the plan preserves |
 | `unsafe-tree-entry` | Symlink, reparse point, gitlink, special file, case collision, or path escape blocks a unit |
 | `untracked-files-included` | Relevant non-ignored untracked files participate in the current snapshot and plan |
@@ -398,23 +546,81 @@ Detail is closed. A token absent from this table must omit it.
 | `agents-md-budget-exceeded` | `(<n> bytes of <B>)`, with canonical non-negative decimal `n`, canonical positive decimal `B`, and `n > B` |
 | `agents-md-near-budget` | `(<n> bytes of <B>)`, with canonical non-negative decimal `n`, canonical positive decimal `B`, `n >= floor(7 * B / 8)`, and `n <= B` |
 | `codex-activation-unresolved` | `(<reason>)`, where reason is `config-unresolved`, `override-carrier-unsafe`, `agents-carrier-unsafe`, `fallback-carrier-unsafe`, `fallback-selection-unknown`, or `budget-unknown` |
+| `codex-handler-unknown-key` | `(<Event> group=<i> handler=<j> key=<name>)`, with an exact-case event name, canonical non-negative decimal indices, and the exact handler key name |
+| `codex-hook-retrust-required` | `(<Event> group=<i> handler=<j>)` |
+| `codex-inline-hooks-conflict` | `(<Event>)` for an inline event table, or the literal `(pointer-key)` for a top-level `hooks =` key |
 | `codex-root-unresolved` | `(<reason>)`, where reason is `effective-root-unknown`, `empty-markers`, or `root-marker-excluded` |
+| `codex-trust-blind-change` | `(<Event> group=<i> handler=<j>)` |
+| `codex-trust-reindex` | `(<Event> from=<index>)`, with a canonical non-negative decimal element index |
 | `covenant-anchor-anomaly` | `(<reason>)`, where reason is `partial`, `untracked`, `malformed`, `modified`, or `version-mismatch` |
+| `hook-opt-in-required` | `(entry <id>)`, where `<id>` matches `[a-z0-9][a-z0-9-]*` |
+| `hook-output-not-delivered` | `(entry <id>)` |
+| `hook-projection-asymmetric` | `(<unit-id>)`, the exact blocked or unavailable `hooks/<entry-id>/<host>` unit id |
+| `hooks-carrier-unusable` | `(<reason>)`, where reason is `parse-error`, `duplicate-key`, or `unmodelled-shape` |
+| `intent-doc-anomaly` | `(entry <id>)` for an entry-scoped violation, otherwise `(line <n>)` with a canonical positive decimal source-line number |
 | `invalid-rule-paths` | `(<reason>)`, where reason is `schema`, `empty`, `unsafe`, `invalid-bracket`, `no-op-universal`, `duplicate`, `expansion-count`, `expansion-bytes`, or `expansion-unproved` |
 | `legacy-managed-mode` | `(line <n>)`, where `n` is a canonical positive decimal source-line number |
 | `marker-anomaly` | `(line <n>)`, where `n` is a canonical positive decimal carrier-line number |
+| `matcher-grammar-divergent` | `(entry <id>)` |
 | `mode-limited` | `(<reason>)`, where reason is `explicit-executable-unrealizable`, `worktree-mode-unobservable`, or `target-mode-unpreservable` |
+| `platform-branch-divergence` | `(entry <id>)` |
+| `undeclared-hooks-key` | `(<Event> matcher=<matcher>)` with the exact declared matcher string, or `(<Event> matcher=omitted)` when the group declares none |
 
 Warnings never grant write authority. `agents-md-near-budget`,
-`guarded-patch-non-cas`, `manual-zone-guarded`, `manual-zone-preserved`, and
+`claude-hooks-shared-execution`, `codex-hook-retrust-required`,
+`codex-trust-reindex`, `guarded-patch-non-cas`, `hook-projection-asymmetric`,
+`manual-zone-guarded`, `manual-zone-preserved`,
+`matcher-grammar-divergent`, `platform-branch-divergence`, and
 `strict-compensation-unavailable` require explicit acknowledgement but are
 not forward-apply blockers. The absence of a strict inverse blocks an
 automatic compensation attempt, not an explicitly confirmed guarded forward
-operation. `ignored-files-excluded`, `unrelated-dirty-preserved`,
-`untracked-files-included`, and `validator-profile-mismatch` are informational
-unless a separate blocker row below applies. Evidence and notes may cite
+operation. `codex-handler-unknown-key`, `codex-project-untrusted`,
+`codex-trust-blind-change`, `hook-carrier-absent`, `hook-format-preserved`,
+`hook-output-not-delivered`, `hooks-globally-disabled`,
+`ignored-files-excluded`, `local-hooks-present`, `undeclared-hooks-key`,
+`unrelated-dirty-preserved`, `untracked-files-included`, and
+`validator-profile-mismatch` are informational unless a separate blocker row
+below applies. `codex-inline-hooks-conflict`, `hook-acknowledgement-missing`,
+`hook-opt-in-required`, and `hooks-carrier-unusable` are closure-scoped
+blockers; `intent-doc-anomaly` is a project-wide blocker. Evidence and notes may cite
 commands, intent records, commit ids, operation-local manual-zone digests, and
 user decisions; it is free-form and not a durable baseline.
+
+Hook warnings obey the same one-line-per-exact-fact rule. Emit
+`claude-hooks-shared-execution` once for `.claude/settings.json` whenever the
+plan selects any Claude hook carrier write, one `codex-hook-retrust-required`
+line per handler whose normalized identity changes, one
+`codex-trust-blind-change` line per handler whose replacement touches only
+`commandWindows`, one `hook-opt-in-required` line per entry, one
+`intent-doc-anomaly` line per violation, and one `undeclared-hooks-key` line
+per `(file, event, matcher)` fact. `codex-hook-retrust-required` and
+`codex-trust-blind-change` are mutually exclusive for one handler: an
+identity change emits the first, a `commandWindows`-only change the second.
+
+Hook warning paths are pinned. Use `.claude/settings.json` for
+`claude-hooks-shared-execution`; `.codex/hooks.json` for
+`codex-handler-unknown-key`, `codex-hook-retrust-required`,
+`codex-trust-blind-change`, and `codex-trust-reindex`; `.codex/config.toml`
+for `codex-inline-hooks-conflict`; `.` for `codex-project-untrusted`;
+`.claude/rules/hooks.md` for `hook-acknowledgement-missing`,
+`hook-opt-in-required`, `hook-output-not-delivered`, `intent-doc-anomaly`,
+`matcher-grammar-divergent`, and `platform-branch-divergence`;
+`.claude/settings.local.json` for `local-hooks-present`; the absent carrier
+for `hook-carrier-absent`; the blocked carrier for
+`hook-projection-asymmetric`; the affected carrier for
+`hook-format-preserved`, `hooks-carrier-unusable`, and
+`undeclared-hooks-key`; and the settings file, either
+`.claude/settings.json` or `.claude/settings.local.json`, for
+`hooks-globally-disabled`.
+
+Every plan containing at least one hook unit row states this exactly in
+Evidence and notes: "The opt-in record is a review checkpoint in Git, not an
+enforcement boundary. Bridge classification is author-declared metadata, not
+a sandbox. Claude Code runs hooks from committed settings without a trust
+prompt in `-p` and SDK sessions, so anyone who can commit to this repository
+can run commands on a teammate's machine." Hook execution is also
+observed-but-not-guaranteed on both hosts, so no Bridge state may be read as a
+runtime guarantee.
 
 Emit `untracked-files-included` once for every relevant non-ignored
 untracked file in every phase in which it remains relevant and untracked.
@@ -442,7 +648,7 @@ operation-scoped applied bootstrap result above.
 
 ## Closed apply-blocker registry
 
-Apply is forbidden when any row matches. Every blocker in reconciliation/v2
+Apply is forbidden when any row matches. Every blocker in reconciliation/v3
 must map to this table; adding a blocker requires a spec-version change.
 
 | Gate | Trigger | Serialized evidence |
@@ -453,15 +659,42 @@ must map to this table; adding a blocker requires a spec-version change.
 | activation | effective config/carrier is unknown, root is unproven, override/fallback shadows, budget is zero/exceeded | one or more of `codex-activation-unresolved`, `codex-root-unresolved`, `surface-shadowed`, `fallback-shadow`, `agents-md-budget-disabled`, `agents-md-budget-exceeded` |
 | entry/rule source | dual entry, active import, invalid paths, legacy mode, unsafe/control anomaly, or marker map failure | one or more of `dual-project-entry`, `active-shared-import`, `invalid-rule-paths`, `legacy-managed-mode`, `entry-rule-source-anomaly`, `marker-anomaly` |
 | history | ownership candidates are ambiguous | `ambiguous-baseline` |
+| hook source | `.claude/rules/hooks.md` violates the `source-tree/v5` hook intent schema | `intent-doc-anomaly` |
+| hook carrier | a hooks carrier is unparseable, duplicate-keyed, or unmodelled, or the same Codex layer also declares inline `[hooks]` | `hooks-carrier-unusable`, `codex-inline-hooks-conflict` |
+| hook opt-in | a selected native carrier of a `gate`/`side-effect` entry lacks a covering `enabled-by` record, or a selected Claude hook carrier write lacks the file-level acknowledgement | `hook-opt-in-required`, `hook-acknowledgement-missing` |
 | migration closure | legacy set/decision is incomplete | `migration-closure-incomplete` |
 | migration finalization | desired current bytes are already prepared but the closed transition commit is not reachable | `migration-transition-uncommitted`; block ordinary Bridge writes and synchronized/ownership claims, but wait for the external user commit rather than blocking the already-completed migration byte preparation |
 | tree safety | symlink/reparse/gitlink/special file, case collision, path escape, or unsafe target | `unsafe-tree-entry` |
 | ignored required input | a required input is excluded by ignore rules | `ignored-required-input` |
-| skill loadability | report/v4 definite skill-load gate fails | `skill-loadability-blocked` |
+| skill loadability | report/v5 definite skill-load gate fails | `skill-loadability-blocked` |
 | sensitive/generated | content must not be copied | `sensitive-or-generated-blocked` |
 | mode preservation | selected direction requires an unrealizable/unprovable mode | `mode-limited` |
 | write capability | a strict-required forward or mandatory rename/rollback/compensation operation is unavailable, or an eligible existing-file replacement has neither a strict nor guarded protocol | `conditional-write-unavailable` for strict-required operations; otherwise `guarded-patch-unavailable`, plus the matching `unavailable` Write capabilities row |
 | unresolved unit decision | conflict, annex/replace, release, destructive, migration, semantic-review, or offboarding decision is pending | the matching closed decision shape below; never prose-only state |
+
+### Narrowed blocker scope (closed exception)
+
+The project-wide prohibition above stands for every gate except three. For
+the `write capability`, `hook carrier`, and `hook opt-in` gates only, the
+prohibition is scoped to the closure that contains the matching row and to
+every closure that depends on it; independent selected closures may proceed.
+Every other gate, including `hook source`, remains project-wide.
+
+A scoped-blocked closure keeps `selected`, authorization `not-applicable`,
+and outcome `blocked`, and each of its unit rows repeats that shape. It is
+never relabelled `not-selected`, because a capability or gate failure must
+stay inside header-authorization derivation and inside every gate. When one
+carrier is scoped-blocked while its sibling proceeds, emit the acknowledged
+`hook-projection-asymmetric` on the blocked carrier.
+
+### Class-gated all-or-nothing
+
+For an entry whose `class` is `reminder`, `observation`, or `side-effect`,
+one carrier may apply while the sibling carrier is blocked or unavailable,
+under the acknowledged `hook-projection-asymmetric`. For an entry whose
+`class` is `gate` the entry is all-or-nothing: a blocked or unavailable
+carrier forces the sibling carrier closure to `not-selected` with zero
+writes, because asymmetric enforcement is worse than no enforcement.
 
 ## Closed decision serialization
 
@@ -471,6 +704,11 @@ matching row:
 | Decision state | Closure | selection | authorization | outcome | Required annotations |
 |---|---|---|---|---|---|
 | Codex onboarding segmentation or authority target pending | `closure/decision/onboarding/agents-md` | `not-selected` | `not-applicable` | `not-selected` | `decision-required` |
+| hook opt-in pending: `class` is `gate` or `side-effect`, `enabled: true`, and no covering `enabled-by` record exists | `closure/decision/hooks/<entry-id>` | `selected` | `required` | `deferred` | `decision-required; opt-in-required` |
+| two-sided hook `both-changed` conflict | `closure/decision/hooks/<entry-id>` | `selected` | `required` | `deferred` | `decision-required` |
+| pending hook occupancy: `annex-or-keep` over a marked orphan, a foreign handler, or a semantics-changing key | `closure/decision/hooks/<entry-id>` | `not-selected` | `not-applicable` | `not-selected` | `decision-required` |
+| confirmed hook `keep` | `closure/decision/hooks/<entry-id>` | `selected` | `not-applicable` | `deferred` | `-` |
+| hook target declares `surface: none` and no decision is pending | `closure/decision/hooks/<entry-id>` | `selected` | `not-applicable` | `unchanged` | `-` |
 | two-sided `both-changed` conflict | `closure/decision/<unit>` | `selected` | `required` | `deferred` | `decision-required` |
 | exact semantic-review source candidate awaits confirmation | physical closure selected by the stable-id rules | `selected` | `required` | `planned` | `intent-required; semantic-review-required` |
 | choice confirmed but required source intent or motivation is incomplete | physical closure selected by the stable-id rules | `selected` | `required` | `planned` | `intent-required` |
@@ -512,6 +750,30 @@ Remove satisfied decision, semantic-review, and intent annotations from those
 rows. The Adoption decisions table retains the confirmed segment evidence;
 the obsolete pending unit and decision closure do not remain beside the
 physical entry/rule closure.
+
+### Hook decision closures
+
+An entry's zero-write hook rows share one `closure/decision/hooks/<entry-id>`
+so a two-host decision is never split across two closures. The hook rows in
+the table above are matched before the generic rows: a hook `both-changed`
+conflict uses `closure/decision/hooks/<entry-id>`, never
+`closure/decision/<unit>`.
+
+A hook decision closure is zero-write, so header authorization stays derived
+from selected mutating closures only. A plan whose only hook decision closure
+is `selected` / `required` / `deferred` still serializes
+`- authorization: not-applicable` and emits no `authorization-incomplete`
+line, exactly as an entry/rule `both-changed` conflict does. Both
+`Capability profiles` and `Write capabilities` are `- (none)` for such a plan.
+
+An opt-in decision is resolved by writing, not by discussion. Confirming it
+produces a `hooks/<entry-id>/source` row in `closure/hooks/source` with
+action `update`, direction `user-decision`, tier `-`, and `intent-required`
+until the dated `enabled-by` record exists, plus the ordinary carrier rows
+that depend on that closure. Until those bytes exist, `opt-in-required`
+remains attached to every hook row of the entry. Evidence and notes must show
+the exact command line being enabled and the pinned "not a sandbox" sentence
+before confirmation.
 
 ## Live operation journal binding
 
@@ -581,7 +843,10 @@ lowercase 40- or 64-hex commit object id.
 
 Rows are per legacy managed payload unit. The covenant pair remains in
 `closure/migration` and its history is transition evidence, but
-`onboarding/covenant` is excluded from both tables. The candidate-table unit
+`onboarding/covenant` is excluded from both tables. A `hooks/*` unit never
+appears in either table: no archived-tuple commit can prove a hook baseline,
+so a hooks unit claiming one is out-of-contract evidence and is
+`blocked` / `resolve-blocker`. The candidate-table unit
 set must equal the Migration decisions unit set after that exclusion.
 When a unit has exactly one candidate, `legacy baseline` is that same full oid
 and `current relation` is not `ambiguous`. When it has two or more
@@ -591,8 +856,9 @@ No timestamp, first-parent choice, abbreviated oid, or arbitrary representative
 may collapse the set. `current relation` is otherwise `converged`,
 `repair-required`, `missing`, or `unsafe`.
 
-A safe unit already satisfying its v4 relation uses `carry-forward` and
-`derived`; it cannot silently disappear from the migration. Every other row
+A safe unit already satisfying its current-contract relation uses
+`carry-forward` and `derived`; it cannot silently disappear from the
+migration. Every other row
 starts with disposition `block` and decision `pending`. The user may confirm
 `repair-and-carry` or `release`; release must have durable, unambiguous Git
 transition evidence and any destructive byte change receives its own explicit
@@ -619,8 +885,9 @@ while confirmed `release` members establish its explicit end. A pending/block ro
 `migration-transition-uncommitted` merely because an old-pair pre-write plan
 has not yet prepared the transition bytes. After those bytes are prepared,
 the user must record one reachable Git commit whose tree carries the exact
-v2/v4 covenant and the complete closed set. Bridge does not commit; until that
-commit is reachable, emit `migration-transition-uncommitted`, keep migration
+current covenant pair and the complete closed set. Bridge does not commit;
+until that commit is reachable, emit `migration-transition-uncommitted`,
+keep migration
 unresolved, and permit no ordinary Bridge write or current-ownership claim.
 This is an external finalization wait, not a reason to undo or re-run the
 already-applied byte preparation. When no migration is in progress, emit
@@ -662,9 +929,90 @@ exact byte-range preview plus the proposed source and deterministic rerender.
 When segmentation is not needed, emit `- (none)`. Segment ids are
 operation-local review handles, not ownership or baseline metadata.
 
+## Hook tiers and reasons
+
+Every document carries a `## Hook tiers` section immediately after
+`## Warnings`. It is `- (none)` when the plan has no hook unit row. Otherwise
+it is exactly this table:
+
+```markdown
+| unit | class | surface | tier | reason |
+|---|---|---|---|---|
+```
+
+`unit` is a plan hook unit id. `class` is the entry's declared
+`reminder`, `observation`, `gate`, or `side-effect`. `surface` is the entry's
+declared `targets.<host>.surface`, which is `settings-json`, `intent-doc`, or
+`none` on a Claude row and `codex-hooks-json`, `agents-md`, or `none` on a
+Codex row. `tier` is the entry's declared `targets.<host>.tier` and must equal
+that unit's Units-table `tier` cell. `reason` is one token from the closed
+registry below. A `hooks/<entry-id>/source` row uses the entry's `class` with
+surface `-`, tier `-`, and reason `-`, because the source document is not
+projected anywhere.
+
+Rows sort byte-wise by unit. The row set must equal the plan's hook unit set
+exactly: no missing row, no extra row, no duplicate unit.
+
+| Reason | Meaning |
+|---|---|
+| `shared-event-command` | The event is in the dated shared registry and one command handler serves both hosts |
+| `claude-only-event` | The declared event is native on Claude and absent from the Codex event set |
+| `codex-only-event` | The declared event is native on Codex and absent from the Claude event set |
+| `degraded-standing-instruction` | The Codex counterpart is one managed root `AGENTS.md` block instead of a handler |
+| `intent-doc-standing-instruction` | The Claude counterpart is the unconditionally loaded `.claude/rules/hooks.md` prose itself, with zero writes |
+| `declared-none` | The entry declares `surface: none` for this host and states no other portability obstacle |
+| `decision-not-portable` | The event's decision shape differs between the hosts, so one command cannot serve both |
+| `handler-type-not-portable` | The intended handler type is not `command` and is never projected |
+| `async-not-portable` | The intent needs asynchronous execution, whose output and timeout semantics differ on both hosts |
+| `matcher-domain` | The event's matcher value domain differs between the hosts |
+| `codex-matcher-ignored` | Codex ignores matchers for the declared event |
+| `platform-command-branch` | The command line needs a per-platform branch through `targets.codex.commandWindows` or `targets.claude.shell` |
+| `timeout-cap-differs` | The hosts apply different timeout defaults or caps to the declared event |
+| `output-not-delivered` | The host runs the handler but does not deliver its stdout to the model on the declared event |
+| `opt-in-pending` | The entry is `gate` or `side-effect` with `enabled: true` and no covering `enabled-by` record |
+
+This section exists because expectation comparison ignores Evidence and
+notes. A tier justification recorded only in prose is not mechanically
+comparable, and every plan must explain each hook's tier and reason on both
+hosts.
+
+## Hook handler adoption decisions
+
+Every document carries a `## Hook adoption decisions` section immediately
+after `## Adoption decisions`. It is `- (none)` when no hooks-carrier handler
+awaits an ownership decision. Otherwise it is exactly this table:
+
+```markdown
+| handler | location | disposition | destination | decision |
+|---|---|---|---|---|
+```
+
+This is the JSON analogue of the line-span Codex-start table. `handler` is
+`handler/<n>` with a one-based decimal `n` allocated in carrier file order
+with no gaps. `location` is `<file>#<Event>[<group-index>][<handler-index>]`,
+where `<file>` is the repository-relative carrier path, `<Event>` is the
+exact-case event name, and both indices are canonical non-negative decimals
+in carrier array order. `disposition` is `adopt`, `keep`, or `discard`.
+`destination` is `hooks/<entry-id>` for `adopt` and `-` otherwise. `decision`
+is `pending` or `confirmed`. Rows serialize in that same carrier file order.
+When both carriers contribute handlers, order by carrier path byte-wise
+first, so `.claude/settings.json` precedes `.codex/hooks.json`, and then by
+file order within each carrier; number `handler/<n>` over that combined
+order.
+
+Every handler that a hook decision closure reports as unresolved occupancy
+has exactly one row. A pending row uses the pending hook occupancy shape
+above: `closure/decision/hooks/<entry-id>`, `not-selected` /
+`not-applicable` / `not-selected`, with `decision-required`. `discard` is
+destructive and needs its own explicit confirmation. A confirmed `adopt`
+writes a new entry into `.claude/rules/hooks.md` inside
+`closure/hooks/source` with user-supplied prose bullets; Bridge never invents
+`Purpose` or `Failure policy`. Handler ids are operation-local review
+handles, never ownership or baseline metadata.
+
 ## Formal validation
 
-Every document must pass a formal `sync-plan/v2` validator before it is shown
+Every document must pass a formal `sync-plan/v3` validator before it is shown
 for confirmation, used to seed a journal, emitted as a result, or passed to a
 fixture comparison. The validator parses the exact independently serialized
 bytes; a model review, Markdown renderer, expectation parser, successful
@@ -683,6 +1031,7 @@ adoption-consistency
 decision-transition
 document-grammar
 fixture-attestation
+hooks-carrier-composition
 migration-candidates
 phase-lifecycle
 unit-closure
@@ -735,11 +1084,13 @@ it validates:
    canonical cell padding, row ordering, object-id grammar, and phase/header
    derivation;
 2. every state/action/direction/outcome/tier/annotation token, the phase versus
-   supplied operation-lifecycle context, post-only carrier annotation timing,
-   exact unit tiers derived from authenticated public input/render source
-   documents, and the explicit temporal context that distinguishes an
-   operation-scoped empty-bootstrap result from an independent
-   untracked-carrier scan;
+   supplied operation-lifecycle context, post-only carrier annotation timing
+   for `live-activation-unknown`, `restart-may-be-required`, and
+   `awaiting-host-trust`, exact unit tiers derived from authenticated public
+   input/render source documents including each hook row's declared
+   `targets.<host>.tier`, and the explicit temporal context that
+   distinguishes an operation-scoped empty-bootstrap result from an
+   independent untracked-carrier scan;
 3. unit-to-closure equality, stable closure ids, member/dependency sorting,
    selection, authorization, outcome, dependency satisfaction, and header
    authorization;
@@ -768,16 +1119,35 @@ it validates:
    not-selected/not-applicable/not-selected shape with only
    `decision-required`, `both-changed` selected/required/deferred,
    semantic-review source candidates selected/required/planned with
-   `intent-required`, and confirmed entry/rule promotion with satisfied
-   annotations removed;
+   `intent-required`, confirmed entry/rule promotion with satisfied
+   annotations removed, the five hook decision shapes bound to
+   `closure/decision/hooks/<entry-id>`, the narrowed scope of the
+   `write capability`, `hook carrier`, and `hook opt-in` gates, and the
+   `class: gate` all-or-nothing rule;
 8. per-payload-unit migration decisions and candidates, candidate-set
    equality, canonical selected blocked ambiguity, post-migration
    carried/released baseline and annotation state, and exclusion of
-   `onboarding/covenant` from the evidence tables; and
+   `onboarding/covenant` from the evidence tables;
 9. Adoption decisions order, dispositions, destinations, and consistency with
    the Units and Closures tables, including rejection of
    `onboarding/agents-md` without explicit pending segmentation; plus the
-   destination/source baseline-state pair for every rename closure.
+   destination/source baseline-state pair for every rename closure;
+10. the `## Hook tiers` section: `- (none)` or the exact header, byte-wise
+    unit order, exactly one row per plan hook unit with no extra or duplicate
+    row, closed `class`, `surface`, `tier`, and `reason` tokens, per-host
+    surface legality, and equality between each row's `tier` and its Units
+    row `tier`;
+11. the `## Hook adoption decisions` section: `- (none)` or the exact header,
+    carrier file order, gapless one-based `handler/<n>` numbering, the
+    `<file>#<Event>[<i>][<j>]` location grammar, closed dispositions and
+    destinations, and consistency with the hook decision closures in the
+    Units and Closures tables; and
+12. `hooks-carrier-composition`: for every render operation on a hooks
+    carrier, recompute the `json-owned-span/v1` composition from the exact
+    preimage plus the owned desired models and require byte equality with
+    that operation's post value. A postimage that differs anywhere outside
+    the located owned spans and insertion points is rejected, and so is any
+    postimage produced by reserializing the parsed document.
 
 Validation receives the exact scan/operation context needed for claims that
 cannot be reconstructed from Markdown alone. The temporal distinction is
@@ -800,8 +1170,8 @@ accepted and rejected fragments are in
 ## Deterministic expectation comparison
 
 A fixture expectation replaces `- spec:` with
-`- expectation: sync-plan/v2` and may omit Evidence and notes. Compare after
-normalization N from `source-tree/v4`:
+`- expectation: sync-plan/v3` and may omit Evidence and notes. Compare after
+normalization N from `source-tree/v5`:
 
 1. expectation/spec, contracts, phase, onboarding, and authorization match;
 2. the Units header is byte-identical and sorted row multisets are identical;
@@ -814,14 +1184,18 @@ normalization N from `source-tree/v4`:
 5. Write capabilities are both `- (none)` or have byte-identical headers and
    byte-identical complete row sequences in numeric step order;
 6. sorted Warning line multisets are identical;
-7. Migration decisions are both `- (none)` or have byte-identical headers and
+7. Hook tiers are both `- (none)` or have byte-identical headers and
    byte-identical complete row sequences in byte-wise unit order;
-8. Migration candidates are both `- (none)` or have byte-identical headers
+8. Migration decisions are both `- (none)` or have byte-identical headers and
+   byte-identical complete row sequences in byte-wise unit order;
+9. Migration candidates are both `- (none)` or have byte-identical headers
    and byte-identical complete row sequences in byte-wise
    `(unit, legacy candidate)` order;
-9. Adoption decisions are both `- (none)` or have byte-identical headers and
+10. Adoption decisions are both `- (none)` or have byte-identical headers and
    byte-identical complete row sequences in normative segment order;
-10. project, invoked scan-root spelling, date, and Evidence and notes are
+11. Hook adoption decisions are both `- (none)` or have byte-identical
+   headers and byte-identical complete row sequences in carrier file order;
+12. project, invoked scan-root spelling, date, and Evidence and notes are
    ignored.
 
 `codex-activation-unresolved`, `codex-root-unresolved`,
@@ -829,3 +1203,9 @@ normalization N from `source-tree/v4`:
 `mode-limited` may depend on effective host or filesystem evidence. A
 deterministic fixture must pin or deliberately exclude those inputs; plan
 comparison does not silently remove the warnings.
+
+`codex-project-untrusted` depends on live Codex activation inputs and is
+pinned in fixture mode by the activation profile named in `report/v5`.
+`hook-carrier-absent`, `hooks-carrier-unusable`, `hooks-globally-disabled`,
+`local-hooks-present`, and `codex-inline-hooks-conflict` are derived from
+repository bytes alone and are never host-dependent.

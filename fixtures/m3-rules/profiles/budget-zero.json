@@ -1,9 +1,11 @@
 {
-  "version": "activation-fixture/v1",
+  "version": "activation-fixture/v2",
   "root_markers": [
     ".git"
   ],
   "fallback_filenames": [],
   "project_doc_max_bytes": 0,
-  "budget_source": "resolved"
+  "budget_source": "resolved",
+  "codex_project_trust": "unknown",
+  "codex_hooks_feature": "unknown"
 }

@@ -72,10 +72,23 @@ observation；本仓库的 live smoke test 是 empirical observation。后两者
 - **`CLAUDE.md` 是上下文不是强制**：官方将其定位为 context；硬约束需走 hooks。
   这与"hook 与常驻指令同为提示词注入、差别在投递确定性与事件邻近性"的分层判断
   一致。
-- **Claude hooks 面**（2026-07-08）：文档化事件 29 个，处理器类型 5 种
-  （`command`、`http`、`mcp_tool`、`prompt`、`agent`）；`timeout` 单位为秒；
-  settings 中的 hooks 配置改动由文件监视器捕获，无需重启会话。未知事件名应按
-  "晚于采集日期的新增"处理，不视为非法。
+- **Claude hooks 面**（2026-07-08，事件数与生效方式于 2026-09-07 复核）：文档化
+  事件 33 个，处理器类型 5 种（`command`、`http`、`mcp_tool`、`prompt`、
+  `agent`）；`timeout` 单位为秒。settings 中的 hooks 改动官方现在只承诺
+  “通常会被捕获”，并记录了漏捕后需要重启的失败模式，因此不能再对任一 host 承诺
+  “改完即刻生效、无需重启”。未知事件名应按“晚于采集日期的新增”处理，不视为非法。
+- **settings 里的 hooks 在 `-p` / SDK 会话中不受 workspace trust 门槛约束**
+  （2026-09-07 复核 + 本机实测）：官方 hooks 文档 `### Workspace trust` 说交互式
+  会话会把所有 settings 文件（含 `~/.claude/settings.json`）里的 hooks 扣到信任
+  对话框被接受为止；只有 `-p` / SDK 会话不显示对话框、直接把目录当作已信任，本机
+  2026-09-07 的实测覆盖的正是 `-p` 这条路径。作为旁证，官方「信任文件夹之前会运行
+  什么」表把 settings 文件中的 hooks 列为已使用，被扣住的只有 `permissions.allow`
+  与 `additionalDirectories`；该表描述的是它所覆盖的未信任场景，不能反推交互式
+  会话也不扣。真正必须过交互式信任对话框的是 subagent frontmatter hooks；skill
+  frontmatter hooks 明确按 settings 文件的同一规则处理。官方给出的
+  自保手段是先审阅 `.claude/`、用 `--bare` 或
+  `--settings '{"disableAllHooks": true}'` 启动。这条事实同时支撑“不在
+  `fixtures/` 内启动工作会话”与夹具 hook 命令的 no-op 围栏。
 
 ## Codex 端对照（与标记成本直接相关）
 
@@ -141,7 +154,7 @@ Codex 侧机制细节见 [codex-capability-surface.md](codex-capability-surface.
   当前生效的意图记录形态（frontmatter 还是注释回退）是否与仓库实际一致。
 - Claude `paths` glob 语法、brace-expansion 预算与 no-op pattern 是否仍与
   2026-07-24 官方说明一致。
-- Claude hooks 事件清单是否继续增长（29 个为 2026-07-08 快照）。
+- Claude hooks 事件清单是否继续增长（33 个为 2026-09-07 快照）。
 - `claudeMdExcludes` 的覆盖范围是否变化——本仓库的夹具围栏依赖它。
 - Codex 侧机制按 [codex-capability-surface.md](codex-capability-surface.md) 的
   复核清单跟进，特别是公开文档与固定提交源码的 budget 措辞、environment

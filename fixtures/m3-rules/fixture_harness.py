@@ -94,7 +94,9 @@ JOURNAL_VALIDATOR_TESTS_PATH = HERE / "journal_validator_tests.py"
 SHARED_DIR = REPO_ROOT
 EXPECTATIONS_DIR = HERE / "expectations"
 ACTIVATION_PROFILES_DIR = HERE / "profiles"
-ACTIVATION_PROFILE_SPEC = "activation-fixture/v1"
+ACTIVATION_PROFILE_SPEC = "activation-fixture/v2"
+CODEX_PROJECT_TRUST_VALUES = {"trusted", "untrusted", "unknown"}
+CODEX_HOOKS_FEATURE_VALUES = {"enabled", "disabled", "unknown"}
 ACTIVATION_PROFILE_TARGET = "bridge-fixture-activation.json"
 WRITE_CAPABILITIES_DIR = HERE / "capabilities"
 WRITE_CAPABILITY_SPEC = "write-capability-fixture/v1"
@@ -167,6 +169,12 @@ ADOPTION_HEADER = (
     "| segment | lines | disposition | destination | decision |"
 )
 ADOPTION_SEPARATOR = "|---|---|---|---|---|"
+HOOK_TIER_HEADER = "| unit | class | surface | tier | reason |"
+HOOK_TIER_SEPARATOR = "|---|---|---|---|---|"
+HOOK_ADOPTION_HEADER = (
+    "| handler | location | disposition | destination | decision |"
+)
+HOOK_ADOPTION_SEPARATOR = "|---|---|---|---|---|"
 
 PLAN_STATES = {
     "unchanged",
@@ -176,6 +184,7 @@ PLAN_STATES = {
     "no-baseline",
     "intent-missing",
     "contract-migration",
+    "declared-unsynced",
     "offboarding",
     "blocked",
 }
@@ -194,6 +203,7 @@ PLAN_ACTIONS = {
     "keep",
     "migrate",
     "offboard",
+    "opt-in-or-skip",
     "resolve-blocker",
     "unchanged",
 }
@@ -216,15 +226,34 @@ PLAN_OUTCOMES = {
     "not-attempted",
     "rolled-back",
 }
-PLAN_TIERS = {"native", "structural", "semantic", "-"}
+PLAN_TIERS = {
+    "native",
+    "structural",
+    "semantic",
+    "declared-unsynced",
+    "-",
+}
+HOOK_ROW_TIERS = {"native", "semantic", "declared-unsynced"}
 PLAN_ANNOTATIONS = {
+    "awaiting-host-trust",
     "behavior-degraded",
     "decision-required",
+    "event-unverified",
     "intent-required",
     "live-activation-unknown",
     "migration-transition-required",
+    "opt-in-required",
     "restart-may-be-required",
     "semantic-review-required",
+}
+# Neutral hook annotations that attach to every affected hook row and so may
+# accompany the pinned annotation set of a hook conflict or hook decision row.
+HOOK_NEUTRAL_ANNOTATIONS = {
+    "awaiting-host-trust",
+    "event-unverified",
+}
+HOOK_CONFLICT_EXTRA_ANNOTATIONS = HOOK_NEUTRAL_ANNOTATIONS | {
+    "opt-in-required",
 }
 PLAN_WARNINGS = {
     "active-shared-import",
@@ -288,6 +317,79 @@ BLOCKING_WARNINGS = {
     "skill-loadability-blocked",
     "surface-shadowed",
     "unsafe-tree-entry",
+}
+HOOK_WARNING_CLASSES = {
+    "claude-hooks-shared-execution": "acknowledged",
+    "codex-handler-unknown-key": "informational",
+    "codex-hook-retrust-required": "acknowledged",
+    "codex-inline-hooks-conflict": "blocker",
+    "codex-project-untrusted": "informational",
+    "codex-trust-blind-change": "informational",
+    "codex-trust-reindex": "acknowledged",
+    "hook-acknowledgement-missing": "blocker",
+    "hook-carrier-absent": "informational",
+    "hook-format-preserved": "informational",
+    "hook-opt-in-required": "blocker",
+    "hook-output-not-delivered": "informational",
+    "hook-projection-asymmetric": "acknowledged",
+    "hooks-carrier-unusable": "blocker",
+    "hooks-globally-disabled": "informational",
+    "intent-doc-anomaly": "blocker",
+    "local-hooks-present": "informational",
+    "matcher-grammar-divergent": "acknowledged",
+    "platform-branch-divergence": "acknowledged",
+    "undeclared-hooks-key": "informational",
+}
+PLAN_WARNINGS.update(HOOK_WARNING_CLASSES)
+BLOCKING_WARNINGS.update(
+    token
+    for token, warning_class in HOOK_WARNING_CLASSES.items()
+    if warning_class == "blocker"
+)
+APPLY_BLOCKER_GATES = {
+    "hook carrier": frozenset(
+        {"codex-inline-hooks-conflict", "hooks-carrier-unusable"}
+    ),
+    "hook opt-in": frozenset(
+        {"hook-acknowledgement-missing", "hook-opt-in-required"}
+    ),
+    "hook source": frozenset({"intent-doc-anomaly"}),
+    "write capability": frozenset(
+        {"conditional-write-unavailable", "guarded-patch-unavailable"}
+    ),
+}
+CLOSURE_SCOPED_APPLY_BLOCKER_GATES = frozenset(
+    {"hook carrier", "hook opt-in", "write capability"}
+)
+CLOSURE_SCOPED_BLOCKING_WARNINGS = frozenset(
+    token
+    for gate in CLOSURE_SCOPED_APPLY_BLOCKER_GATES
+    for token in APPLY_BLOCKER_GATES[gate]
+)
+PROJECT_WIDE_BLOCKING_WARNINGS = (
+    BLOCKING_WARNINGS - CLOSURE_SCOPED_BLOCKING_WARNINGS
+)
+HOOK_CARRIER_CLOSURES = {
+    ".claude/rules/hooks.md": "closure/hooks/source",
+    ".claude/settings.json": "closure/hooks/claude",
+    ".codex/config.toml": "closure/hooks/codex",
+    ".codex/hooks.json": "closure/hooks/codex",
+}
+HOOK_BLOCKER_SCOPE_CLOSURES = {
+    "codex-inline-hooks-conflict": ("closure/hooks/codex",),
+    "hook-acknowledgement-missing": ("closure/hooks/claude",),
+}
+PLAN_VALIDATOR_FAILURES = {
+    "adoption-consistency",
+    "decision-transition",
+    "document-grammar",
+    "fixture-attestation",
+    "hooks-carrier-composition",
+    "migration-candidates",
+    "phase-lifecycle",
+    "unit-closure",
+    "warning-grammar",
+    "write-capability",
 }
 PLAN_SELECTIONS = {"selected", "not-selected"}
 PLAN_AUTHORIZATIONS = {"required", "confirmed", "not-applicable"}
@@ -368,6 +470,144 @@ GRAPH_WARNING_TOKENS = {
     "migration-closure-incomplete",
     "migration-transition-uncommitted",
 }
+HOOK_CLASSES = {"reminder", "observation", "gate", "side-effect"}
+HOOK_SURFACES = {
+    "claude": {"settings-json", "intent-doc", "none"},
+    "codex": {"codex-hooks-json", "agents-md", "none"},
+}
+HOOK_SURFACE_TIERS = {
+    ("claude", "settings-json"): "native",
+    ("claude", "intent-doc"): "semantic",
+    ("claude", "none"): "declared-unsynced",
+    ("codex", "codex-hooks-json"): "native",
+    ("codex", "agents-md"): "semantic",
+    ("codex", "none"): "declared-unsynced",
+}
+HOOK_TIER_REASONS = {
+    "shared-event-command",
+    "claude-only-event",
+    "codex-only-event",
+    "degraded-standing-instruction",
+    "intent-doc-standing-instruction",
+    "declared-none",
+    "decision-not-portable",
+    "handler-type-not-portable",
+    "async-not-portable",
+    "matcher-domain",
+    "codex-matcher-ignored",
+    "platform-command-branch",
+    "timeout-cap-differs",
+    "output-not-delivered",
+    "opt-in-pending",
+}
+HOOK_ADOPTION_DISPOSITIONS = {"adopt", "keep", "discard"}
+HOOK_ADOPTION_DECISIONS = {"pending", "confirmed"}
+# The five closed hook decision shapes of sync-plan/v3, in first-match order.
+# Each entry is (name, (selection, authorization, outcome), required
+# annotations). A matching row may add only neutral hook annotations.
+HOOK_DECISION_SHAPES = (
+    (
+        "opt-in-pending",
+        ("selected", "required", "deferred"),
+        frozenset({"decision-required", "opt-in-required"}),
+    ),
+    (
+        "two-sided-conflict",
+        ("selected", "required", "deferred"),
+        frozenset({"decision-required"}),
+    ),
+    (
+        "pending-occupancy",
+        ("not-selected", "not-applicable", "not-selected"),
+        frozenset({"decision-required"}),
+    ),
+    (
+        "confirmed-keep",
+        ("selected", "not-applicable", "deferred"),
+        frozenset(),
+    ),
+    (
+        "surface-none",
+        ("selected", "not-applicable", "unchanged"),
+        frozenset(),
+    ),
+)
+# Outcomes under which a selected row still writes nothing. A `class: gate`
+# entry projects both host carriers or neither, so a blocked or unavailable
+# carrier forces its sibling to a zero-write row.
+HOOK_ZERO_WRITE_OUTCOMES = {
+    "blocked",
+    "deferred",
+    "not-attempted",
+    "not-selected",
+    "unchanged",
+}
+HOOK_ENTRY_ID = r"[a-z0-9][a-z0-9-]*"
+HOOK_EVENT = r"[A-Z][A-Za-z0-9]*"
+HOOK_INDEX = r"(?:0|[1-9][0-9]*)"
+HOOK_UNIT_PATTERN = re.compile(
+    rf"hooks/{HOOK_ENTRY_ID}/(?:source|claude|codex)"
+)
+HOOK_DESTINATION_PATTERN = re.compile(rf"hooks/{HOOK_ENTRY_ID}")
+HOOK_DECISION_CLOSURE_PATTERN = re.compile(
+    rf"closure/decision/hooks/{HOOK_ENTRY_ID}"
+)
+HOOK_HANDLER_PATTERN = re.compile(r"handler/([1-9][0-9]*)")
+HOOK_LOCATION_PATTERN = re.compile(
+    rf"([^ #\[\]]+)#({HOOK_EVENT})\[({HOOK_INDEX})\]\[({HOOK_INDEX})\]"
+)
+HOOK_ENTRY_DETAIL_PATTERN = re.compile(rf"entry {HOOK_ENTRY_ID}")
+HOOK_HANDLER_DETAIL_PATTERN = re.compile(
+    rf"{HOOK_EVENT} group={HOOK_INDEX} handler={HOOK_INDEX}"
+)
+HOOK_UNKNOWN_KEY_DETAIL_PATTERN = re.compile(
+    rf"{HOOK_EVENT} group={HOOK_INDEX} handler={HOOK_INDEX} "
+    r"key=[A-Za-z_][A-Za-z0-9_-]*"
+)
+HOOK_REINDEX_DETAIL_PATTERN = re.compile(
+    rf"{HOOK_EVENT} from={HOOK_INDEX}"
+)
+HOOK_UNDECLARED_KEY_DETAIL_PATTERN = re.compile(
+    rf"{HOOK_EVENT} matcher=[^()\r\n]+"
+)
+HOOK_WARNING_PATHS = {
+    "claude-hooks-shared-execution": ".claude/settings.json",
+    "codex-handler-unknown-key": ".codex/hooks.json",
+    "codex-hook-retrust-required": ".codex/hooks.json",
+    "codex-inline-hooks-conflict": ".codex/config.toml",
+    "codex-trust-blind-change": ".codex/hooks.json",
+    "codex-trust-reindex": ".codex/hooks.json",
+    "hook-acknowledgement-missing": ".claude/rules/hooks.md",
+    "hook-opt-in-required": ".claude/rules/hooks.md",
+    "hook-output-not-delivered": ".claude/rules/hooks.md",
+    "intent-doc-anomaly": ".claude/rules/hooks.md",
+    "local-hooks-present": ".claude/settings.local.json",
+    "matcher-grammar-divergent": ".claude/rules/hooks.md",
+    "platform-branch-divergence": ".claude/rules/hooks.md",
+}
+HOOK_ANY_CARRIER_PATHS = {
+    ".claude/settings.json",
+    ".claude/settings.local.json",
+    ".codex/hooks.json",
+    "AGENTS.md",
+}
+HOOK_JSON_CARRIER_PATHS = {
+    ".claude/settings.json",
+    ".codex/hooks.json",
+}
+HOOK_SETTINGS_CARRIER_PATHS = {
+    ".claude/settings.json",
+    ".claude/settings.local.json",
+}
+HOOK_CARRIER_WARNING_PATHS = {
+    "hook-carrier-absent": HOOK_ANY_CARRIER_PATHS,
+    "hook-format-preserved": HOOK_JSON_CARRIER_PATHS,
+    "hook-projection-asymmetric": HOOK_ANY_CARRIER_PATHS,
+    "hooks-carrier-unusable": HOOK_JSON_CARRIER_PATHS,
+    "hooks-globally-disabled": HOOK_SETTINGS_CARRIER_PATHS,
+    "undeclared-hooks-key": HOOK_JSON_CARRIER_PATHS,
+}
+HOOK_CARRIER_WARNING_TOKENS = set(HOOK_CARRIER_WARNING_PATHS)
 WARNING_REASON_SETS = {
     "codex-activation-unresolved": {
         "config-unresolved",
@@ -405,19 +645,38 @@ WARNING_REASON_SETS = {
         "worktree-mode-unobservable",
         "target-mode-unpreservable",
     },
+    "hooks-carrier-unusable": {
+        "parse-error",
+        "duplicate-key",
+        "unmodelled-shape",
+    },
 }
 WARNING_DETAIL_TOKENS = {
     "active-shared-import",
     "agents-md-budget-exceeded",
     "agents-md-near-budget",
     "codex-activation-unresolved",
+    "codex-handler-unknown-key",
+    "codex-hook-retrust-required",
+    "codex-inline-hooks-conflict",
     "codex-root-unresolved",
+    "codex-trust-blind-change",
+    "codex-trust-reindex",
     "covenant-anchor-anomaly",
+    "hook-opt-in-required",
+    "hook-output-not-delivered",
+    "hook-projection-asymmetric",
+    "hooks-carrier-unusable",
+    "intent-doc-anomaly",
     "invalid-rule-paths",
     "legacy-managed-mode",
     "marker-anomaly",
+    "matcher-grammar-divergent",
     "mode-limited",
+    "platform-branch-divergence",
+    "undeclared-hooks-key",
 }
+ROOT_PATH_WARNING_TOKENS = GRAPH_WARNING_TOKENS | {"codex-project-untrusted"}
 RULE_UNIT_PATTERN = re.compile(
     r"rules/[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*"
 )
@@ -464,6 +723,8 @@ def _load_activation_profile(value: Any) -> Dict[str, Any]:
         "fallback_filenames",
         "project_doc_max_bytes",
         "budget_source",
+        "codex_project_trust",
+        "codex_hooks_feature",
     }
     if set(profile) != required:
         raise FixtureError(f"{path}: activation profile fields are not closed")
@@ -492,6 +753,10 @@ def _load_activation_profile(value: Any) -> Dict[str, Any]:
         "documented-default",
     }:
         raise FixtureError(f"{path}: invalid budget_source")
+    if profile["codex_project_trust"] not in CODEX_PROJECT_TRUST_VALUES:
+        raise FixtureError(f"{path}: invalid codex_project_trust")
+    if profile["codex_hooks_feature"] not in CODEX_HOOKS_FEATURE_VALUES:
+        raise FixtureError(f"{path}: invalid codex_hooks_feature")
     installed_profile = {
         "version": profile["version"],
         "root_markers": copy.deepcopy(profile["root_markers"]),
@@ -504,6 +769,8 @@ def _load_activation_profile(value: Any) -> Dict[str, Any]:
             else str(profile["project_doc_max_bytes"])
         ),
         "budget_source": profile["budget_source"],
+        "codex_project_trust": profile["codex_project_trust"],
+        "codex_hooks_feature": profile["codex_hooks_feature"],
     }
     installed_bytes = _canonical_json_bytes(installed_profile)
     return {
@@ -2263,8 +2530,14 @@ def _validate_blind_installed_replay_input(
             "fallback_filenames",
             "project_doc_max_bytes",
             "budget_source",
+            "codex_project_trust",
+            "codex_hooks_feature",
         }
         or profile_facts["version"] != ACTIVATION_PROFILE_SPEC
+        or profile_facts["codex_project_trust"]
+        not in CODEX_PROJECT_TRUST_VALUES
+        or profile_facts["codex_hooks_feature"]
+        not in CODEX_HOOKS_FEATURE_VALUES
         or any(
             value is not None
             and (
@@ -2724,16 +2997,26 @@ def _unit_valid(unit: str) -> bool:
         unit in {"onboarding/covenant", "onboarding/agents-md", "entry"}
         or RULE_UNIT_PATTERN.fullmatch(unit) is not None
         or SKILL_UNIT_PATTERN.fullmatch(unit) is not None
+        or HOOK_UNIT_PATTERN.fullmatch(unit) is not None
     )
 
 
+def _hook_unit_host(unit: str) -> Optional[str]:
+    if HOOK_UNIT_PATTERN.fullmatch(unit) is None:
+        return None
+    return unit.rsplit("/", 1)[1]
+
+
 def _validate_unit_tier(path: Path, unit: str, tier: str) -> None:
+    host = _hook_unit_host(unit)
     if unit.startswith("onboarding/"):
         allowed = {"-"}
     elif unit == "entry":
         allowed = {"structural"}
     elif unit.startswith("rules/"):
         allowed = {"structural", "semantic"}
+    elif host is not None:
+        allowed = {"-"} if host == "source" else set(HOOK_ROW_TIERS)
     else:
         allowed = {"native", "-"}
     if tier not in allowed:
@@ -2745,6 +3028,7 @@ def _validate_unit_tier(path: Path, unit: str, tier: str) -> None:
 def _validate_row_semantics(
     path: Path,
     *,
+    unit: str,
     phase: str,
     selection: str,
     state: str,
@@ -2756,13 +3040,21 @@ def _validate_row_semantics(
 ) -> None:
     annotation_set = set(annotations)
     if state == "both-changed":
+        if _hook_unit_host(unit) is None:
+            annotations_valid = annotation_set == {"decision-required"}
+        else:
+            annotations_valid = (
+                "decision-required" in annotation_set
+                and annotation_set - {"decision-required"}
+                <= HOOK_CONFLICT_EXTRA_ANNOTATIONS
+            )
         if (
             selection != "selected"
             or action != "conflict"
             or direction != "user-decision"
             or authorization != "required"
             or outcome != "deferred"
-            or annotation_set != {"decision-required"}
+            or not annotations_valid
         ):
             raise FixtureError(
                 f"{path}: both-changed requires selected/required/deferred "
@@ -2798,6 +3090,7 @@ def _validate_row_semantics(
         "conflict": "deferred",
         "annex-or-keep": "deferred",
         "keep": "deferred",
+        "opt-in-or-skip": "deferred",
         "resolve-blocker": "blocked",
     }
     required = fixed_outcomes.get(action)
@@ -2850,6 +3143,7 @@ def _validate_row_semantics(
     if action in {
         "conflict",
         "annex-or-keep",
+        "opt-in-or-skip",
         "repair",
         "restore",
         "migrate",
@@ -2858,6 +3152,14 @@ def _validate_row_semantics(
     } and direction != "user-decision":
         raise FixtureError(
             f"{path}: {action} requires user-decision direction"
+        )
+    if action == "opt-in-or-skip" and "opt-in-required" not in annotation_set:
+        raise FixtureError(
+            f"{path}: opt-in-or-skip requires the opt-in-required annotation"
+        )
+    if state == "declared-unsynced" and action != "unchanged":
+        raise FixtureError(
+            f"{path}: declared-unsynced requires the unchanged action"
         )
 
 
@@ -2977,6 +3279,245 @@ def _parse_adoption(path: Path, lines: Sequence[str]) -> List[Tuple[str, ...]]:
                 f"{path}: {disposition} destination must be '-'"
             )
     return rows
+
+
+def _parse_hook_tiers(
+    path: Path, lines: Sequence[str]
+) -> List[Tuple[str, ...]]:
+    content = [
+        line for line in markdown_section(lines, "Hook tiers") if line
+    ]
+    if content == ["- (none)"]:
+        return []
+    rows = parse_table(
+        lines,
+        heading="Hook tiers",
+        expected_header=HOOK_TIER_HEADER,
+        expected_separator=HOOK_TIER_SEPARATOR,
+    )
+    if not rows:
+        raise FixtureError(f"{path}: Hook tiers table has no rows")
+    units: List[str] = []
+    for row in rows:
+        unit, hook_class, surface, tier, reason = row
+        host = _hook_unit_host(unit)
+        if host is None:
+            raise FixtureError(
+                f"{path}: Hook tiers row must name a hook unit, got {unit!r}"
+            )
+        if hook_class not in HOOK_CLASSES:
+            raise FixtureError(f"{path}: invalid hook class {hook_class!r}")
+        if host == "source":
+            if (surface, tier, reason) != ("-", "-", "-"):
+                raise FixtureError(
+                    f"{path}: hook source row uses '-' for surface, tier "
+                    "and reason"
+                )
+        else:
+            if surface not in HOOK_SURFACES[host]:
+                raise FixtureError(
+                    f"{path}: surface {surface!r} is invalid for host {host}"
+                )
+            if tier not in HOOK_ROW_TIERS:
+                raise FixtureError(f"{path}: invalid hook tier {tier!r}")
+            if HOOK_SURFACE_TIERS[(host, surface)] != tier:
+                raise FixtureError(
+                    f"{path}: surface {surface!r} requires tier "
+                    f"{HOOK_SURFACE_TIERS[(host, surface)]!r}"
+                )
+            if reason not in HOOK_TIER_REASONS:
+                raise FixtureError(
+                    f"{path}: invalid hook tier reason {reason!r}"
+                )
+        units.append(unit)
+    if units != sorted(units) or len(units) != len(set(units)):
+        raise FixtureError(
+            f"{path}: Hook tiers rows must be byte-wise sorted and unique"
+        )
+    return rows
+
+
+def _parse_hook_adoption(
+    path: Path, lines: Sequence[str]
+) -> List[Tuple[str, ...]]:
+    content = [
+        line
+        for line in markdown_section(lines, "Hook adoption decisions")
+        if line
+    ]
+    if content == ["- (none)"]:
+        return []
+    rows = parse_table(
+        lines,
+        heading="Hook adoption decisions",
+        expected_header=HOOK_ADOPTION_HEADER,
+        expected_separator=HOOK_ADOPTION_SEPARATOR,
+    )
+    if not rows:
+        raise FixtureError(
+            f"{path}: Hook adoption decisions table has no rows"
+        )
+    locations: List[str] = []
+    carriers: List[str] = []
+    for index, row in enumerate(rows, start=1):
+        handler, location, disposition, destination, decision = row
+        match = HOOK_HANDLER_PATTERN.fullmatch(handler)
+        if match is None or int(match.group(1)) != index:
+            raise FixtureError(
+                f"{path}: hook handlers must be handler/1..N in file order"
+            )
+        location_match = HOOK_LOCATION_PATTERN.fullmatch(location)
+        if location_match is None:
+            raise FixtureError(
+                f"{path}: invalid hook handler location {location!r}"
+            )
+        carrier = location_match.group(1)
+        safe_relative(carrier, field=f"{path} hook handler carrier")
+        if carriers and carrier != carriers[-1]:
+            if carrier < carriers[-1] or carrier in set(carriers):
+                raise FixtureError(
+                    f"{path}: hook handler rows must be grouped by carrier "
+                    "in byte-wise carrier path order"
+                )
+        carriers.append(carrier)
+        if disposition not in HOOK_ADOPTION_DISPOSITIONS:
+            raise FixtureError(
+                f"{path}: invalid hook adoption disposition {disposition!r}"
+            )
+        if decision not in HOOK_ADOPTION_DECISIONS:
+            raise FixtureError(
+                f"{path}: invalid hook adoption decision {decision!r}"
+            )
+        if disposition == "adopt":
+            if HOOK_DESTINATION_PATTERN.fullmatch(destination) is None:
+                raise FixtureError(
+                    f"{path}: adopt destination must be hooks/<id>"
+                )
+        elif destination != "-":
+            raise FixtureError(
+                f"{path}: {disposition} destination must be '-'"
+            )
+        locations.append(location)
+    if len(locations) != len(set(locations)):
+        raise FixtureError(
+            f"{path}: hook handler locations must be unique"
+        )
+    return rows
+
+
+def _validate_carrier_annotation_timing(
+    path: Path,
+    *,
+    unit: str,
+    closure: str,
+    outcome: str,
+    phase: str,
+    annotations: set[str],
+    write_capabilities: Sequence[Tuple[str, ...]],
+) -> None:
+    """Bind post-write-only annotations to a carrier this row may have written.
+
+    `live-activation-unknown` and `restart-may-be-required` follow the
+    entry/rule/skill carrier. `awaiting-host-trust` follows the Codex hooks
+    carrier only, so a Claude or source hook row and every pre-write plan
+    never carry it.
+    """
+
+    carrier_written = False
+    hook_carrier_written = False
+    if phase == "post-write" and outcome in {"applied", "partial"}:
+        if unit.startswith("skills/"):
+            name = unit[len("skills/") :]
+            prefix = f".agents/skills/{name}/"
+            carrier_written = any(
+                operation[1] == closure
+                and operation[2].startswith(prefix)
+                for operation in write_capabilities
+            )
+        elif unit in {
+            "entry",
+            "onboarding/agents-md",
+            "onboarding/covenant",
+        } or unit.startswith("rules/"):
+            carrier_written = any(
+                operation[1] == closure and operation[2] == "AGENTS.md"
+                for operation in write_capabilities
+            )
+        elif _hook_unit_host(unit) == "codex":
+            hook_carrier_written = any(
+                operation[1] == closure
+                and operation[2] == ".codex/hooks.json"
+                for operation in write_capabilities
+            )
+    for annotation, expected in (
+        ("live-activation-unknown", carrier_written),
+        ("restart-may-be-required", carrier_written),
+        ("awaiting-host-trust", hook_carrier_written),
+    ):
+        if (annotation in annotations) != expected:
+            raise FixtureError(
+                f"{path}: {annotation} does not match post-write "
+                f"carrier-touch timing for {unit}"
+            )
+
+
+def _hook_decision_shape(
+    selection: str,
+    authorization: str,
+    outcome: str,
+    annotations: set[str],
+) -> Optional[str]:
+    """Name the closed hook decision shape a row serializes, or None."""
+
+    triple = (selection, authorization, outcome)
+    for name, shape_triple, required in HOOK_DECISION_SHAPES:
+        if shape_triple != triple or not required <= annotations:
+            continue
+        if annotations - required <= HOOK_NEUTRAL_ANNOTATIONS:
+            return name
+    return None
+
+
+def _validate_hook_decisions(
+    path: Path,
+    parsed_rows: Sequence[Tuple[str, ...]],
+    hook_tiers: Sequence[Tuple[str, ...]],
+) -> None:
+    """Enforce hook decision shapes and the gate all-or-nothing rule."""
+
+    hook_classes = {row[0]: row[1] for row in hook_tiers}
+    gate_projection: Dict[str, Dict[str, bool]] = {}
+    for row in parsed_rows:
+        unit = row[0]
+        host = _hook_unit_host(unit)
+        if host is None:
+            continue
+        entry_id = unit.split("/")[1]
+        closure = row[1]
+        annotations = set() if row[10] == "-" else set(row[10].split("; "))
+        if HOOK_DECISION_CLOSURE_PATTERN.fullmatch(closure) is not None:
+            if closure != f"closure/decision/hooks/{entry_id}":
+                raise FixtureError(
+                    f"{path}: {unit} must use its own hook decision closure"
+                )
+            shape = _hook_decision_shape(row[2], row[7], row[8], annotations)
+            if shape is None:
+                raise FixtureError(
+                    f"{path}: {unit} is not one of the closed hook decision "
+                    "shapes"
+                )
+        if host != "source" and hook_classes.get(unit) == "gate":
+            gate_projection.setdefault(entry_id, {})[host] = (
+                row[2] == "selected"
+                and row[8] not in HOOK_ZERO_WRITE_OUTCOMES
+            )
+    for entry_id in sorted(gate_projection):
+        projection = gate_projection[entry_id]
+        if len(projection) == 2 and len(set(projection.values())) != 1:
+            raise FixtureError(
+                f"{path}: class gate entry {entry_id} must project both "
+                "host carriers together or neither"
+            )
 
 
 def _parse_capability_profiles(
@@ -3257,6 +3798,7 @@ def _exercise_contract_adversarials() -> int:
     _expect_fixture_error(
         lambda: _validate_row_semantics(
             path,
+            unit="entry",
             phase="pre-write",
             selection="selected",
             state="blocked",
@@ -3297,6 +3839,884 @@ def _exercise_contract_adversarials() -> int:
         label="guarded region starts inside a UTF-8 code point",
     )
     checks += 1
+    return checks
+
+
+def _hook_section_lines(
+    heading: str,
+    header: str,
+    separator: str,
+    rows: Sequence[Tuple[str, ...]],
+) -> List[str]:
+    return [
+        f"## {heading}",
+        "",
+        header,
+        separator,
+        *["| " + " | ".join(row) + " |" for row in rows],
+    ]
+
+
+def _exercise_hook_section_contract() -> int:
+    """Named checks for the two sync-plan/v3 hook sections and registries."""
+
+    path = Path("<m3-hook-section-adversarial>")
+
+    def tiers(rows: Sequence[Tuple[str, ...]]) -> List[Tuple[str, ...]]:
+        return _parse_hook_tiers(
+            path,
+            _hook_section_lines(
+                "Hook tiers",
+                HOOK_TIER_HEADER,
+                HOOK_TIER_SEPARATOR,
+                rows,
+            ),
+        )
+
+    def hook_adoption(
+        rows: Sequence[Tuple[str, ...]]
+    ) -> List[Tuple[str, ...]]:
+        return _parse_hook_adoption(
+            path,
+            _hook_section_lines(
+                "Hook adoption decisions",
+                HOOK_ADOPTION_HEADER,
+                HOOK_ADOPTION_SEPARATOR,
+                rows,
+            ),
+        )
+
+    checks = 0
+    tier_rows = [
+        (
+            "hooks/repo-guard/claude",
+            "gate",
+            "settings-json",
+            "native",
+            "shared-event-command",
+        ),
+        (
+            "hooks/repo-guard/codex",
+            "gate",
+            "none",
+            "declared-unsynced",
+            "decision-not-portable",
+        ),
+        ("hooks/repo-guard/source", "gate", "-", "-", "-"),
+    ]
+    if tiers(tier_rows) != [tuple(row) for row in tier_rows]:
+        raise FixtureError("hook tier rows did not round-trip")
+    checks += 1
+    if _parse_hook_tiers(path, ["## Hook tiers", "", "- (none)"]) != []:
+        raise FixtureError("empty Hook tiers section did not parse as none")
+    checks += 1
+    adoption_rows = [
+        (
+            "handler/1",
+            ".claude/settings.json#PreToolUse[0][1]",
+            "adopt",
+            "hooks/repo-guard",
+            "confirmed",
+        ),
+        (
+            "handler/2",
+            ".codex/hooks.json#SessionStart[2][0]",
+            "keep",
+            "-",
+            "pending",
+        ),
+    ]
+    if hook_adoption(adoption_rows) != [tuple(row) for row in adoption_rows]:
+        raise FixtureError("hook adoption rows did not round-trip")
+    checks += 1
+    if (
+        _parse_hook_adoption(
+            path, ["## Hook adoption decisions", "", "- (none)"]
+        )
+        != []
+    ):
+        raise FixtureError(
+            "empty Hook adoption decisions section did not parse as none"
+        )
+    checks += 1
+    for label, rows in (
+        (
+            "hook tier reason outside the closed registry",
+            [
+                (
+                    "hooks/repo-guard/claude",
+                    "gate",
+                    "settings-json",
+                    "native",
+                    "structural-projection",
+                )
+            ],
+        ),
+        (
+            "hook tier disagreeing with its surface",
+            [
+                (
+                    "hooks/repo-guard/claude",
+                    "gate",
+                    "settings-json",
+                    "semantic",
+                    "shared-event-command",
+                )
+            ],
+        ),
+        (
+            "hook source row claiming a projected surface",
+            [
+                (
+                    "hooks/repo-guard/source",
+                    "gate",
+                    "settings-json",
+                    "native",
+                    "shared-event-command",
+                )
+            ],
+        ),
+        (
+            "hook tier row naming a report-shaped unit id",
+            [("hooks/repo-guard", "gate", "-", "-", "-")],
+        ),
+        (
+            "hook tier surface invalid for the host",
+            [
+                (
+                    "hooks/repo-guard/claude",
+                    "reminder",
+                    "agents-md",
+                    "semantic",
+                    "degraded-standing-instruction",
+                )
+            ],
+        ),
+        (
+            "hook tier rows out of byte-wise order",
+            [tier_rows[1], tier_rows[0]],
+        ),
+        (
+            "hook tier class outside the closed registry",
+            [
+                (
+                    "hooks/repo-guard/claude",
+                    "advisory",
+                    "settings-json",
+                    "native",
+                    "shared-event-command",
+                )
+            ],
+        ),
+    ):
+        _expect_fixture_error(
+            lambda rows=rows: tiers(rows), label=label
+        )
+        checks += 1
+    for label, rows in (
+        (
+            "hook handler ids out of file order",
+            [adoption_rows[1]],
+        ),
+        (
+            "hook handler location outside the closed grammar",
+            [
+                (
+                    "handler/1",
+                    ".claude/settings.json#PreToolUse[0]",
+                    "keep",
+                    "-",
+                    "pending",
+                )
+            ],
+        ),
+        (
+            "hook adoption without a hooks destination",
+            [
+                (
+                    "handler/1",
+                    ".claude/settings.json#PreToolUse[0][0]",
+                    "adopt",
+                    "-",
+                    "pending",
+                )
+            ],
+        ),
+        (
+            "hook keep with an invented destination",
+            [
+                (
+                    "handler/1",
+                    ".claude/settings.json#PreToolUse[0][0]",
+                    "keep",
+                    "hooks/repo-guard",
+                    "pending",
+                )
+            ],
+        ),
+        (
+            "duplicate hook handler location",
+            [
+                adoption_rows[0],
+                ("handler/2",) + tuple(adoption_rows[0][1:]),
+            ],
+        ),
+        (
+            "hook handler carriers in inverted carrier-path order",
+            [
+                ("handler/1",) + tuple(adoption_rows[1][1:]),
+                ("handler/2",) + tuple(adoption_rows[0][1:]),
+            ],
+        ),
+        (
+            "hook handler carriers interleaved instead of grouped",
+            [
+                adoption_rows[0],
+                adoption_rows[1],
+                (
+                    "handler/3",
+                    ".claude/settings.json#SessionStart[0][0]",
+                    "keep",
+                    "-",
+                    "pending",
+                ),
+            ],
+        ),
+    ):
+        _expect_fixture_error(
+            lambda rows=rows: hook_adoption(rows), label=label
+        )
+        checks += 1
+    accepted_warnings = [
+        "- claude-hooks-shared-execution: .claude/settings.json",
+        "- codex-handler-unknown-key: .codex/hooks.json "
+        "(PostToolUse group=0 handler=1 key=retryLimit)",
+        "- codex-hook-retrust-required: .codex/hooks.json "
+        "(SessionStart group=1 handler=0)",
+        "- codex-inline-hooks-conflict: .codex/config.toml (SessionStart)",
+        "- codex-inline-hooks-conflict: .codex/config.toml (pointer-key)",
+        "- codex-project-untrusted: .",
+        "- codex-trust-blind-change: .codex/hooks.json "
+        "(Stop group=0 handler=0)",
+        "- codex-trust-reindex: .codex/hooks.json (PreToolUse from=1)",
+        "- hook-acknowledgement-missing: .claude/rules/hooks.md",
+        "- hook-carrier-absent: .codex/hooks.json",
+        "- hook-format-preserved: .claude/settings.json",
+        "- hook-opt-in-required: .claude/rules/hooks.md "
+        "(entry deploy-on-stop)",
+        "- hook-output-not-delivered: .claude/rules/hooks.md "
+        "(entry reminder-start)",
+        "- hook-projection-asymmetric: .codex/hooks.json "
+        "(hooks/reminder-start/codex)",
+        "- hooks-carrier-unusable: .codex/hooks.json (duplicate-key)",
+        "- hooks-globally-disabled: .claude/settings.json",
+        "- intent-doc-anomaly: .claude/rules/hooks.md (entry repo-guard)",
+        "- intent-doc-anomaly: .claude/rules/hooks.md (line 42)",
+        "- local-hooks-present: .claude/settings.local.json",
+        "- matcher-grammar-divergent: .claude/rules/hooks.md "
+        "(entry repo-guard)",
+        "- platform-branch-divergence: .claude/rules/hooks.md "
+        "(entry repo-guard)",
+        "- undeclared-hooks-key: .claude/settings.json "
+        "(SessionEnd matcher=omitted)",
+    ]
+    for line in accepted_warnings:
+        _validate_warning_line(path, line)
+    covered = {line[2:].split(": ", 1)[0] for line in accepted_warnings}
+    if covered != set(HOOK_WARNING_CLASSES):
+        raise FixtureError(
+            "hook warning grammar coverage is incomplete"
+        )
+    checks += 1
+    for line in (
+        "- hook-carrier-absent: AGENTS.md",
+        "- hook-projection-asymmetric: AGENTS.md "
+        "(hooks/reminder-start/codex)",
+    ):
+        _validate_warning_line(path, line)
+    checks += 1
+    for label, line in (
+        (
+            "hook warning naming the wrong carrier",
+            "- intent-doc-anomaly: AGENTS.md (entry repo-guard)",
+        ),
+        (
+            "hook warning with a malformed handler position",
+            "- codex-hook-retrust-required: .codex/hooks.json "
+            "(SessionStart group=one handler=0)",
+        ),
+        (
+            "hook warning detail that is not a unit id",
+            "- hook-projection-asymmetric: .codex/hooks.json "
+            "(hooks/reminder-start)",
+        ),
+        (
+            "project-scope hook warning with a file path",
+            "- codex-project-untrusted: .codex/hooks.json",
+        ),
+        (
+            "hook carrier warning with an unregistered reason",
+            "- hooks-carrier-unusable: .codex/hooks.json (encoding-error)",
+        ),
+        (
+            "hook warning with a missing required detail",
+            "- hook-opt-in-required: .claude/rules/hooks.md",
+        ),
+        (
+            "hook warning with a forbidden detail",
+            "- hook-format-preserved: .claude/settings.json (entry alpha)",
+        ),
+        (
+            "global hooks disablement outside a settings file",
+            "- hooks-globally-disabled: .codex/hooks.json",
+        ),
+        (
+            "undeclared hooks key outside a JSON hooks carrier",
+            "- undeclared-hooks-key: AGENTS.md (SessionEnd matcher=omitted)",
+        ),
+        (
+            "unusable hooks carrier naming a local settings overlay",
+            "- hooks-carrier-unusable: .claude/settings.local.json "
+            "(parse-error)",
+        ),
+    ):
+        _expect_fixture_error(
+            lambda line=line: _validate_warning_line(path, line),
+            label=label,
+        )
+        checks += 1
+    for unit in (
+        "hooks/repo-guard/source",
+        "hooks/repo-guard/claude",
+        "hooks/repo-guard/codex",
+    ):
+        if not _unit_valid(unit):
+            raise FixtureError(f"hook unit id {unit!r} was rejected")
+    for closure in (
+        "closure/hooks/source",
+        "closure/hooks/claude",
+        "closure/hooks/codex",
+        "closure/decision/hooks/repo-guard",
+    ):
+        if not _closure_id_valid(closure):
+            raise FixtureError(f"hook closure id {closure!r} was rejected")
+    if (
+        _unit_valid("hooks/repo-guard")
+        or _unit_valid("hooks/Repo-Guard/claude")
+        or _closure_id_valid("closure/hooks/agents-md")
+        or _closure_id_valid("closure/decision/hooks/Repo-Guard")
+    ):
+        raise FixtureError("hook id grammar accepted an off-grammar value")
+    checks += 1
+    _validate_unit_tier(path, "hooks/repo-guard/codex", "declared-unsynced")
+    _validate_unit_tier(path, "hooks/repo-guard/source", "-")
+    for label, unit, tier in (
+        (
+            "structural tier on a hook row",
+            "hooks/repo-guard/claude",
+            "structural",
+        ),
+        (
+            "native tier on a hook source row",
+            "hooks/repo-guard/source",
+            "native",
+        ),
+    ):
+        _expect_fixture_error(
+            lambda unit=unit, tier=tier: _validate_unit_tier(
+                path, unit, tier
+            ),
+            label=label,
+        )
+    checks += 1
+    _validate_row_semantics(
+        path,
+        unit="hooks/repo-guard/claude",
+        phase="pre-write",
+        selection="selected",
+        state="no-baseline",
+        action="opt-in-or-skip",
+        direction="user-decision",
+        authorization="required",
+        outcome="deferred",
+        annotations=["decision-required", "opt-in-required"],
+    )
+    _expect_fixture_error(
+        lambda: _validate_row_semantics(
+            path,
+            unit="hooks/repo-guard/claude",
+            phase="pre-write",
+            selection="selected",
+            state="no-baseline",
+            action="opt-in-or-skip",
+            direction="user-decision",
+            authorization="required",
+            outcome="deferred",
+            annotations=["decision-required"],
+        ),
+        label="opt-in-or-skip without opt-in-required",
+    )
+    checks += 1
+    _validate_row_semantics(
+        path,
+        unit="hooks/repo-guard/codex",
+        phase="pre-write",
+        selection="selected",
+        state="declared-unsynced",
+        action="unchanged",
+        direction="-",
+        authorization="not-applicable",
+        outcome="unchanged",
+        annotations=[],
+    )
+    _expect_fixture_error(
+        lambda: _validate_row_semantics(
+            path,
+            unit="hooks/repo-guard/codex",
+            phase="pre-write",
+            selection="selected",
+            state="declared-unsynced",
+            action="update",
+            direction="source-to-projection",
+            authorization="confirmed",
+            outcome="planned",
+            annotations=[],
+        ),
+        label="declared-unsynced with a mutating action",
+    )
+    checks += 1
+    for conflict_annotations in (
+        ["decision-required"],
+        ["decision-required", "event-unverified"],
+        ["awaiting-host-trust", "decision-required", "opt-in-required"],
+    ):
+        _validate_row_semantics(
+            path,
+            unit="hooks/repo-guard/codex",
+            phase="pre-write",
+            selection="selected",
+            state="both-changed",
+            action="conflict",
+            direction="user-decision",
+            authorization="required",
+            outcome="deferred",
+            annotations=conflict_annotations,
+        )
+    for label, unit, conflict_annotations in (
+        (
+            "hook conflict without decision-required",
+            "hooks/repo-guard/codex",
+            ["event-unverified"],
+        ),
+        (
+            "hook conflict carrying an unrelated annotation",
+            "hooks/repo-guard/codex",
+            ["decision-required", "intent-required"],
+        ),
+        (
+            "entry conflict carrying a hook annotation",
+            "entry",
+            ["decision-required", "event-unverified"],
+        ),
+    ):
+        _expect_fixture_error(
+            lambda unit=unit, conflict_annotations=conflict_annotations: (
+                _validate_row_semantics(
+                    path,
+                    unit=unit,
+                    phase="pre-write",
+                    selection="selected",
+                    state="both-changed",
+                    action="conflict",
+                    direction="user-decision",
+                    authorization="required",
+                    outcome="deferred",
+                    annotations=conflict_annotations,
+                )
+            ),
+            label=label,
+        )
+    checks += 1
+    scoped_tokens = {
+        token
+        for gate in CLOSURE_SCOPED_APPLY_BLOCKER_GATES
+        for token in APPLY_BLOCKER_GATES[gate]
+    }
+    blocker_tokens = {
+        token
+        for token, warning_class in HOOK_WARNING_CLASSES.items()
+        if warning_class == "blocker"
+    }
+    if (
+        scoped_tokens != CLOSURE_SCOPED_BLOCKING_WARNINGS
+        or not CLOSURE_SCOPED_APPLY_BLOCKER_GATES.issubset(
+            set(APPLY_BLOCKER_GATES)
+        )
+        or not blocker_tokens.issubset(BLOCKING_WARNINGS)
+        or PROJECT_WIDE_BLOCKING_WARNINGS & CLOSURE_SCOPED_BLOCKING_WARNINGS
+        or "intent-doc-anomaly" not in PROJECT_WIDE_BLOCKING_WARNINGS
+        or not set(HOOK_WARNING_CLASSES).issubset(PLAN_WARNINGS)
+        or {
+            warning_class for warning_class in HOOK_WARNING_CLASSES.values()
+        }
+        - {"acknowledged", "informational", "blocker"}
+    ):
+        raise FixtureError("hook warning class registries are inconsistent")
+    checks += 1
+    for profile_path in sorted(ACTIVATION_PROFILES_DIR.glob("*.json")):
+        profile = read_json(profile_path)
+        if (
+            profile.get("version") != ACTIVATION_PROFILE_SPEC
+            or profile.get("codex_project_trust")
+            not in CODEX_PROJECT_TRUST_VALUES
+            or profile.get("codex_hooks_feature")
+            not in CODEX_HOOKS_FEATURE_VALUES
+        ):
+            raise FixtureError(
+                f"{profile_path}: activation profile is not a valid "
+                f"{ACTIVATION_PROFILE_SPEC} document"
+            )
+    checks += 1
+    if (
+        "hooks-carrier-composition" not in PLAN_VALIDATOR_FAILURES
+        or _validator_failure(
+            FixtureError("hooks carrier composition is not byte-exact")
+        )
+        != "hooks-carrier-composition"
+    ):
+        raise FixtureError(
+            "hooks-carrier-composition is not a registered validator failure"
+        )
+    checks += 1
+    checks += _exercise_hook_decision_shapes(path)
+    checks += _exercise_hook_trust_annotation_timing(path)
+    return checks
+
+
+def _exercise_hook_trust_annotation_timing(path: Path) -> int:
+    """Named checks for the post-write scope of awaiting-host-trust."""
+
+    codex_write = (
+        "1",
+        "closure/hooks/codex",
+        ".codex/hooks.json",
+        "replace",
+        "guarded-patch/v1",
+        "cap1",
+        "replace",
+        "cap2",
+    )
+
+    def timing(
+        unit: str,
+        annotations: Sequence[str],
+        *,
+        phase: str = "post-write",
+        closure: str = "closure/hooks/codex",
+        outcome: str = "applied",
+    ) -> None:
+        _validate_carrier_annotation_timing(
+            path,
+            unit=unit,
+            closure=closure,
+            outcome=outcome,
+            phase=phase,
+            annotations=set(annotations),
+            write_capabilities=[codex_write],
+        )
+
+    checks = 0
+    timing("hooks/repo-guard/codex", ["awaiting-host-trust"])
+    timing("hooks/repo-guard/claude", [], closure="closure/hooks/claude")
+    timing("hooks/repo-guard/source", [], closure="closure/hooks/source")
+    timing("hooks/repo-guard/codex", [], phase="pre-write", outcome="planned")
+    checks += 1
+    for label, unit, annotations, phase, closure, outcome in (
+        (
+            "written Codex hooks carrier without awaiting-host-trust",
+            "hooks/repo-guard/codex",
+            [],
+            "post-write",
+            "closure/hooks/codex",
+            "applied",
+        ),
+        (
+            "awaiting-host-trust on a Claude hook row",
+            "hooks/repo-guard/claude",
+            ["awaiting-host-trust"],
+            "post-write",
+            "closure/hooks/claude",
+            "applied",
+        ),
+        (
+            "awaiting-host-trust on a hook source row",
+            "hooks/repo-guard/source",
+            ["awaiting-host-trust"],
+            "post-write",
+            "closure/hooks/source",
+            "applied",
+        ),
+        (
+            "awaiting-host-trust in a pre-write plan",
+            "hooks/repo-guard/codex",
+            ["awaiting-host-trust"],
+            "pre-write",
+            "closure/hooks/codex",
+            "planned",
+        ),
+        (
+            "awaiting-host-trust without a touched Codex hooks carrier",
+            "hooks/repo-guard/codex",
+            ["awaiting-host-trust"],
+            "post-write",
+            "closure/decision/hooks/repo-guard",
+            "applied",
+        ),
+    ):
+        def attempt(
+            unit: str = unit,
+            annotations: Sequence[str] = annotations,
+            phase: str = phase,
+            closure: str = closure,
+            outcome: str = outcome,
+        ) -> None:
+            timing(
+                unit,
+                annotations,
+                phase=phase,
+                closure=closure,
+                outcome=outcome,
+            )
+
+        _expect_fixture_error(attempt, label=label)
+        checks += 1
+    return checks
+
+
+def _exercise_hook_decision_shapes(path: Path) -> int:
+    """Named checks for the five hook decision shapes and the gate rule."""
+
+    def decision_row(
+        unit: str,
+        selection: str,
+        authorization: str,
+        outcome: str,
+        annotations: str,
+        *,
+        closure: Optional[str] = None,
+    ) -> Tuple[str, ...]:
+        entry_id = unit.split("/")[1]
+        return (
+            unit,
+            closure or f"closure/decision/hooks/{entry_id}",
+            selection,
+            "-",
+            "no-baseline",
+            "opt-in-or-skip",
+            "user-decision",
+            authorization,
+            outcome,
+            "declared-unsynced",
+            annotations,
+        )
+
+    gate_tiers = [
+        (
+            "hooks/repo-guard/claude",
+            "gate",
+            "settings-json",
+            "native",
+            "shared-event-command",
+        ),
+        (
+            "hooks/repo-guard/codex",
+            "gate",
+            "codex-hooks-json",
+            "native",
+            "shared-event-command",
+        ),
+    ]
+    checks = 0
+    accepted_shapes = (
+        (
+            "opt-in-pending",
+            "selected",
+            "required",
+            "deferred",
+            "decision-required; opt-in-required",
+        ),
+        (
+            "two-sided-conflict",
+            "selected",
+            "required",
+            "deferred",
+            "decision-required",
+        ),
+        (
+            "pending-occupancy",
+            "not-selected",
+            "not-applicable",
+            "not-selected",
+            "decision-required",
+        ),
+        ("confirmed-keep", "selected", "not-applicable", "deferred", "-"),
+        ("surface-none", "selected", "not-applicable", "unchanged", "-"),
+    )
+    for name, selection, authorization, outcome, annotations in (
+        accepted_shapes
+    ):
+        row = decision_row(
+            "hooks/repo-guard/claude",
+            selection,
+            authorization,
+            outcome,
+            annotations,
+        )
+        observed = _hook_decision_shape(
+            row[2],
+            row[7],
+            row[8],
+            set() if row[10] == "-" else set(row[10].split("; ")),
+        )
+        if observed != name:
+            raise FixtureError(
+                f"hook decision shape {name} resolved as {observed!r}"
+            )
+        _validate_hook_decisions(path, [row], gate_tiers[:1])
+    if len({shape[0] for shape in HOOK_DECISION_SHAPES}) != 5:
+        raise FixtureError("the hook decision shape registry is not five")
+    checks += 1
+    neutral_row = decision_row(
+        "hooks/repo-guard/codex",
+        "selected",
+        "required",
+        "deferred",
+        "awaiting-host-trust; decision-required; event-unverified",
+    )
+    _validate_hook_decisions(path, [neutral_row], gate_tiers[1:])
+    checks += 1
+    for label, row in (
+        (
+            "confirmed hook keep still carrying decision-required",
+            decision_row(
+                "hooks/repo-guard/claude",
+                "selected",
+                "not-applicable",
+                "deferred",
+                "decision-required",
+            ),
+        ),
+        (
+            "hook opt-in pending without decision-required",
+            decision_row(
+                "hooks/repo-guard/claude",
+                "selected",
+                "required",
+                "deferred",
+                "opt-in-required",
+            ),
+        ),
+        (
+            "hook decision row carrying an unrelated annotation",
+            decision_row(
+                "hooks/repo-guard/claude",
+                "selected",
+                "required",
+                "deferred",
+                "decision-required; intent-required",
+            ),
+        ),
+        (
+            "hook decision triple outside the five closed shapes",
+            decision_row(
+                "hooks/repo-guard/claude",
+                "not-selected",
+                "required",
+                "deferred",
+                "decision-required",
+            ),
+        ),
+        (
+            "hook row inside another entry's decision closure",
+            decision_row(
+                "hooks/repo-guard/claude",
+                "selected",
+                "required",
+                "deferred",
+                "decision-required",
+                closure="closure/decision/hooks/other-entry",
+            ),
+        ),
+    ):
+        _expect_fixture_error(
+            lambda row=row: _validate_hook_decisions(
+                path, [row], gate_tiers
+            ),
+            label=label,
+        )
+        checks += 1
+    def carrier_row(
+        unit: str,
+        selection: str,
+        outcome: str,
+    ) -> Tuple[str, ...]:
+        host = unit.rsplit("/", 1)[1]
+        return (
+            unit,
+            f"closure/hooks/{host}",
+            selection,
+            "-",
+            "no-baseline",
+            "create",
+            "source-to-projection",
+            "confirmed",
+            outcome,
+            "native",
+            "-",
+        )
+
+    for claude_pair, codex_pair in (
+        (("selected", "planned"), ("selected", "planned")),
+        (("not-selected", "not-selected"), ("not-selected", "not-selected")),
+        (("selected", "blocked"), ("not-selected", "not-selected")),
+        (("selected", "deferred"), ("selected", "unchanged")),
+    ):
+        _validate_hook_decisions(
+            path,
+            [
+                carrier_row("hooks/repo-guard/claude", *claude_pair),
+                carrier_row("hooks/repo-guard/codex", *codex_pair),
+            ],
+            gate_tiers,
+        )
+    checks += 1
+    for label, claude_pair, codex_pair in (
+        (
+            "class gate entry projected on one host only",
+            ("selected", "applied"),
+            ("not-selected", "not-selected"),
+        ),
+        (
+            "class gate entry writing beside a blocked sibling carrier",
+            ("selected", "blocked"),
+            ("selected", "planned"),
+        ),
+    ):
+        def gate_attempt(
+            claude_pair: Tuple[str, str] = claude_pair,
+            codex_pair: Tuple[str, str] = codex_pair,
+        ) -> None:
+            _validate_hook_decisions(
+                path,
+                [
+                    carrier_row("hooks/repo-guard/claude", *claude_pair),
+                    carrier_row("hooks/repo-guard/codex", *codex_pair),
+                ],
+                gate_tiers,
+            )
+
+        _expect_fixture_error(gate_attempt, label=label)
+        checks += 1
     return checks
 
 
@@ -3561,7 +4981,15 @@ def _parse_migration_candidates(
 
 
 def _closure_id_valid(value: str) -> bool:
-    if value in {"closure/migration", "closure/agents-md"}:
+    if value in {
+        "closure/migration",
+        "closure/agents-md",
+        "closure/hooks/source",
+        "closure/hooks/claude",
+        "closure/hooks/codex",
+    }:
+        return True
+    if HOOK_DECISION_CLOSURE_PATTERN.fullmatch(value) is not None:
         return True
     if value.startswith("closure/decision/"):
         return _unit_valid(value[len("closure/decision/") :])
@@ -3584,7 +5012,7 @@ def _validate_warning_line(
     token, relative, detail = match.groups()
     if token not in PLAN_WARNINGS:
         raise FixtureError(f"{plan_path}: invalid warning token {token!r}")
-    if token in GRAPH_WARNING_TOKENS:
+    if token in ROOT_PATH_WARNING_TOKENS:
         if relative != ".":
             raise FixtureError(
                 f"{plan_path}: graph warning {token} must use path '.'"
@@ -3595,6 +5023,16 @@ def _validate_warning_line(
                 f"{plan_path}: file warning {token} cannot use path '.'"
             )
         safe_relative(relative, field=f"{plan_path} warning path")
+    pinned = HOOK_WARNING_PATHS.get(token)
+    if pinned is not None and relative != pinned:
+        raise FixtureError(
+            f"{plan_path}: warning {token} must name {pinned}"
+        )
+    allowed_carriers = HOOK_CARRIER_WARNING_PATHS.get(token)
+    if allowed_carriers is not None and relative not in allowed_carriers:
+        raise FixtureError(
+            f"{plan_path}: warning {token} must name a hooks carrier"
+        )
     if token in WARNING_DETAIL_TOKENS:
         if detail is None:
             raise FixtureError(
@@ -3631,11 +5069,145 @@ def _validate_warning_line(
             raise FixtureError(
                 f"{plan_path}: invalid {token} source line detail"
             )
+    elif token in {
+        "hook-opt-in-required",
+        "hook-output-not-delivered",
+        "matcher-grammar-divergent",
+        "platform-branch-divergence",
+    }:
+        if HOOK_ENTRY_DETAIL_PATTERN.fullmatch(payload) is None:
+            raise FixtureError(
+                f"{plan_path}: invalid {token} hook entry detail"
+            )
+    elif token == "intent-doc-anomaly":
+        if (
+            HOOK_ENTRY_DETAIL_PATTERN.fullmatch(payload) is None
+            and re.fullmatch(r"line [1-9][0-9]*", payload) is None
+        ):
+            raise FixtureError(
+                f"{plan_path}: invalid intent-doc-anomaly detail"
+            )
+    elif token in {
+        "codex-hook-retrust-required",
+        "codex-trust-blind-change",
+    }:
+        if HOOK_HANDLER_DETAIL_PATTERN.fullmatch(payload) is None:
+            raise FixtureError(
+                f"{plan_path}: invalid {token} handler position detail"
+            )
+    elif token == "codex-handler-unknown-key":
+        if HOOK_UNKNOWN_KEY_DETAIL_PATTERN.fullmatch(payload) is None:
+            raise FixtureError(
+                f"{plan_path}: invalid codex-handler-unknown-key detail"
+            )
+    elif token == "codex-trust-reindex":
+        if HOOK_REINDEX_DETAIL_PATTERN.fullmatch(payload) is None:
+            raise FixtureError(
+                f"{plan_path}: invalid codex-trust-reindex detail"
+            )
+    elif token == "codex-inline-hooks-conflict":
+        if payload != "pointer-key" and (
+            re.fullmatch(HOOK_EVENT, payload) is None
+        ):
+            raise FixtureError(
+                f"{plan_path}: invalid codex-inline-hooks-conflict detail"
+            )
+    elif token == "undeclared-hooks-key":
+        if HOOK_UNDECLARED_KEY_DETAIL_PATTERN.fullmatch(payload) is None:
+            raise FixtureError(
+                f"{plan_path}: invalid undeclared-hooks-key detail"
+            )
+    elif token == "hook-projection-asymmetric":
+        if HOOK_UNIT_PATTERN.fullmatch(payload) is None:
+            raise FixtureError(
+                f"{plan_path}: invalid hook-projection-asymmetric detail"
+            )
     else:
         raise FixtureError(
             f"{plan_path}: missing warning detail validator for {token}"
         )
     return token, relative, detail
+
+
+def _scoped_blocker_closures(
+    token: str,
+    relative: str,
+    detail: Optional[str],
+    *,
+    closures: Mapping[str, Tuple[str, ...]],
+    write_capabilities: Sequence[Tuple[str, ...]],
+) -> set[str]:
+    """Closures a closure-scoped apply blocker forbids from applying.
+
+    The global apply prohibition still holds for every other gate; the
+    write-capability, hook-carrier and hook-opt-in gates are scoped to the
+    closure carrying the matching row and to its dependents.
+    """
+
+    scope: set[str] = set()
+    scope.update(HOOK_BLOCKER_SCOPE_CLOSURES.get(token, ()))
+    carrier_closure = HOOK_CARRIER_CLOSURES.get(relative)
+    if carrier_closure is not None and token in {
+        "hooks-carrier-unusable",
+        "conditional-write-unavailable",
+        "guarded-patch-unavailable",
+    }:
+        scope.add(carrier_closure)
+    scope.update(
+        operation[1]
+        for operation in write_capabilities
+        if operation[2] == relative
+    )
+    if token == "hook-opt-in-required" and detail is not None:
+        entry = detail[1:-1][len("entry ") :]
+        scope.update(
+            {
+                f"closure/decision/hooks/{entry}",
+                "closure/hooks/claude",
+                "closure/hooks/codex",
+            }
+        )
+    scope &= set(closures)
+    dependents = set(scope)
+    changed = True
+    while changed:
+        changed = False
+        for closure_id, closure in closures.items():
+            if closure_id in dependents or closure[2] == "-":
+                continue
+            if set(closure[2].split("; ")) & dependents:
+                dependents.add(closure_id)
+                changed = True
+    return dependents
+
+
+def _validate_scoped_apply_blockers(
+    path: Path,
+    *,
+    warnings: Sequence[str],
+    rows: Sequence[Tuple[str, ...]],
+    closures: Mapping[str, Tuple[str, ...]],
+    write_capabilities: Sequence[Tuple[str, ...]],
+) -> None:
+    for line in warnings:
+        if line == "- (none)":
+            continue
+        token, relative, detail = _validate_warning_line(path, line)
+        if token not in CLOSURE_SCOPED_BLOCKING_WARNINGS:
+            continue
+        blocked = _scoped_blocker_closures(
+            token,
+            relative,
+            detail,
+            closures=closures,
+            write_capabilities=write_capabilities,
+        )
+        for row in rows:
+            if row[1] in blocked and row[8] == "applied":
+                raise FixtureError(
+                    f"{path}: scoped blocker {token} cannot accompany "
+                    f"applied row {row[0]}"
+                )
 
 
 def parse_plan(path: Path, *, expectation: bool) -> Plan:
@@ -3647,9 +5219,11 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
         "## Capability profiles",
         "## Write capabilities",
         "## Warnings",
+        "## Hook tiers",
         "## Migration decisions",
         "## Migration candidates",
         "## Adoption decisions",
+        "## Hook adoption decisions",
     ]
     positions: List[int] = []
     for heading in expected_headings:
@@ -3659,6 +5233,21 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
             raise FixtureError(f"{path}: missing {heading}") from error
     if positions != sorted(positions):
         raise FixtureError(f"{path}: plan sections are out of order")
+    headings = [line for line in lines if line.startswith("## ")]
+    known = set(expected_headings)
+    if [line for line in headings if line in known] != expected_headings:
+        raise FixtureError(
+            f"{path}: plan sections are not the exact normative sequence"
+        )
+    for anchor, follower in (
+        ("## Warnings", "## Hook tiers"),
+        ("## Adoption decisions", "## Hook adoption decisions"),
+    ):
+        index = headings.index(anchor)
+        if headings[index + 1 : index + 2] != [follower]:
+            raise FixtureError(
+                f"{path}: {follower} must immediately follow {anchor}"
+            )
 
     rows = parse_table(
         lines,
@@ -3717,6 +5306,7 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
                 )
         _validate_row_semantics(
             path,
+            unit=unit,
             phase=headers["phase"],
             selection=selection,
             state=state,
@@ -3901,38 +5491,15 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
         annotations = (
             set() if row[10] == "-" else set(row[10].split("; "))
         )
-        carrier_may_have_been_written = False
-        if headers["phase"] == "post-write" and outcome in {
-            "applied",
-            "partial",
-        }:
-            if unit.startswith("skills/"):
-                name = unit[len("skills/") :]
-                prefix = f".agents/skills/{name}/"
-                carrier_may_have_been_written = any(
-                    operation[1] == closure
-                    and operation[2].startswith(prefix)
-                    for operation in write_capabilities
-                )
-            elif unit in {
-                "entry",
-                "onboarding/agents-md",
-                "onboarding/covenant",
-            } or unit.startswith("rules/"):
-                carrier_may_have_been_written = any(
-                    operation[1] == closure
-                    and operation[2] == "AGENTS.md"
-                    for operation in write_capabilities
-                )
-        for annotation in {
-            "live-activation-unknown",
-            "restart-may-be-required",
-        }:
-            if (annotation in annotations) != carrier_may_have_been_written:
-                raise FixtureError(
-                    f"{path}: {annotation} does not match post-write "
-                    f"carrier-touch timing for {unit}"
-                )
+        _validate_carrier_annotation_timing(
+            path,
+            unit=unit,
+            closure=closure,
+            outcome=outcome,
+            phase=headers["phase"],
+            annotations=annotations,
+            write_capabilities=write_capabilities,
+        )
 
     warnings = parse_list_section(lines, heading="Warnings")
     if warnings != ["- (none)"]:
@@ -3942,6 +5509,21 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
             )
         for line in warnings:
             _validate_warning_line(path, line)
+    hook_tiers = _parse_hook_tiers(path, lines)
+    hook_units = {
+        row[0]: row[9]
+        for row in parsed_rows
+        if _hook_unit_host(row[0]) is not None
+    }
+    if [row[0] for row in hook_tiers] != sorted(hook_units):
+        raise FixtureError(
+            f"{path}: Hook tiers rows must equal the plan hook unit set"
+        )
+    for row in hook_tiers:
+        if hook_units[row[0]] != row[3]:
+            raise FixtureError(
+                f"{path}: Hook tiers tier for {row[0]} disagrees with Units"
+            )
     migration = _parse_migration(path, lines)
     migration_candidates = _parse_migration_candidates(path, lines)
     if bool(migration) != bool(migration_candidates):
@@ -3970,6 +5552,7 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
                     f"{path}: unique migration candidate must equal baseline"
                 )
     adoption = _parse_adoption(path, lines)
+    hook_adoption = _parse_hook_adoption(path, lines)
     pending = any(row[4] == "pending" for row in adoption)
     onboarding_agents_rows = [
         row for row in parsed_rows if row[0] == "onboarding/agents-md"
@@ -4003,6 +5586,7 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
             f"{path}: onboarding/agents-md requires explicit pending "
             "AGENTS.md segmentation decisions"
         )
+    _validate_hook_decisions(path, parsed_rows, hook_tiers)
 
     rename_rows = [row for row in parsed_rows if row[5] == "rename"]
     if rename_rows:
@@ -4226,7 +5810,10 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
                         f"{path}: carried migration unit must retain the "
                         "legacy baseline and transition annotation"
                     )
-    if warning_tokens & BLOCKING_WARNINGS and headers["phase"] == "post-write":
+    if (
+        warning_tokens & PROJECT_WIDE_BLOCKING_WARNINGS
+        and headers["phase"] == "post-write"
+    ):
         for row in parsed_rows:
             if row[8] == "applied" and row[0] in {
                 "entry",
@@ -4236,6 +5823,14 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
                     f"{path}: blocking AGENTS warning cannot accompany "
                     f"applied row {row[0]}"
                 )
+    if headers["phase"] == "post-write":
+        _validate_scoped_apply_blockers(
+            path,
+            warnings=warnings,
+            rows=parsed_rows,
+            closures=closure_map,
+            write_capabilities=write_capabilities,
+        )
     return {
         "path": str(path),
         "headers": headers,
@@ -4244,9 +5839,11 @@ def parse_plan(path: Path, *, expectation: bool) -> Plan:
         "capability_profiles": capability_profiles,
         "write_capabilities": write_capabilities,
         "warnings": warnings,
+        "hook_tiers": hook_tiers,
         "migration": migration,
         "migration_candidates": migration_candidates,
         "adoption": adoption,
+        "hook_adoption": hook_adoption,
     }
 
 
@@ -4369,6 +5966,12 @@ def compare_plans(expected: Plan, actual: Plan) -> List[str]:
             "warnings: "
             f"actual={actual['warnings']!r}, expected={expected['warnings']!r}"
         )
+    if expected["hook_tiers"] != actual["hook_tiers"]:
+        differences.append(
+            "hook tiers: "
+            f"actual={actual['hook_tiers']!r}, "
+            f"expected={expected['hook_tiers']!r}"
+        )
     if expected["migration"] != actual["migration"]:
         differences.append(
             "migration: "
@@ -4385,6 +5988,12 @@ def compare_plans(expected: Plan, actual: Plan) -> List[str]:
         differences.append(
             "adoption: "
             f"actual={actual['adoption']!r}, expected={expected['adoption']!r}"
+        )
+    if expected["hook_adoption"] != actual["hook_adoption"]:
+        differences.append(
+            "hook adoption: "
+            f"actual={actual['hook_adoption']!r}, "
+            f"expected={expected['hook_adoption']!r}"
         )
     return differences
 
@@ -5150,6 +6759,8 @@ def _validate_covenant_assets() -> None:
         REPO_ROOT / "templates/covenant/agents-md-covenant-block.md",
         REPO_ROOT / "templates/covenant/v1/claude-rules-bridge.md",
         REPO_ROOT / "templates/covenant/v1/agents-md-covenant-block.md",
+        REPO_ROOT / "templates/covenant/v2/claude-rules-bridge.md",
+        REPO_ROOT / "templates/covenant/v2/agents-md-covenant-block.md",
     )
     for template in required:
         if not template.is_file() or not template.read_bytes():
@@ -5584,6 +7195,83 @@ def _formal_adversarial_plans(
                             b"(untracked)\n"
                         ),
                         label="post-write covenant anomaly",
+                    ),
+                ),
+                (
+                    "hook-tiers-section-missing",
+                    _replace_once(
+                        plan_bytes,
+                        b"## Hook tiers\n\n- (none)\n\n",
+                        b"",
+                        label="hook tiers section",
+                    ),
+                ),
+                (
+                    "hook-tiers-section-misplaced",
+                    _replace_once(
+                        plan_bytes,
+                        (
+                            b"## Hook tiers\n\n- (none)\n\n"
+                            b"## Migration decisions\n\n- (none)\n\n"
+                        ),
+                        (
+                            b"## Migration decisions\n\n- (none)\n\n"
+                            b"## Hook tiers\n\n- (none)\n\n"
+                        ),
+                        label="hook tiers section position",
+                    ),
+                ),
+                (
+                    "hook-tiers-invented-row",
+                    _replace_once(
+                        plan_bytes,
+                        b"## Hook tiers\n\n- (none)\n",
+                        (
+                            b"## Hook tiers\n\n"
+                            b"| unit | class | surface | tier | reason |\n"
+                            b"|---|---|---|---|---|\n"
+                            b"| hooks/repo-guard/claude | gate | "
+                            b"settings-json | native | shared-event-command "
+                            b"|\n"
+                        ),
+                        label="hook tiers row",
+                    ),
+                ),
+                (
+                    "hook-adoption-out-of-file-order",
+                    _replace_once(
+                        plan_bytes,
+                        b"## Hook adoption decisions\n\n- (none)\n",
+                        (
+                            b"## Hook adoption decisions\n\n"
+                            b"| handler | location | disposition | "
+                            b"destination | decision |\n"
+                            b"|---|---|---|---|---|\n"
+                            b"| handler/2 | "
+                            b".claude/settings.json#PreToolUse[0][0] | keep "
+                            b"| - | pending |\n"
+                        ),
+                        label="hook adoption row",
+                    ),
+                ),
+                (
+                    "hook-adoption-out-of-carrier-order",
+                    _replace_once(
+                        plan_bytes,
+                        b"## Hook adoption decisions\n\n- (none)\n",
+                        (
+                            b"## Hook adoption decisions\n\n"
+                            b"| handler | location | disposition | "
+                            b"destination | decision |\n"
+                            b"|---|---|---|---|---|\n"
+                            b"| handler/1 | "
+                            b".codex/hooks.json#PreToolUse[0][0] | keep "
+                            b"| - | pending |\n"
+                            b"| handler/2 | "
+                            b".claude/settings.json#PreToolUse[0][0] | keep "
+                            b"| - | pending |\n"
+                        ),
+                        label="hook adoption carrier order",
                     ),
                 ),
             ]
@@ -8420,10 +10108,12 @@ def run_self_test() -> Dict[str, Any]:
     stale_recovery = _exercise_stale_recovery_adversarials()
     stale_recovery_checks = stale_recovery["checks"]
     journal_gate_checks = 1
+    hook_section_checks = _exercise_hook_section_contract()
     checks = (
         1
         + _exercise_contract_adversarials()
         + _exercise_public_tier_contract()
+        + hook_section_checks
         + adapter_checks
         + stale_recovery_checks
         + journal_gate_checks
@@ -8819,11 +10509,13 @@ def run_self_test() -> Dict[str, Any]:
         )
     check_accounting = {
         "adapter": adapter_checks,
+        "hook_sections": hook_section_checks,
         "stale_recovery": stale_recovery_checks,
         "journal_suite_gate": journal_gate_checks,
         "other": (
             checks
             - adapter_checks
+            - hook_section_checks
             - stale_recovery_checks
             - journal_gate_checks
         ),
@@ -8845,6 +10537,7 @@ def run_self_test() -> Dict[str, Any]:
         "validator_spec": PLAN_VALIDATOR_SPEC,
         "diagnostic_spec": PLAN_DIAGNOSTIC_SPEC,
         "adapter_negative_checks": adapter_checks,
+        "hook_section_checks": hook_section_checks,
         "stale_recovery": stale_recovery,
         "fault_adapter_capability": fault_capability,
         "safeguards": len(matrix["required_safeguards"]),
@@ -9202,6 +10895,12 @@ def _public_replay_dto(
                     "project_doc_max_bytes"
                 ],
                 "budget_source": profile_facts["budget_source"],
+                "codex_project_trust": profile_facts[
+                    "codex_project_trust"
+                ],
+                "codex_hooks_feature": profile_facts[
+                    "codex_hooks_feature"
+                ],
             },
         },
         "capability": {
@@ -11028,7 +12727,18 @@ def _validate_plan_replay_context(
 
 
 def _validator_failure(error: Exception) -> str:
+    failure = _validator_failure_token(error)
+    if failure not in PLAN_VALIDATOR_FAILURES:
+        raise FixtureError(
+            f"unregistered plan validator failure id {failure!r}"
+        )
+    return failure
+
+
+def _validator_failure_token(error: Exception) -> str:
     message = str(error).lower()
+    if "composition" in message:
+        return "hooks-carrier-composition"
     if "warning" in message or "untracked" in message:
         return "warning-grammar"
     if (
@@ -11514,7 +13224,7 @@ def _warning_diagnostics(
             relative = None if strict is None else strict.group(2)
             path_invalid = False
             if strict is not None:
-                if token in GRAPH_WARNING_TOKENS:
+                if token in ROOT_PATH_WARNING_TOKENS:
                     path_invalid = relative != "."
                 elif relative == ".":
                     path_invalid = True

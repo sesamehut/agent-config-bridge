@@ -34,6 +34,10 @@
 - invalid-rule-paths: .claude/rules/invalid.md (no-op-universal)
 - untracked-files-included: .claude/rules/invalid.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -43,5 +47,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

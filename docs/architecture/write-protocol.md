@@ -1,8 +1,9 @@
-# ADR：M3 写入协议
+# ADR：写入协议
 
-状态：已接受，适用于当前 M3 实施。
+状态：已接受。M3 建立 strict / guarded 双通道；M4 在同一通道下增补 JSON 受管键
+的 postimage 求法 `json-owned-span/v1`，协议 token 本身不变。
 
-决策日期：2026-07-24。
+决策日期：2026-07-24。增补日期：2026-09-07。
 
 ## 背景
 
@@ -46,8 +47,9 @@ capability adapter 默认拒绝。guarded 通道不是 strict 通道的静默 fa
 | `guarded-patch/v1` | 替换现有 eligible text file | 完整 preflight、一次唯一 exact-region replacement、完整 postverify；明确保留竞态 |
 | `unavailable` | 无 | 当前 binding 没有可用协议，相关 closure 阻断 |
 
-这些 token 正交于 `covenant/v2` 等内容契约版本。协议语义发生不兼容变化时增加新的
-protocol version，不把旧 token 的保证悄悄改强或改弱。
+这些 token 正交于 `covenant/v3` 等内容契约版本。协议语义发生不兼容变化时增加新的
+protocol version，不把旧 token 的保证悄悄改强或改弱。同理，postimage 怎么求得
+不是 capability 声明：`json-owned-span/v1` 是一条具名派生规则，不进入本表。
 
 ## capability adapter
 
@@ -145,6 +147,92 @@ preflight 后、工具匹配前、工具匹配与写入之间或 postverify 后�
 一旦出现 `partial`，停止该 closure 及后续/dependent closure，并保留当前 bytes 与
 journal evidence。不得为了制造整洁结果而覆盖第三种值。
 
+## JSON 受管键写入（json-owned-span/v1）
+
+M4 的两个 hooks carrier（`.claude/settings.json` 与 `.codex/hooks.json`）是 JSON，
+但它们对写入协议没有提出新要求：对已存在文件仍是一次 exact-literal、唯一匹配、
+非 regex 的替换，正好是 `guarded-patch/v1` 的承诺；缺失文件仍只接受
+`strict-create/v1`。因此不新增 protocol token，只给 postimage 的求法一个名字
+`json-owned-span/v1`。它是派生规则，不是能力声明，也不进 Write capabilities 表。
+
+### 资格
+
+carrier 必须是已存在、路径安全、可完整读取并 byte-round-trip 的 regular UTF-8
+text file，能被严格解析器解析成 JSON 对象，且**任何层级都没有重复对象键**，
+所有节点都落在封闭的 hooks 形状内。重复键或形状之外的节点用
+`hooks-carrier-unusable` 阻断对应 closure。这里必须 fail closed：重复键让 span
+与取值的对应不唯一，猜错一个就会静默丢掉用户的 hook。
+
+### owned span 派生
+
+ownership 只来自意图文档：对 host `h`，owned 组恰好是 `targets.<h>.surface` 为该
+host JSON carrier 的合法条目的 `(event, effective-matcher(h))` 对。机械层在精确
+preimage 上做 span-preserving 扫描，给出 `hooks`、每个 `hooks.<Event>` 数组、每个
+组元素、每个 handler 对象与每个 key/value 成员的 byte range，以及元素之间的精确
+分隔符字节；它从不重新序列化，也不判断归属。不存在的组是一个零宽插入点，带自己
+的精确前后缀字节，插入层级只有 group、event、hooks 三种。
+
+postimage 就是 preimage 加上「只编辑 owned span、只填插入点」：
+
+- **已存在的成员**做最小成员 span 编辑。改标量只替换该值的 token span；加键插在
+  该对象最后一个成员之后，沿用该对象自己的分隔符与缩进；删键删掉该成员 span 加
+  恰好一个分隔符。组内键顺序与未变化的 `matcher` 成员绝不重写。
+- **新建的组或 handler**才用规范化 render，缩进与 handler 单行/多行形态从所在
+  文件推断，键顺序固定。
+- 其余每个字节逐字节复制：兄弟 event、同 event 的其他组、无关顶层键、Codex 顶层
+  `description`、键顺序、缩进与文件末尾换行都不动。
+
+得到 `(preimage, postimage)` 之后，交给上面**未修改**的 guarded region 规则求唯一
+contiguous region。hooks JSON 高度重复，region 可能合法地吞入相邻的未受管字节
+（允许，因为它们新旧值相同），也可能始终无法唯一；后者用
+`guarded-patch-unavailable` 阻断，上下文一律不得为了凑匹配而缩短。
+
+### 幂等律
+
+**当每个 owned 组解析后都已等于其期望模型时，`compose(preimage, desired)` 必须
+恒等于 `preimage`，与格式无关。** 状态由语义 handler 相等决定，字节相等只决定
+是否存在一行 Write capabilities：语义相等且没有额外键的组序列化成
+`unchanged` / `unchanged`、不产生写入行，字节不同时只发信息性
+`hook-format-preserved`。这条律不是风格偏好，而是可比性的前提：夹具按原始字节
+比较整棵树，非幂等的 renderer 会让每次运行都在未受管字节上报出假漂移。
+
+合成器自检前后缀相等，拒绝任何在已定位 span 之外发生差异的 postimage；计划验证
+器另有封闭失败 id `hooks-carrier-composition`，它重算「preimage 只改 owned span」
+的结果并要求与 render 操作的 post 值逐字节相等。整文件反序列化再序列化因此被显式
+禁止。
+
+### 数组只追加
+
+新组追加在 `hooks.<Event>` 数组的收尾括号处，回退过尾部空白后写「`,` + 换行 +
+缩进 + 渲染结果」。Bridge 永不移动、排序或重排既有元素，无论受管与否。删除移除
+元素 span 加恰好一个相邻分隔符（非首元素取前一个，否则取后一个）连同该侧空白；
+被清空的 event 成员整体删除，被清空的 `hooks` 对象保留为 `"hooks": {}`。
+
+这是安全决定而不是风格决定：Codex 的逐 hook 信任与用户在 `/hooks` 里的禁用选择
+都存在按 `group_index`、`handler_index` 编址的 key 之下，按 id 排序会把无关 hook
+的信任指到别处，甚至静默重新启用用户刻意禁用的 hook。任何使后续下标位移的删除
+都必须发需确认的 `codex-trust-reindex`。
+
+### 为什么不整文件重写
+
+整文件重新序列化会重排未受管组、抹掉用户的手工格式，并因此触发上一条的信任位移；
+它还会改写 Codex 顶层 `description` 这个用户唯一的元数据槽（Bridge 从不写它、
+从不创建它、也从不修复它的缺失）。本仓库自己那份手写 `.claude/settings.json`
+就是反例：混合的行内与多行数组、成规模的 map，一次重排就是一次不可评审的 diff。
+
+### 与其他 token 的关系与后果
+
+- `json-owned-span/v1` 只描述怎样得到 postimage；实际 mutation 仍由
+  `guarded-patch/v1` 执行，并照常发出 `guarded-patch-non-cas`。
+- carrier 缺失时动作仍是 `create`，协议解析为 `unavailable` 并阻断，计划在
+  Evidence 里给出需要用户自己创建的精确 bytes；Bridge 不用无条件写入伪造
+  create-if-absent。
+- 逆操作与补偿的规则不变：没有 strict inverse 就不做乐观回退，按观察结果报
+  `partial`。
+- 向 Claude carrier 写 hook 还要求一条需确认的 `claude-hooks-shared-execution`：
+  提交进仓库的 hook 会在每个 clone 上运行，Bridge 的分类是评审元数据而不是沙箱。
+  写入协议本身不提供任何执行边界。
+
 ## create、delete、rename 与 compensation
 
 - **create**：只接受 `strict-create/v1`。普通 `Write`、patch add 或
@@ -180,7 +268,7 @@ full-file precondition 拒绝。
 
 ## 计划接口与确认
 
-`sync-plan/v2` 增加 closed `Capability profiles` binding 表：
+`sync-plan/v3` 使用 closed `Capability profiles` binding 表：
 
 ```markdown
 | binding | profile | host | host version | tool surface | platform | filesystem assumptions |
@@ -245,6 +333,9 @@ inverse protocol 就停止为 `partial`。
 - `applied` 的含义保持为“验证通过”，但必须结合 path protocol 与 warning 解读；
 - fixture/replay 需要分别覆盖 preflight rejection、unique-region rejection、
   exact postverify、第三值 `partial`、无 strict inverse、以及 strict-only 操作阻断；
+- hooks carrier 另需覆盖幂等重跑（重规划后整棵树逐字节不变）、手工格式 carrier 的
+  未受管字节保全、无法唯一化的 region、重复键 carrier 与缺失 carrier 的阻断；这些
+  是 `json-owned-span/v1` 的回归面，不能靠 `guarded-patch/v1` 既有夹具代证；
 - 可执行的 preflight rejection 夹具还必须把精确 confirmed plan、bundle、
   root/leaf identity、preimage/mode 与一次性 `armed -> claim -> injected` evidence
   绑定起来；plan 的 hash、parse 与正式验证必须来自同一次 retained-handle bytes

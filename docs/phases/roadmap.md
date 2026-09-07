@@ -3,19 +3,22 @@
 ## 当前状态
 
 实现阶段已经完成 M1（源树声明与只读哨兵）、M2（技能投射与采纳）和
-M3（入口与规则投射）。下一里程碑是 M4（钩子意图与双侧投射）。产品产物继续按
-[分发模型](../implementation/distribution-model.md)声明的目录落地；M4 hooks
-尚未实施，CLI、npm package、插件清单与插件制品仍门控到 M5，CI 门禁仍是 M6
-工作。
+M3（入口与规则投射）。M4（钩子意图与双侧投射）正在进行：设计已定稿、契约 tuple
+已整体升版，规范、机械层与夹具仍在落地。产品产物继续按
+[分发模型](../implementation/distribution-model.md)声明的目录落地；CLI、npm
+package、插件清单与插件制品仍门控到 M5，CI 门禁仍是 M6 工作。
 
-M3 当前契约是
-[`covenant/v2`](../../templates/covenant/README.md)、
-[`source-tree/v4`](../../skills/bridge-sentinel/references/source-tree-spec.md)、
-[`report/v4`](../../skills/bridge-sentinel/references/report-spec.md)、
-[`reconciliation/v2`](../../skills/bridge-sync/references/reconciliation-spec.md)
-与 [`sync-plan/v2`](../../skills/bridge-sync/references/sync-plan-spec.md)。它直接
-替换 v1/v3 runtime contract，不提供双读或隐式兼容路径；归档的 covenant v1
-bytes 只用于识别一次显式 closed-set ownership migration。
+当前契约是
+[`covenant/v3`](../../templates/covenant/README.md)、
+[`source-tree/v5`](../../skills/bridge-sentinel/references/source-tree-spec.md)、
+[`report/v5`](../../skills/bridge-sentinel/references/report-spec.md)、
+[`reconciliation/v3`](../../skills/bridge-sync/references/reconciliation-spec.md)
+与 [`sync-plan/v3`](../../skills/bridge-sync/references/sync-plan-spec.md)。它直接
+替换上一版 runtime contract，不提供双读或隐式兼容路径；归档的 covenant v1 与 v2
+bytes 组成封闭两成员集合，各自一跳迁移到当前 tuple，只用于识别一次显式
+closed-set ownership migration。v2→v3 迁移永不携带 hooks unit，因为
+`reconciliation/v2` 禁止一切 hook 写入，没有可达的 v2 时代 commit 能证明 hook
+baseline。
 
 M3 已交付：
 
@@ -242,26 +245,113 @@ inputs 的真实 agent replay 是另一层独立证据；两类证据不得互�
   `manual-zone-guarded` / `guarded-patch-non-cas` 及 host call 内的 residual race。
 - Codex 起点项目可经逐段确认完成收编，无静默覆盖。
 
-## M4：钩子意图与双侧投射（下一阶段）
+## M4：钩子意图与双侧投射（进行中）
 
 钩子放在更后面，因为风险主要来自执行语义：触发时机、环境变量、权限和失败处理
-在两个工具中都可能不同。
+在两个工具中都可能不同。2026-09-07 的设计定稿把这些差异全部落到可序列化的字段与
+封闭 token 上，而不是散文承诺。
 
 要完成：
 
-- 定稿钩子意图文档模型，见[同步模型](../implementation/sync-model.md)钩子一节。
-- Claude 侧投射到 `settings.json` 声明键；Codex 侧投射到 `.codex/hooks.json`
-  声明键，超出目标侧 hooks 能力面的意图降级为 `AGENTS.md` 常驻指令。
-- 实测项目级 `.codex/hooks.json` 的信任加载与逐 hook 重新信任流程，把实测
-  确认的执行约束写入映射知识（逐项复核清单见
+- 定稿钩子意图文档模型：单元身份 `hooks/<entry-id>/{source,claude,codex}`、必填
+  `class`、`enabled-by` 启用记录、per-target override 与 `override-reason`，以及
+  文件级 `bridge:hooks-shared-execution` 确认注释。机制见
+  [同步模型](../implementation/sync-model.md)钩子一节。
+- Claude 侧投射到 `.claude/settings.json` 声明键；Codex 侧投射到
+  `.codex/hooks.json` 声明键。两者的 postimage 由 `json-owned-span/v1` 求得：只
+  编辑 owned span、数组只追加、语义相等即零写，规则见
+  [写入协议 ADR](../architecture/write-protocol.md)。
+- 超出目标侧 hooks 承载面的 `reminder` / `observation` 意图降级为常驻指令：Codex
+  落到 root `AGENTS.md` 受管区块，Claude 落到意图文档自身（零写入）；`gate` 与
+  `side-effect` 永不降级。
+- 读侧 `report/v5` 补齐 hooks 决策表的散文面 H-case、外来 handler 与语义分歧
+  case、`AGENTS.md` 孤儿降级块 case、新观察项与注记，并加上 Claude 与 Codex 两条
+  runtime hedge。
+- 写侧 `reconciliation/v3` 与 `sync-plan/v3` 补齐 hooks snapshot、baseline 取值、
+  reconciliation 表、反向采纳规则、closure 与步骤顺序、封闭 warning 与
+  apply-blocker registry，以及 `## Hook tiers`、`## Hook adoption decisions`
+  两张表。
+- 机械层新增七个封闭语法子命令（carrier 检视、span 定位、组渲染、整文件合成、
+  意图扫描、handler 比较、降级渲染）并自检幂等律；夹具新增 `fixtures/m4-hooks/`
+  场景矩阵与只读 H-case 项目，并把全部夹具 hook 命令换成不可执行的 no-op 围栏。
+- 按 2026-09-07 复核改写映射知识：事件集与 Codex 独有 `Interrupt`、timeout 边界、
+  handler 类型、trust identity 与状态落点、两个 host 的 Windows shell、matcher
+  语法、exit code 与 stdout 交付语义（逐项清单见
   [Codex 能力面核验](../research/codex-capability-surface.md)）。
-- 在映射知识里写清每类钩子意图在两侧的保真档位。
+- Codex 项目级 hooks 的信任加载与逐 hook 重新信任：源码层已核验 trust identity
+  的字段构成、`[hooks.state."<key>"]` 写入用户 `config.toml` 的位置化 key，以及
+  未信任 hook 在 `codex exec` 中被静默跳过、加 bypass 标志才运行；仍缺一次交互式
+  `/hooks` TUI 会话，用来验证「首次信任后无 bypass 也能运行、改动字段后变为
+  Modified」的完整流程并现场确认状态落点。该项完成前不得作为实现依据。
 
 完成标准：
 
-- 高副作用钩子默认要求显式启用。
-- 声明不同步以独立状态呈现。
-- 同步计划能解释每个钩子在两个工具上的档位与理由。
+- 高副作用钩子默认要求显式启用：`class` 为 `gate` / `side-effect` 且
+  `enabled: true` 而缺少覆盖当前命令的 `enabled-by` 记录时，计划只给出零写
+  decision closure，并被 hook opt-in gate 拦住。
+- 声明不同步以独立状态呈现：`declared-unsynced` 同时进入计划的 state registry 与
+  tier registry，不退化成 warning 或 `unchanged`。
+- 同步计划能解释每个钩子在两个工具上的档位与理由：`## Hook tiers` 逐 unit 序列化
+  class、surface、tier 与封闭 reason token，行集与 Units 表完全一致。
+- 提交进仓库的 hook 会在每个 clone 上运行这一事实，在 covenant、计划 Evidence 与
+  报告 hedge 中都按 byte-pinned 文本出现；Bridge 的分类是评审元数据而不是沙箱。
+- 已收敛的 carrier 重新规划为零写：整棵树逐字节不变，两张 capability 表都是
+  `- (none)`，只发信息性 `hook-format-preserved`。
+
+明确推迟到后续里程碑或后续决策：
+
+- 读取 Codex 逐 hook 信任状态 `[hooks.state."<key>"]`。写入文件已在源码层定位到
+  用户 `config.toml`，但装机上尚未观察到真实写入；M4 只读项目信任这一有文档、可
+  实测且改变同一批决策的信号。
+- 在本仓库自身 carrier 上 dogfood 真实 hook：Claude 通常会在维护者自己的会话中途
+  装载它（官方只承诺“通常被捕获”，并记录了漏捕后需重启的失败模式），三面示例
+  覆盖改由 M6 的独立示例项目承担。
+- Claude 的 `args` exec 形态、`mcp_tool` 作为第二种共享原生 handler 类型、
+  `.codex/config.toml` 内联 `[hooks]` 与 `.claude/settings.local.json` 作为写目标、
+  跨设置层重复执行的去重、skill / subagent frontmatter hooks、企业 managed hooks
+  键，以及跨 carrier 原子性。这些要么会把写面扩进本仓库读不到的域，要么需要先补
+  一次逐字复核。
+
+### M4 检查命令与证据边界
+
+M4 收口后稳定、可复现的仓库内检查为（各条随对应实现步骤落地后逐条可运行）：
+
+```text
+python -B skills/bridge-sentinel/scripts/sentinel_mechanics.py self-test
+python -B fixtures/m2-sync/fixture_harness.py self-test
+python -B fixtures/m3-rules/fixture_harness.py self-test
+python -B fixtures/m3-rules/journal_validator_tests.py --mode worker-matrix
+python -B fixtures/m3-rules/journal_validator_tests.py --mode single
+python -B fixtures/m3-rules/journal_validator_tests.py --mode concurrent
+python -B fixtures/m4-hooks/hooks_harness.py self-test
+python -B fixtures/m4-hooks/hooks_harness.py check-hook-fence
+git diff --check
+```
+
+M1 到 M3 的既有检查命令与计数全部保留在上面各自小节，不因 M4 重新基线化。M4 的
+证据计数如下：
+
+- M4 matrix 为 N scenarios、N expectations 与 N replay inputs，agent-replayable
+  与 declarative-only 的拆分单独记录； <!-- m4-counts-pending -->
+- 加入七个 hooks 子命令后的 Sentinel self-test 为 N checks； <!-- m4-counts-pending -->
+- M3 main harness 在 plan 文法扩展到 `sync-plan/v3` 后为 N checks，增量只来自新增
+  检查项，既有计数不重新基线化； <!-- m4-counts-pending -->
+- `check-hook-fence` 对整棵夹具树断言每个 `command` / `commandWindows` 都匹配
+  `^bridge-fixture-noop( [a-z0-9-]+)?$`；夹具 hook 永不执行，
+  `--dangerously-bypass-hook-trust` 不出现在任何夹具或 CI 路径中。
+
+证据边界：
+
+- `bridge-live-operation-journal/v2` 按引用绑定，不由 M4 套件重新证明。它的
+  path-operations 字段与路径种类无关，`json-owned-span/v1` 没有新增 journal
+  字段；M4 self-test 只断言所引用的契约 token。
+- 平台边界：Codex 在 Windows 上用 pwsh 执行 `commandWindows`，Claude 在同一台
+  机器上用 bash（Git Bash）执行 `command`，因此共享命令必须在两种 shell 下都
+  成立，否则条目必须带 per-host 分支。
+- hook 是否真的执行属于观察结果而非保证（2026-09-07 有 1/7 次 `codex exec` 未触发
+  任何 hook，原因不明）。任何 Bridge 状态都不得读作运行期保证。
+- 上述检查验证的仍是仓库载体与夹具契约，不证明 Claude Code / Codex live host 已
+  加载或已信任这些 hook；Codex 侧的信任仍需用户在 `/hooks` 中复核。
 
 ## M5：插件打包（skill 加薄包装）
 
@@ -293,6 +383,7 @@ inputs 的真实 agent replay 是另一层独立证据；两类证据不得互�
 
 完成标准：
 
-- 示例项目覆盖技能 / 规则 / 钩子三类 MVP 配置面。
+- 示例项目覆盖技能 / 规则 / 钩子三类 MVP 配置面。三面覆盖由独立示例项目承担，
+  绝不通过给本仓库自身的 hooks carrier 装载真实 hook 来达成。
 - 快路径、哨兵与仲裁的 skill 行为稳定，落盘前确认与收尾自检可靠。
 - 发布流程能复现生成产物。

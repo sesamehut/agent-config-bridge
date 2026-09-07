@@ -10,8 +10,8 @@ and `paths` schema) live in
 report states, tier-assignment rules, and annotations live in
 [`../skills/bridge-sentinel/references/report-spec.md`](../skills/bridge-sentinel/references/report-spec.md).
 Write-side ownership and plans are governed by
-[`reconciliation/v2`](../skills/bridge-sync/references/reconciliation-spec.md)
-and [`sync-plan/v2`](../skills/bridge-sync/references/sync-plan-spec.md).
+[`reconciliation/v3`](../skills/bridge-sync/references/reconciliation-spec.md)
+and [`sync-plan/v3`](../skills/bridge-sync/references/sync-plan-spec.md).
 
 Evidence labels in this file are deliberate:
 
@@ -23,12 +23,15 @@ Evidence labels in this file are deliberate:
 
 ## Current Bridge contract boundary
 
-The only current tuple is `covenant/v2`, `source-tree/v4`, `report/v4`,
-`reconciliation/v2`, and `sync-plan/v2`. The exact former
-`covenant/v1` / `source-tree/v3` templates are archived migration evidence
-only; they are not an alternate runtime interpretation. A legacy v3 managed
-start containing `mode=` is a blocking migration/repair input, not a current
-semantic mode.
+The only current tuple is `covenant/v3`, `source-tree/v5`, `report/v5`,
+`reconciliation/v3`, and `sync-plan/v3`. The exact former
+`covenant/v1` / `source-tree/v3` and `covenant/v2` / `source-tree/v4`
+templates are archived migration evidence only; they form a closed
+two-member set, each one hop from the current tuple, and neither is an
+alternate runtime interpretation. A legacy v3 managed start containing `mode=`
+is a blocking migration/repair input, not a current semantic mode. The
+entry/rules facts in this file are unchanged by the current tuple; the tuple
+bump adds the hook unit class recorded in [`hooks.md`](hooks.md).
 
 ## Fidelity mapping (entry/rules unit class)
 
@@ -168,7 +171,7 @@ observation above.
 - `CLAUDE.md` and `.claude/CLAUDE.md` are both official project-entry
   locations, documented as alternatives. Official docs do not define load
   order or precedence when both exist.
-- `source-tree/v4` assigns neither path precedence. Both files present emits
+- `source-tree/v5` assigns neither path precedence. Both files present emits
   `dual-project-entry` and blocks the entry unit until the user resolves the
   divergence. This is Bridge policy derived from the undocumented host
   precedence, not a claim about which file Claude would load.
@@ -176,7 +179,7 @@ observation above.
   code spans and fenced code blocks are skipped; relative paths resolve from
   the containing file; paths outside the project require one-time approval.
 - Claude reads `CLAUDE.md`, not `AGENTS.md`.
-- After v4 control comments and Claude-only regions are subtracted, any active
+- After v5 control comments and Claude-only regions are subtracted, any active
   shared `@path` import blocks M3 projection: Claude expands it, while Codex
   has no equivalent preprocessing, and Bridge does not inline another file
   implicitly. `@AGENTS.md` is the high-risk self-referential case, not the
@@ -214,7 +217,7 @@ observation above.
 - collected: 2026-07-08; official mechanics reconfirmed 2026-07-24
 - source: official Claude Code rules docs; dated notes in
   [`../docs/research/host-context-loading.md`](../docs/research/host-context-loading.md)
-- status: settled host contract for documented mechanics; v4 validation is
+- status: settled host contract for documented mechanics; v5 validation is
   Bridge policy
 
 - `.claude/rules/**` is discovered recursively; symlinked rule files are
@@ -226,11 +229,11 @@ observation above.
   exceed the host budget remains unexpanded and its literal braces match no
   files. An invalid bracket expression matches no files while other patterns
   continue to work.
-- `source-tree/v4` narrows this host surface to a deterministic portable
+- `source-tree/v5` narrows this host surface to a deterministic portable
   schema: a rule has no frontmatter and is unscoped, or has a YAML map whose
   only key is `paths`; the value is a non-empty ordered list of unique strings.
   Bridge metadata never appears in YAML.
-- Every v4 pattern must be non-empty, valid UTF-8, repo-relative, slash-based,
+- Every v5 pattern must be non-empty, valid UTF-8, repo-relative, slash-based,
   and free of NUL, CR/LF, backticks, backslashes, empty/dot/dot-dot segments,
   leading slash, and unclosed brackets. Exact universal scopes `**` and
   `**/*`, plus duplicate patterns, are defined no-ops; an unscoped rule must
@@ -246,9 +249,9 @@ observation above.
 
 - collected: current contract adopted 2026-07-24
 - source:
-  [`source-tree/v4`](../skills/bridge-sentinel/references/source-tree-spec.md)
+  [`source-tree/v5`](../skills/bridge-sentinel/references/source-tree-spec.md)
   and
-  [`reconciliation/v2`](../skills/bridge-sync/references/reconciliation-spec.md)
+  [`reconciliation/v3`](../skills/bridge-sync/references/reconciliation-spec.md)
 - status: current Bridge policy
 
 - Entry and rule intent uses only the strict single-line control grammar
@@ -258,7 +261,7 @@ observation above.
 - Entry records form one contiguous header from byte zero. Scoped-rule records
   immediately follow the closing `paths` frontmatter delimiter; unscoped-rule
   records start at byte zero.
-- The v4 renderer strips the complete valid intent header before composing the
+- The v5 renderer strips the complete valid intent header before composing the
   Codex managed block. The carrier therefore never receives Bridge intent
   comments, independent of Codex's lack of comment preprocessing.
 - Unknown `bridge:*` control comments, misplaced intent records, or any YAML
@@ -266,18 +269,18 @@ observation above.
   evidence, not ownership; a managed source requires a valid record from its
   first confirmed onboarding or annexation onward.
 - **Archived observation only:** a 2026-07-21 Claude run tolerated an unknown
-  YAML `bridge` key and stripped rule-file block comments. `source-tree/v4`
+  YAML `bridge` key and stripped rule-file block comments. `source-tree/v5`
   deliberately does not depend on that undocumented tolerance. The old YAML
   intent form is not current syntax; rule-file comment stripping remains an
   empirical host observation, not a Bridge correctness dependency.
 
-## Current v4 Bridge-policy consequences
+## Current v5 Bridge-policy consequences
 
 The following are current Bridge rules derived from the host facts, not host
 behavior:
 
 - Dual Claude entries, any active shared import, and invalid/no-op/duplicate/
-  over-budget `paths` block the affected unit. v4 defines no root-entry winner,
+  over-budget `paths` block the affected unit. v5 defines no root-entry winner,
   implicit import expansion, or unscoped fallback for these cases.
 - Root `AGENTS.md` eligibility is resolved from live activation inputs,
   separate from repo ownership bytes. Apply blocks when effective Codex
@@ -301,6 +304,6 @@ behavior:
   malformation that prevents a trustworthy region map blocks the whole
   carrier.
 - Repository bytes, host discoverability, and model adherence remain separate
-  claims. After an actual root `AGENTS.md` write, v4 attaches
+  claims. After an actual root `AGENTS.md` write, v5 attaches
   `restart-may-be-required` and requires a new Codex run/session before testing
   activation.

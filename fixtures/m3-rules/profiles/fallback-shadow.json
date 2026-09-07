@@ -1,5 +1,5 @@
 {
-  "version": "activation-fixture/v1",
+  "version": "activation-fixture/v2",
   "root_markers": [
     ".git"
   ],
@@ -7,5 +7,7 @@
     "BRIDGE_FALLBACK.md"
   ],
   "project_doc_max_bytes": 32768,
-  "budget_source": "documented-default"
+  "budget_source": "documented-default",
+  "codex_project_trust": "unknown",
+  "codex_hooks_feature": "unknown"
 }

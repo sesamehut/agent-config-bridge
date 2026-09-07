@@ -35,6 +35,10 @@
 - untracked-files-included: .claude/CLAUDE.md
 - untracked-files-included: CLAUDE.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -44,5 +48,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

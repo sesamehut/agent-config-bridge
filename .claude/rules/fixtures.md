@@ -3,6 +3,7 @@ paths:
   - "fixtures/**"
 ---
 <!-- bridge:intent 2026-07-08 Fixture-authoring conventions introduced with the first M1 fixtures -->
+<!-- bridge:intent 2026-09-07 M4 hook fence: inert fixture hook commands, activation-fixture/v2 profiles -->
 
 # fixtures/ - Fixture authoring rules
 
@@ -53,19 +54,45 @@ Bridge skills. These are hard rules, binding on every change inside
   Single deliberate exception: `SKILL.md` (master and copy) of the
   `fixture-bom-with-a-very-long-directory-name-exceeding-codexs-limit` skill
   begins with a UTF-8 BOM by design.
-- **Expectations move with their fixtures.** Each `expected-report.md`
-  follows the expectation-file format defined in
-  [`skills/bridge-sentinel/references/report-spec.md`](../../skills/bridge-sentinel/references/report-spec.md)
+- **Expectations move with their fixtures.** Each `expected-report.md` declares
+  `- expectation: report/v5`, follows the expectation-file format defined in
+  [`skills/bridge-sentinel/references/report-spec.md`](../../skills/bridge-sentinel/references/report-spec.md),
   and changes only together with the fixture bytes it describes, in the same
   change. Pin deterministic live activation inputs in a contained
-  `activation-fixture/v1` profile; use `environment-dependent` only when the
-  expectation deliberately excludes all live and capability observations.
-- **Fixture hooks never execute.** Sentinel runs are file comparison only at
-  M1. M2 mutation fixtures do not install hooks. Any later live-loading check
-  must use a materialized temporary project, never fixture source data.
-- **Never start a work session with cwd inside `fixtures/`.** Fixture project
-  settings and hooks can become active there. The skill fences above do not
-  make the rest of the fixture configuration safe to load.
+  `activation-fixture/v2` profile: it adds `codex_project_trust` (`trusted`,
+  `untrusted`, or `unknown`) and `codex_hooks_feature` (`enabled`, `disabled`,
+  or `unknown`) to the v1 keys, and a profile pinning neither Codex input uses
+  `unknown` for both. Use `environment-dependent` only when the expectation
+  deliberately excludes all live and capability observations.
+- **Fixture hooks are inert by construction.** Every `command` and
+  `commandWindows` value a change writes into any fixture
+  `.claude/settings.json`, `.codex/hooks.json`, `.codex/config.toml`, or
+  `.claude/rules/hooks.md` must match `^bridge-fixture-noop( [a-z0-9-]+)?$`, a
+  program that exists on no machine, so an accidental run is a harmless ENOENT.
+  `scan_hook_fence()` in
+  [`skills/bridge-sentinel/scripts/sentinel_mechanics.py`](../../skills/bridge-sentinel/scripts/sentinel_mechanics.py)
+  implements the check today, and `sentinel_mechanics self-test` asserts it over
+  synthetic trees; `fixtures/m4-hooks/hooks_harness.py check-hook-fence` runs it
+  over the complete fixture tree once the M4 harness lands. Converting the
+  pre-M4 commands still carried by `fixtures/onboarded` belongs to the M4
+  fixture suite, and the change that converts a command converts its
+  `expected-report.md` in the same change.
+- **Fixture hooks never execute.** The fixture hook carriers
+  `.claude/settings.json` and `.codex/hooks.json` are inert file comparison
+  inputs, never loaded by starting a host inside `fixtures/`. No fixture or
+  harness step starts either host against fixture source data or against a
+  materialized fixture tree with hooks enabled.
+  `--dangerously-bypass-hook-trust` is forbidden in every fixture and every CI
+  path; it may appear only in a dated, manually run live-verification procedure
+  recorded under `.debug-output/`. `disableAllHooks` is never relied upon.
+- **Never start a work session with cwd inside `fixtures/`** or inside a
+  materialized fixture tree. Fixture project settings and hook keys are real
+  host-native keys and can become active there, and the skill fences above do
+  not make the rest of the fixture configuration safe to load. A materialized
+  temporary project is the only place a host may be pointed at fixture-derived
+  bytes, and even there the no-op fence holds.
+- **Hook changes move together.** On adding or renaming a fixture hook, update
+  the intent document, both carriers, and the expectation in the same change.
 - **The leak fence.** This repo's root `.claude/settings.json` carries
   `"claudeMdExcludes": ["**/fixtures/**"]`, which neutralizes fixture
   `CLAUDE.md` and rules files for Claude sessions launched at the repo root.

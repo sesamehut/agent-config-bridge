@@ -33,6 +33,10 @@
 
 - (none)
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -47,3 +51,7 @@
 |---|---|---|---|---|
 | segment/1 | 49-51 | shared-entry | entry | pending |
 | segment/2 | 53-55 | manual | - | pending |
+
+## Hook adoption decisions
+
+- (none)

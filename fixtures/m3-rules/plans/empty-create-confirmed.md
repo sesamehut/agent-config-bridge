@@ -39,6 +39,10 @@
 - strict-compensation-unavailable: .claude/rules/bridge-covenant.md
 - strict-compensation-unavailable: AGENTS.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -48,5 +52,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

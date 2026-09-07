@@ -49,6 +49,10 @@
 - strict-compensation-unavailable: .claude/rules/bridge-covenant.md
 - strict-compensation-unavailable: AGENTS.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 | unit | legacy baseline | current relation | disposition | decision |
@@ -66,5 +70,9 @@
 | skills/fixture-legacy-repair | 0000000000000000000000000000000000000000 |
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

@@ -34,6 +34,10 @@
 - agents-md-budget-exceeded: AGENTS.md (2997 bytes of 2200)
 - untracked-files-included: .codex/config.toml
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -43,5 +47,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

@@ -6,19 +6,27 @@ for agent skills, hooks, and rules, then project that source into host-native
 layouts.
 
 The development tree has completed M1 through M3. M4 hook-intent modeling and
-dual-host hook projection are next.
+dual-host hook projection are in progress.
 
 - [`bridge-sentinel`](skills/bridge-sentinel/SKILL.md) observes repository
-  carriers without writing, using `source-tree/v4` and `report/v4`.
+  carriers without writing, using `source-tree/v5` and `report/v5`.
 - [`bridge-sync`](skills/bridge-sync/SKILL.md) plans, confirms, projects,
-  adopts, and verifies complete skill trees plus entry/rule managed blocks
-  using Git-proven per-unit baselines, deterministic rendering, serialized
-  closure selection/authorization, and explicit strict or non-CAS guarded
-  write protocols under `reconciliation/v2` and `sync-plan/v2`.
-- [`covenant/v2`](templates/covenant/README.md) provides the exact two-part
-  onboarding anchor; archived v1 bytes identify a closed-set migration whose
-  ownership transition still requires reachable Git evidence, not a supported
-  legacy runtime contract.
+  adopts, and verifies complete skill trees, entry/rule managed blocks, and
+  hook intents using Git-proven per-unit baselines, deterministic rendering,
+  serialized closure selection/authorization, and explicit strict or non-CAS
+  guarded write protocols under `reconciliation/v3` and `sync-plan/v3`.
+- Hook intents live in `.claude/rules/hooks.md` and project into two native
+  carriers, `.claude/settings.json` for Claude and `.codex/hooks.json` for
+  Codex, editing only the spans each intent owns and never rewriting the rest
+  of either document. A `reminder` or `observation` intent whose event has no
+  native carrier on one host degrades to a standing instruction there; a `gate`
+  or `side-effect` intent is not projected at all until a dated `enabled-by`
+  record covers it. Hooks committed to a repository run for everyone who clones
+  it: Bridge classification is review metadata, not a sandbox.
+- [`covenant/v3`](templates/covenant/README.md) provides the exact two-part
+  onboarding anchor; the archived v1 and v2 bytes form a closed two-member set
+  identifying a single-hop migration whose ownership transition still requires
+  reachable Git evidence, not a supported legacy runtime contract.
 - The [M2 fixture matrix](fixtures/m2-sync/README.md) defines 13 isolated
   scenarios and 22 lightweight safeguards. Twelve scenarios have real agent
   workflow replay evidence; `write-verify-failure` is deliberately
@@ -44,22 +52,29 @@ git diff --check
 
 Fixture harnesses validate declarations, expected plans, exact post-state
 trees, and safeguards; they are not substitutes for agent workflow replay.
-The M1 self-test closes 36 checks. M2 closes 13 definitions, 12 replayable
-scenarios, one declarative-only scenario, and 22 safeguards. The M3 main
-harness closes 809 checks: 28 adapter checks, one journal-suite gate, 737
-other contract checks, and 43 stale-recovery checks. Its independent journal
-evidence closes an 11/11 worker matrix and a 66/66 single suite; the concurrent
-gate closes two workers, 132 cases, two unique session roots, and two
-successful cleanups. Three final independent concurrent runs passed on their
-first attempt without retry.
+At M1 closure the sentinel self-test closed 36 checks. M2 closes 13
+definitions, 12 replayable scenarios, one declarative-only scenario, and 22
+safeguards. At M3 closure the M3 main harness closed 809 checks: 28 adapter
+checks, one journal-suite gate, 737 other contract checks, and 43
+stale-recovery checks. Its independent journal evidence closes an 11/11 worker
+matrix and a 66/66 single suite; the concurrent gate closes two workers, 132
+cases, two unique session roots, and two successful cleanups. Three final
+independent concurrent runs passed on their first attempt without retry. The
+two closure counts above are milestone evidence, not the current totals: M4 is
+adding the `sync-plan/v3` plan grammar to the M3 harness and seven hooks
+subcommands to the sentinel mechanics, so both self-tests now report more
+checks, and the M4 numbers are recorded at M4 closure. <!-- m4-counts-pending -->
 
 These results prove repository contracts, isolated fixture behavior, and the
 recorded agent workflows; repository bytes do not prove Claude Code or Codex
-live-host discovery or activation. M4 hooks are not implemented. There is no
-CLI, npm package, plugin manifest or payload, or CI release gate: packaging
-remains gated until M5, and CI remains M6 work. Product artifacts land
-milestone by milestone; the [roadmap](docs/phases/roadmap.md) owns that
-boundary.
+live-host discovery or activation, and they never prove that a projected hook
+is trusted or will run. M4 is in progress: the contract tuple is raised and the
+hook design is settled, but the hook specs, mechanics, and fixture suite are
+still landing, so the command list above stays at its M3 shape until the M4
+harness exists. There is no CLI, npm package, plugin manifest or payload, or CI
+release gate: packaging remains gated until M5, and CI remains M6 work. Product
+artifacts land milestone by milestone; the [roadmap](docs/phases/roadmap.md)
+owns that boundary.
 
 Start with:
 
@@ -79,8 +94,9 @@ layers by role:
 
 - `skills/` — agent-facing skill sources: `SKILL.md`, references, metadata,
   and narrowly scoped read-only mechanics (tracked).
-- `templates/` — install-time project templates such as the bridge covenant;
-  these are not loaded as skill instructions (tracked).
+- `templates/` — install-time project templates such as the bridge covenant,
+  plus the hook intent example document, which nothing installs; these are not
+  loaded as skill instructions (tracked).
 - `knowledge/` — the host-mapping knowledge base, with collection dates
   (tracked).
 - `fixtures/` — fixture projects with known states and expected reports, used

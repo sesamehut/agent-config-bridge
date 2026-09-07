@@ -21,7 +21,7 @@ fixture carries `disable-model-invocation` in `SKILL.md`.
 | [`onboarded/`](onboarded/) | A project carrying the exact two-part `covenant/v3` anchor and exercising the onboarded regime end to end: in-sync, neutral reconcile drift, adoption-candidate, blocked skill-loadability, declared-unsynced hook, marked orphan hook, representative portability lints and behavior degradation, neutral Codex live-activation annotations, claude-only subtraction, strict intent comments, pv2 scoped-rule rendering, and the undeclared-hooks-key and nested-agents-md observation channels. |
 | [`dogfood/`](dogfood/) | Expectation only — no fixture tree. Its `expected-report.md` targets this repository itself (see below). |
 | [`m2-sync/`](m2-sync/) | Declarative write-side contract vectors. A standard-library harness validates fixture data, materializes replayable inputs into marked OS-temporary Git repositories, and compares an agent-produced sync plan plus exact post-state. Its self-test does not execute the workflow. |
-| [`m3-rules/`](m3-rules/) | Declarative `source-tree/v5` reconciliation vectors. Its standard-library harness validates 41 scenarios, capability-bound `sync-plan/v3` expectations, exact named trees and commit DAGs, the 66-case `bridge-live-operation-journal/v2` suite, per-process temporary-session isolation, platform-gated guarded-preflight fault evidence, lease-bound replay, the closed public `sync-plan-diagnostic/v1` warning explainer, and cleanup without executing the workflow. |
+| [`m3-rules/`](m3-rules/) | Declarative `source-tree/v5` reconciliation vectors. Its standard-library harness validates 41 scenarios, capability-bound `sync-plan/v3` expectations including the two pinned hook sections, exact named trees and commit DAGs, the 66-case `bridge-live-operation-journal/v2` suite, per-process temporary-session isolation, platform-gated guarded-preflight fault evidence, lease-bound replay, the closed public `sync-plan-diagnostic/v1` warning explainer, and cleanup without executing the workflow. |
 
 The two M1 fixture projects exercise every `report/v5` Sentinel state. M2 and
 M3 mutation coverage is inventoried separately in
@@ -43,9 +43,12 @@ parameters in its header, then its normative content — nothing else:
 - `- scope excludes:` — comma+space-separated glob filters passed to the
   sentinel as a run parameter (gitignore semantics, anchored at the scan
   root), or `(none)`.
-- `- activation profile:` — a contained `activation-fixture/v1` JSON file, or
+- `- activation profile:` — a contained `activation-fixture/v2` JSON file, or
   `environment-dependent` to exclude live-activation and host-capability
-  observations from deterministic comparison.
+  observations from deterministic comparison. `activation-fixture/v2` adds the
+  required `codex_project_trust` (`trusted`, `untrusted`, `unknown`) and
+  `codex_hooks_feature` (`enabled`, `disabled`, `unknown`) keys; every current
+  fixture profile declares `unknown` for both.
 - `- onboarding:` — the expected project-level flag
   (`onboarded`, `not-onboarded`, or `blocked`).
 

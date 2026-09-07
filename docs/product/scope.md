@@ -43,10 +43,10 @@ MVP 最终覆盖三类 project-level 配置：
 - M3：一般 entry / rules projection 与 managed-block reverse adoption；
 - M4：hook intents 与双侧 projection。
 
-M3 把 M2 covenant 升级为当前 `covenant/v2`，正式开放 entry / rules 写面；hooks
-仍未安装。
+M4 把 covenant 升级为当前 `covenant/v3`，正式开放 hooks 写面；covenant 正文自此
+不再提任何 milestone。
 
-## M2–M3 用户契约
+## M2–M4 用户契约
 
 技能 canonical unit 仍是 immediate `.claude/skills/<name>/` 完整 regular-file
 Git tree，projection 是 `.agents/skills/<name>/` 同名完整 tree。M3 新增两类
@@ -55,7 +55,26 @@ canonical unit：
 - `entry`：`CLAUDE.md` 或 `.claude/CLAUDE.md` 恰好一个；二者并存直接阻断；
 - `rules/<id>`：`.claude/rules/**/*.md` 中除 covenant 与 `hooks.md` 之外的分片。
 
-entry / rules 通过固定 `source-tree/v4` render 投入 root `AGENTS.md` 独立 managed
+M4 再新增一类：`.claude/rules/hooks.md` 里的每条 hook 意图。一条意图对应三个
+unit（source 加两个 host），每侧各自声明 surface 与保真档位
+`native | semantic | declared-unsynced`：Claude 原生落在 `.claude/settings.json`
+的 `hooks` 键，Codex 原生落在 `.codex/hooks.json` 的 `hooks` 键。只有 `reminder`
+与 `observation` 意图、且该 event 在那一侧没有原生承载面时，才允许降级为常驻
+指令：Codex 落到 root `AGENTS.md` 受管区块，Claude 落到意图文档自身（零写入）。
+`gate` 与 `side-effect` 永不降级；某一侧声明不投射时，那一侧以独立状态
+`declared-unsynced` 如实呈现，而不是伪装成已同步。
+
+hooks 的用户契约多两条闸门，且都写在 source 里、被每个 clone 继承：`gate` 与
+`side-effect` 意图在启用前必须有一条带日期的 `enabled-by` 记录，首次向
+`.claude/settings.json` 写 hook 前必须有一条文件级确认注释。它们都不是执行边界。
+提交进仓库的 hook 会在每个 clone 上运行，Bridge 的分类是作者声明的评审元数据而
+不是沙箱：Claude Code 即使在你从未信任过的目录里也会使用 settings 文件里的
+hook（`claude -p` / SDK 会话不显示信任对话框；交互式会话则把 settings 文件里的
+hooks 扣到信任对话框被接受为止），因此任何能向本仓库提交的人都能在同事机器上执行
+命令。真正的控制手段是那条 PR 的评审。
+机制细节见[同步模型](../implementation/sync-model.md)钩子一节。
+
+entry / rules 通过固定 `source-tree/v5` render 投入 root `AGENTS.md` 独立 managed
 block。受管区块外与未被本轮选中的所有 bytes 都是 manual zone，进入完整 planned
 pre/post image。已有文件优先使用已证明的 strict replace；否则 eligible 文本文件
 可用显式非 CAS 的 `guarded-patch/v1` exact-region 流程。新建只接受
@@ -106,9 +125,10 @@ Codex 起点不会整文件自动收编：计划把既有 `AGENTS.md` 精确分�
    current bytes + reachable Git 重建新计划并再次确认，无法从 Git 重建旧值就不可
    回滚；用户确认不能替代 ownership、baseline 或 prior bytes。
 8. **版本显式**：covenant / source-tree / report / reconciliation / plan 绑定版本；
-   当前 tuple 是 `covenant/v2`、`source-tree/v4`、`report/v4`、
-   `reconciliation/v2`、`sync-plan/v2`。v1/v3 只作一次性显式 migration evidence，
-   不保留双读兼容模式；迁移必须把 reachable-v1 proven units 作为闭集由一个
+   当前 tuple 是 `covenant/v3`、`source-tree/v5`、`report/v5`、
+   `reconciliation/v3`、`sync-plan/v3`。归档的 v1 与 v2 pair 组成封闭两成员集合，
+   各自一跳迁移到当前 tuple，只作一次性显式 migration evidence，
+   不保留双读兼容模式；迁移必须把 reachable legacy proven units 作为闭集由一个
    reachable transition commit carry / repair / explicit release，不能只换 covenant；
    每个 unit 的全部 ancestry-maximal legacy OID 必须独立列出，ambiguity 不得折叠成
    任意单个 baseline。
@@ -121,8 +141,9 @@ Codex 起点不会整文件自动收编：计划把既有 `AGENTS.md` 精确分�
     `capability-profile/v1` 证明后使用；现有 eligible 文本文件可用
     `guarded-patch/v1`，但计划必须显示 exact region、完整 preflight/postverify、
     residual race 与缺失 strict compensation。create、delete、rename 和 inverse
-    operation 不得 guarded 降级。Bridge 不承诺 lock、跨文件 transaction 或 crash
-    durability。
+    operation 不得 guarded 降级。两个 hooks JSON carrier 走同一通道，postimage 由
+    `json-owned-span/v1` 只编辑受管 span 求得，绝不整文件反序列化重写，也绝不重排
+    既有数组元素。Bridge 不承诺 lock、跨文件 transaction 或 crash durability。
 
 ## compatibility 承诺
 
@@ -168,5 +189,16 @@ M3 完成时：
 - 空项目、Claude 起点与 Codex 起点都能通过完整计划接入，无整文件隐式 annex；
 - Git reachable DAG、失败补偿、rollback 与 M2 使用同一安全底座。
 
-完整 MVP 完成时，hooks 也满足相同的 ownership、plan、confirmation 与 verification
-原则；不同 host 的降级档位逐 unit 可解释。
+M4 完成时：
+
+- hook 意图只维护一份，两个原生 carrier 各自由 owned span 投射；已收敛的 carrier
+  重新规划为零写，未受管字节逐字节保持原状；
+- `gate` 与 `side-effect` 意图没有覆盖当前命令的 `enabled-by` 记录时不投射，只给
+  零写决策，并把「这不是沙箱」的事实写进计划与报告；
+- 两侧都不可投射时以 `declared-unsynced` 独立呈现，计划逐 unit 给出 class、
+  surface、档位与封闭理由 token；
+- carrier 里未声明的组、外来 handler 类型与语义改变键只报告、只走 annex-or-keep，
+  Bridge 绝不删除用户的 hook。
+
+完整 MVP 完成时，三类配置面共用同一套 ownership、plan、confirmation 与
+verification 原则；不同 host 的降级档位逐 unit 可解释。

@@ -1,7 +1,10 @@
 # Codex 能力面核验
 
-采集日期：2026-07-24。主要来源为 Codex 官方文档
+采集日期：2026-07-24；Hooks 一节已于 2026-09-07 整体复核并重写，其余章节仍沿用
+2026-07-24 的采集边界。主要来源为 Codex 官方文档
 （learn.chatgpt.com/docs）、Agent Skills 官方规范与 openai/codex 官方仓库。
+`developers.openai.com/codex/*` 已被上游重定向到 `learn.chatgpt.com/docs/*`：
+hooks 一节的引用已改指新地址，其余章节保留旧链接，需在各自复核时逐条改指。
 本文把官方文档记为 host contract，把固定提交源码记为带日期的 implementation
 observation；源码观察不能反向扩张公开契约。issue / discussion 只保留为待复核
 线索，不承担公共契约。哨兵观察项与注记的口径见
@@ -12,59 +15,136 @@ observation；源码观察不能反向扩张公开契约。issue / discussion �
 
 ## Hooks：原生支持，已 GA
 
-本节事件与 timeout 边界于 2026-07-25 局部复核；全文其余内容仍沿用文首的
-2026-07-24 采集边界。来源：
-[Codex Hooks](https://learn.chatgpt.com/docs/hooks)、
-[config-reference](https://developers.openai.com/codex/config-reference)。
+本节于 2026-09-07 全面复核，取代 2026-07-24 / 2026-07-25 的旧结论。公开契约来源
+是 [Codex Hooks](https://learn.chatgpt.com/docs/hooks)（raw 版本为同址加 `.md`
+后缀）：`developers.openai.com/codex/hooks` 已重定向到该地址，
+`learn.chatgpt.com/docs/codex/hooks` 不是有效路径。实现观察取自 openai/codex
+main 分支的
+[`hook_config.rs`](https://github.com/openai/codex/blob/main/codex-rs/config/src/hook_config.rs)、
+[`engine/discovery.rs`](https://github.com/openai/codex/blob/main/codex-rs/hooks/src/engine/discovery.rs)、
+[`engine/command_runner.rs`](https://github.com/openai/codex/blob/main/codex-rs/hooks/src/engine/command_runner.rs)
+与
+[`tools/hook_names.rs`](https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/hook_names.rs)，
+按带日期的 implementation observation 处理，不反向扩张公开契约。
 
-- **状态**：实验版随 CLI v0.114 引入（约 2026-03），GA 约 2026-05-14；采集日
-  changelog（0.140.0 / 0.141.0，2026-06）中为稳定维护特性；feature flag
-  `[features] hooks = true` 默认开启。
-- **事件模型**（11 个生命周期事件）：`SessionStart`、`SubagentStart`、
-  `PreToolUse`、`PermissionRequest`、`PostToolUse`、`PreCompact`、`PostCompact`、
-  `UserPromptSubmit`、`SubagentStop`、`Stop`、`SessionEnd`。11 个事件在
-  Claude Code 侧全部同名存在，无 Codex 独有事件；Claude Code 另有一组独有事件
-  （`Notification`、`FileChanged` 等），挂在其上的钩子意图没有 Codex 原生
-  承载面。`SessionEnd` 只作用于主线程，当前 matcher reason 只有 `other`；
-  command 默认 timeout 为 1 秒、最大为 3 秒。
-- **PreToolUse 拦截范围**：可拦截 Bash / unified exec、apply_patch 文件编辑、
-  MCP 工具调用及其他走标准 local function-tool hook path 的工具，matcher 为正则。
-  WebSearch 等 hosted tools 不走该路径，部分专用 local tool path 也可退出默认
-  hook path；因此官方仍将它定位为 guardrail，而非完整 enforcement boundary。
+- **状态**：实验版随 CLI v0.114 引入（约 2026-03），GA 约 2026-05-14；
+  CLI 0.153.4 的 `codex features list` 报告 `hooks stable true`。
+- **事件模型（复核：12 个，且存在 Codex 独有事件）**：`SessionStart`、
+  `SessionEnd`、`SubagentStart`、`PreToolUse`、`PermissionRequest`、
+  `PostToolUse`、`PreCompact`、`PostCompact`、`UserPromptSubmit`、
+  `SubagentStop`、`Stop`、`Interrupt`。前 11 个在 Claude Code 同名存在；
+  `Interrupt` 是第一个 Codex 独有事件，Claude 侧没有原生承载面。旧结论
+  「11 个事件、无 Codex 独有事件」作废。12 个事件中只有 9 个处理 matcher，
+  `UserPromptSubmit`、`Stop` 与 `Interrupt` 忽略 matcher。
+- **timeout（复核）**：一般事件默认 600 秒、下限钳到 1 秒；只有 `SessionEnd` 与
+  `Interrupt` 默认 1 秒、上限钳到 3 秒，越界静默钳制并给 warning。旧结论
+  「command 默认 timeout 1 秒、最大 3 秒」只对这两个事件成立。
+- **handler 类型（复核）**：`command`、`mcp_tool`、`prompt`、`agent` 四种可解析；
+  `prompt` 与 `agent` 在 discovery 阶段被拒（"not supported yet"），`mcp_tool`
+  已可执行。`async: true` 的 command handler 现在后台执行（最多 8 个并发，
+  `SessionEnd` 始终同步），不再整体跳过。旧结论「只有 command 会执行、`async`
+  被跳过」作废。
 - **配置形式**：`hooks.json` 顶层是带 `hooks` 键的包装对象（可选顶层
-  `description` 字符串），`hooks` 内为事件名键，值与 Claude Code hooks 同族
-  （事件 → matcher 分组 → `{type, command, timeout, statusMessage}`）；
-  2026-07-08 曾记为裸事件名键，2026-07-23 按官方 reference 与
-  `hook_config.rs`（`HooksFile`）证伪，夹具与规范按包装对象形态编码。也可在
-  `config.toml` 内联 `[[hooks.<Event>]]` 表；`commandWindows` 字段做 Windows
-  命令分支（Codex 独有，Claude 未文档化）。
+  `description` 字符串），`hooks` 内为事件名键，值是「matcher 分组 → handler
+  列表」。command handler 字段为 `command`、`commandWindows`、`timeout`、
+  `async`、`statusMessage`、`additionalContextLimit`；分组字段为 `matcher`、
+  `hooks`。也可在 `config.toml` 内联 `[[hooks.<Event>]]` 表。
+- **未知键的严格程度（复核）**：`#[serde(deny_unknown_fields)]` 只加在
+  `HooksFile` 顶层，`MatcherGroup` 与 `HookHandlerConfig` 都不拒绝未知键。因此
+  顶层多一个键会让整份文件加载失败，而分组或 handler 内的未知键被静默忽略；
+  不能把严格性描述到 handler 层。
 - **配置层级**：用户级 `~/.codex/hooks.json`；**项目级
   `<repo>/.codex/hooks.json`**（也可写在项目 `.codex/config.toml`）；插件自带
-  `hooks/hooks.json`；企业 `requirements.toml`。多层命中的 hook 全部执行，
-  高层不覆盖低层。
-- **信任机制**：项目级 `.codex/` 层只在项目被信任后加载；非受管 hook 首次运行
-  前需要用户审阅信任，且信任绑定 hook 内容哈希——**hook 被改动后需要重新信任**。
-  CLI 内 `/hooks` 命令可查看 / 信任 / 禁用。
-- **协议**：command hook 从 stdin 读 JSON（session_id、cwd、事件名、model、
-  permission_mode 等），可返回 JSON 控制续行 / 提示（`continue`、`stopReason`、
-  `systemMessage`）；exit code 2 + stderr 表示阻断。PreToolUse 支持
-  `permissionDecision: "allow" | "deny"`（`"ask"` 解析未实装）、`updatedInput`
-  输入重写与 `additionalContext` 注入，PermissionRequest 返回
-  `decision.behavior`，与 Claude 同形——Claude 式 deny hook 在 Codex 原生
-  可表达。目前只有 `type: "command"` 会执行：`prompt` / `agent` 处理器"解析但
-  跳过"，`async: true` 的处理器被整体跳过（不退化为同步执行）。
-- **对 Claude 的刻意兼容**：插件 hook 除 `PLUGIN_ROOT` / `PLUGIN_DATA` 外还
-  注入 `CLAUDE_PLUGIN_ROOT` / `CLAUDE_PLUGIN_DATA`（官方文档明言 "for
-  compatibility"）——Codex 有意镜像 Claude Code 的 hook schema。
-- **已知 bug（与本项目直接相关）**：
-  [openai/codex#17532](https://github.com/openai/codex/issues/17532)（采集日
-  仍 open，报于 CLI 0.120.0）：写在项目 `.codex/config.toml` 里的 hooks 配置
-  可能不触发交互式 `SessionStart` / `Stop`。投射目标应优先
-  `.codex/hooks.json`，并在实现时用当前 CLI 版本实测。
+  `hooks/hooks.json`；企业 `requirements.toml`。多层命中的 hook 全部执行，高层
+  不覆盖低层，因此用户级与项目级各有一份等价 hook 时会执行两遍。
+- **信任机制（复核细节）**：项目级 `.codex/` 层只在项目被信任后加载；逐 hook
+  信任绑定一个 normalized identity 哈希，且该哈希在 timeout 取默认值与钳制
+  **之后**计算。进入 identity 的是 event 名、`matcher`、`command`、归一化
+  `timeout`、`statusMessage`、`async` 与归一化 `additionalContextLimit`；
+  `commandWindows` **不在** identity 内，所以只改 Windows 分支不会使既有信任失效。
+  持久状态是 `[hooks.state."<key>"] {enabled, trusted_hash}`，由 `/hooks` 经
+  `ConfigBatchWrite`（`file_path: None`）写入**用户的 `config.toml`**；key 形如
+  `<source>:<Event>:<groupIndex>:<handlerIndex>`，按位置编址，重排分组或 handler
+  会静默孤立既有信任记录。`hook_trust_status()` 给出
+  `Trusted | Modified | Untrusted | Managed`，未信任或已修改的 hook 在分发时被
+  静默跳过，既不阻断也不在会话中提示。
+- **协议与交付语义（复核）**：command hook 从 stdin 读 JSON（session_id、cwd、
+  事件名、model、permission_mode 等），可返回 JSON 控制续行 / 提示
+  （`continue`、`stopReason`、`systemMessage`、`suppressOutput`，其中
+  `suppressOutput` 目前只解析未实装）；exit code 2 加 stderr 是统一的阻断语义。
+  `SessionStart` 接受纯文本 stdout（作为 developer context 注入）与 JSON
+  `hookSpecificOutput.additionalContext`；`Stop` 只接受 JSON 或 exit 2，纯文本
+  对该事件无效。`SessionEnd` 有输入 schema 却没有输出 schema，属于
+  fire-and-forget。模型可见的 hook 输出上限约 2500 tokens，超出部分写入临时文件。
+- **PreToolUse 拦截范围与 tool_name 词汇（复核）**：`tool_name` 是开放集合。
+  shell / unified exec 报 `Bash`（`tool_input.command`），文件编辑报
+  `apply_patch`（matcher 别名 `Write` / `Edit`，别名只用于匹配、不进 stdin），
+  子智能体报 `spawn_agent`（别名 `Agent`），其余本地函数工具报各自的扁平函数名
+  （如 `update_plan`、`write_stdin`、`request_permissions`），MCP 工具报
+  `mcp__<server>__<tool>`。`WebSearch` 等 hosted tool 不走本地函数工具的 hook
+  路径，因此不会触发 hook；官方仍把 hooks 定位为 guardrail 而非完整
+  enforcement boundary。matcher 是无锚定的 Rust 正则（不支持 lookahead 与反向
+  引用），与 Claude「命中字符类就按精确列表、否则按 JS 正则」的双模语法不同形。
+- **PermissionRequest 决策形状（复核）**：Codex 返回对象
+  `decision: {behavior, ...}`，Claude 返回字符串 `allow | deny | ask`，两者
+  **不同形**；Codex 的 `permissionDecision: "ask"` 仍未实装。旧结论「与 Claude
+  同形，Claude 式 deny hook 原生可表达」作废。
+- **Windows 执行与环境（复核）**：`commandWindows` 由会话检测到的 shell 执行，
+  Windows 上检测无条件为 PowerShell：先 `pwsh`，回退 `powershell.exe`，只有在
+  没有会话 shell 时才落到 `COMSPEC` / `cmd.exe /C`；argv 为
+  `<shell> -NoProfile -Command <command>`。hook 进程先 `env_clear()` 再回放会话
+  启动时捕获的环境快照，**项目级 hook 不获得任何 Codex 注入的环境变量**；
+  `PLUGIN_ROOT` 等只注入插件来源的 hook。
+- **对 Claude 的刻意兼容**：插件 hook 除 `PLUGIN_ROOT` / `PLUGIN_DATA` 外还注入
+  `CLAUDE_PLUGIN_ROOT` / `CLAUDE_PLUGIN_DATA`（官方文档明言 "for
+  compatibility"）。Codex 自带的 Claude 迁移器只搬运键集恰为 `{matcher, hooks}`
+  的分组，以及键集属于
+  `{type, command, timeout|timeoutSec, statusMessage, async}` 的 command
+  handler，并丢弃 `async: true`、`asyncRewake`、`shell` 与 `once`；宿主自己也
+  收敛到同一个跨 host 安全核心。
+- **已知 bug（复核）**：
+  [openai/codex#17532](https://github.com/openai/codex/issues/17532) 于
+  2026-09-07 仍 open，最后活动 2026-05-21；其复现用的是 legacy
+  `hooks = "<path>"` 指针键加已废弃的 `features.codex_hooks` 别名。投射目标因此
+  固定为 `.codex/hooks.json`，并在同层检测到内联 `[hooks]` 表或该指针键时阻断：
+  两种形态在同一层合并成两个位置 key 却共享同一个 normalized 哈希，hook 会执行
+  两遍。
+
+### 2026-09-07 的证据分层
+
+本机实测（Windows 11 Pro 10.0.26200，Codex CLI 0.153.4；一次性临时项目或用后即删
+的临时 carrier，未修改用户配置）：
+
+- 未受信任的项目不加载 `.codex/` 层；`-c projects.<path>.trust_level` 的命令行
+  覆盖也不能让它加载，项目信任只从用户配置文件的 `projects` 表读取。
+- 未受信任的 hook 在 `codex exec` 中被静默跳过，`--json` 流里没有任何提示；只有
+  加上 `--dangerously-bypass-hook-trust` 才运行。该标志仅用于这次人工取证，绝不
+  进入夹具或 CI 路径。
+- `SessionStart`、`UserPromptSubmit`、`Stop`、`SessionEnd`、`PreToolUse` 与
+  `PostToolUse` 都在 `codex exec` 中触发，并带上文所述的 stdin 信封；shell 工具
+  向 hook 报 `tool_name: "Bash"`。
+- Windows 上只有 `commandWindows` 分支运行，四个被测事件全部如此；实测 shell 为
+  pwsh 7.6.5，`echo %COMSPEC%` 原样写出字面量。
+- `SessionStart` 的纯文本 stdout 与脚本文件输出的 `additionalContext` 都被注入
+  模型；单独的 `systemMessage` 不可见；经内联 `cmd /c echo` 输出的 JSON 信封被
+  引号处理破坏、未送达。输出 JSON 信封的 hook 必须是提交进仓库的脚本文件。
+- 当天 7 次 `codex exec` 中有 1 次完全没有触发任何 hook，原因不明。hook 执行必须
+  按「观察到的行为」处理，绝不作为边界或保证。
+
+源码复核（openai/codex main 分支，未在本机运行）：`deny_unknown_fields` 的作用
+范围、trust identity 的字段构成与计算时机、`[hooks.state."<key>"]` 的写入文件与
+位置化 key、Windows shell 的选择顺序与环境快照、`tool_name` 词汇表，以及 12 个
+事件的 serde 重命名与 `SessionStart` / `Stop` 的输出语义。
+
+尚未验证、不得作为实现依据：交互式 `/hooks` 的完整信任流程（首次信任后不加 bypass
+也能运行、改动 identity 字段后变为 Modified），以及状态记录落盘位置的现场确认。
+装机的用户 `config.toml` 当前没有任何 `hooks` 行，`~/.codex` 下也没有 hook 命名的
+文件，因此这一项必须由一次人工 TUI 会话补齐。
 
 ## notify：被 hooks 取代的窄机制
 
-来源：[config-advanced](https://developers.openai.com/codex/config-advanced)。
+来源：[config-advanced](https://developers.openai.com/codex/config-advanced)
+（链接为 2026-07-24 采集，已重定向到 learn.chatgpt.com/docs/*，待本节复核时改指）。
 
 `notify` 在事件发生时调外部程序，但只有一个事件（`agent-turn-complete`），且
 **仅用户级生效**——官方明确项目级配置不能覆盖 notify 键。生命周期自动化应走
@@ -72,7 +152,8 @@ hooks，notify 不作为投射目标。
 
 ## Rules（execpolicy）：命令审批的项目级规则
 
-来源：[developers.openai.com/codex/rules](https://developers.openai.com/codex/rules)。
+来源：[developers.openai.com/codex/rules](https://developers.openai.com/codex/rules)
+（链接为 2026-07-24 采集，已重定向到 learn.chatgpt.com/docs/*，待本节复核时改指）。
 
 - `.rules` 文件用 Starlark 编写 `prefix_rule(pattern, decision, ...)`，decision
   为 `allow | prompt | forbidden`；多规则命中时最严者胜；shell 链
@@ -85,7 +166,8 @@ hooks，notify 不作为投射目标。
 
 ## 技能：格式、运行时、校验器与行为可移植性分层
 
-来源：[Codex skills 文档](https://developers.openai.com/codex/skills)、
+来源：[Codex skills 文档](https://developers.openai.com/codex/skills)
+（链接为 2026-07-24 采集，已重定向到 learn.chatgpt.com/docs/*，待本节复核时改指）、
 [Agent Skills specification](https://agentskills.io/specification)、
 [Claude Code skills 文档](https://code.claude.com/docs/en/slash-commands)，以及
 openai/codex 固定提交 `44d76c6` 中的
@@ -250,22 +332,27 @@ gate，行为与开放规范及 runtime loader 都不完全相同：
   上下文并占用预算，应保持精简。
 - **没有分片机制**：Codex 没有 `.claude/rules/*.md` 的等价物（官方
   [customization](https://developers.openai.com/codex/concepts/customization)
-  页枚举的模型面只有 AGENTS.md / Memories / Skills / MCP / Subagents）；嵌套
+  页枚举的模型面只有 AGENTS.md / Memories / Skills / MCP / Subagents；链接为
+  2026-07-24 采集，已重定向到 learn.chatgpt.com/docs/*，待本节复核时改指）；嵌套
   AGENTS.md 是唯一原生多文件指令形态。规则分片注入 `AGENTS.md` 受管区块就是
   投射到原生指令面，path-scoped 语义走适用性前言。适用性前言是 Bridge 的
   attention-scoping policy，不是 Codex 的机械 path enforcement。
 
 ## 其余机制速记
 
-- **Automations**（[app/automations](https://developers.openai.com/codex/app/automations)）：
+- **Automations**（[app/automations](https://developers.openai.com/codex/app/automations)，
+  链接为 2026-07-24 采集，已重定向到 learn.chatgpt.com/docs/*，待本节复核时改指）：
   Codex app 专属的定时任务（支持 cron 表达式），在本机后台 worktree 运行；
   CLI / IDE 无此机制。属调度自动化，与 hooks 的事件自动化互补，MVP 不涉及。
-- **Custom prompts 已废弃**（[custom-prompts](https://developers.openai.com/codex/custom-prompts)）：
+- **Custom prompts 已废弃**（[custom-prompts](https://developers.openai.com/codex/custom-prompts)，
+  链接为 2026-07-24 采集，已重定向到 learn.chatgpt.com/docs/*，待本节复核时改指）：
   官方建议改用技能。
 - **Local Environments**（app）：worktree 创建时执行 setup 脚本，配置存于项目
   `.codex/` 并可入库。
 - Codex app 设置面板的「编码」区（钩子 / 连接 / Git / 环境 / 工作树）与上述
-  文件机制一一对应；hooks 定义本身是文件，**可随仓库共享**。
+  文件机制一一对应；hooks 定义本身是文件，**可随仓库共享**。可共享也意味着它会
+  被每个 clone 拿到：Codex 侧还有项目信任与逐 hook 信任两道门，Claude 侧没有，
+  所以提交进仓库的 hook 是评审问题而不是配置问题。
 
 ## 项目级配置面汇总
 
@@ -279,9 +366,16 @@ auth / notify 等机器本地键）、`hooks.json`、`rules/*.rules`、`agents/*
 
 以下设计结论由 [sync-model](../implementation/sync-model.md) 持有，此处存目：
 
-- 钩子投射目标是项目级 `.codex/hooks.json`，只有超出 Codex 承载能力的意图才
-  落回常驻指令（语义降级）：Claude 独有事件、非 command 处理器、`async`
-  后台钩子、`permissionDecision: "ask"`、工具输出重写。
+- 钩子投射目标是项目级 `.codex/hooks.json`，且是 Codex 唯一写目标；同层内联
+  `[hooks]` 或 legacy 指针键会造成双重注册，检测到就阻断该 closure。
+- 语义降级只对 `reminder` / `observation` 意图开放，且只在该 event 在目标侧
+  没有原生承载面时成立：Claude 独有事件在 Codex 侧落到 root `AGENTS.md` 常驻
+  指令，Codex 独有的 `Interrupt` 在 Claude 侧由意图文档自身承载（零写入）。
+  非 command 处理器、`async` 后台钩子、`permissionDecision: "ask"` 与
+  `PermissionRequest` 的决策形状差异都不降级，而是以 `declared-unsynced` 如实
+  声明：它们的效果是运行期否决，散文不能替代。
+- Codex 逐 hook 信任按位置编址且哈希覆盖 `statusMessage`，所以受管组只追加、
+  不重排，Codex 侧的 `[bridge:<id>]` 标记只在创建时写。
 - 技能受管副本写入 `.agents/skills/<name>/`。
 - 技能的 bytes、host discoverability 与 live activation 分别验证；不为
   `.agents/skills/` 合成未经官方证实的 host-trust 状态。
@@ -301,17 +395,22 @@ auth / notify 等机器本地键）、`hooks.json`、`rules/*.rules`、`agents/*
 
 ## 实现前需要复核
 
-- issue #17532 状态：项目级 `config.toml` 内联 hooks 是否已修复；实测
-  `.codex/hooks.json` 在当前 CLI 的触发行为。
+- issue #17532 是否修复（2026-09-07 复核仍 open）。项目级 `.codex/hooks.json` 在
+  当前 CLI 的触发行为已于同日实测，见上文证据分层。
+- 交互式 `/hooks` 的完整信任流程与 `[hooks.state."<key>"]` 的实际落盘位置：源码
+  层已定位到用户 `config.toml`，但装机上尚未观察到真实写入，需要一次人工 TUI
+  会话确认。这是 hooks 知识条目上唯一未闭合的阻塞项。
 - `.agents/skills` 路径是否仍是官方项目级技能目录。
 - Codex bundled validator、Agent Skills specification 与 runtime loader
   是否仍有字段差异；runtime 的宽松接受仍不得反向扩张公共格式。
 - 分别 smoke test skill list 发现、显式调用与隐式调用；若用户级
   `[[skills.config]]` 覆盖影响结果，只记录环境事实，不改写该配置。
-- hooks 的 `prompt` / `agent` 处理器与 `async` 是否已实装（影响可映射的
-  意图范围）。
-- hooks 信任流程的实际交互成本（首次信任、哈希变更重信任）对快路径体验的
-  影响。
+- hooks 的 `prompt` / `agent` 处理器是否已实装（2026-09-07 仍在 discovery 阶段
+  被拒；`mcp_tool` 与 `async` 已实装，见上文）。
+- hooks 信任流程的实际交互成本（首次信任、identity 变更重信任）对快路径体验的
+  影响；`commandWindows` 不进 identity 这一盲区是否在后续版本收敛。
+- Codex 事件清单是否继续增长（12 个为 2026-09-07 快照），以及 9 / 12 的 matcher
+  适用面是否变化。
 - 受管区块与投射内容对 `project_doc_max_bytes` 合并预算的占用；警戒阈值的
   标定与“区块不完整即阻断”的 contract-owner 决策。
 - 有效 `project_root_markers`、fallback names、root override 与 budget=0 对

@@ -39,6 +39,10 @@
 - conditional-write-unavailable: .agents/skills/fixture-consumer/agents/openai.yaml
 - conditional-write-unavailable: .agents/skills/fixture-consumer/bridge-intent.yaml
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -48,5 +52,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

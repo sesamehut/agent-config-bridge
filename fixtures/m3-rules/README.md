@@ -30,7 +30,7 @@ id; the Codex-first branches use `codex-first-pending` and
 operating-system temporary directory, initializes and commits a disposable Git
 repository, applies the input tree, and installs canonical, single-link plain
 files under the retained `.git` directory: the exact closed
-`activation-fixture/v1` profile, the bound `write-capability-fixture/v1`
+`activation-fixture/v2` profile, the bound `write-capability-fixture/v1`
 document, an optional `fault-schedule-fixture/v1`, the
 `replay-bundle-commitment/v1` operation binding, and the
 `bridge-m3-replay-envelope/v2` envelope. The marker and envelope both name the
@@ -209,8 +209,35 @@ is a fixture placeholder only when its `baseline_ref` binds it to the
 materialized commit; the harness substitutes that exact commit before
 comparison. Plan comparison checks the complete headers, unit and closure
 tables, capability-profile bindings, ordered physical path operations,
-migration decisions and complete candidate sets, adoption decisions,
-warnings, outcomes, registries, ordering, and cross-field invariants.
+migration decisions and complete candidate sets, adoption decisions, hook
+tiers, hook adoption decisions, warnings, outcomes, registries, ordering, and
+cross-field invariants.
+
+`sync-plan/v3` pins two hook sections: `## Hook tiers` immediately after
+`## Warnings` and `## Hook adoption decisions` immediately after
+`## Adoption decisions`. Both serialize `- (none)` when the plan has no hook
+rows, which is what every M3 expectation and confirmed plan carries. The
+harness enforces the exact section sequence, the
+`| unit | class | surface | tier | reason |` and
+`| handler | location | disposition | destination | decision |` headers, the
+closed hook unit, class, surface, tier and reason registries, the
+`handler/<n>` file order and `<file>#<Event>[<group>][<handler>]` location
+grammar, and the rule that the Hook tiers row set equals the plan's hook unit
+set with a matching tier. A `hooks/<id>/source` row carries the entry class
+with surface, tier and reason `-`, because the source document is not
+projected anywhere.
+Hook warning tokens carry their pinned carrier path, closed detail grammar,
+and acknowledgement class; the `hook carrier`, `hook opt-in` and
+`write capability` apply-blocker gates are scoped to the closure carrying the
+matching row and to its dependents, while every other gate stays
+project-wide. Hooks committed to a repository run for everyone who clones it,
+so this classification is review metadata, not a sandbox.
+
+The activation profiles under [`profiles/`](profiles/) are
+`activation-fixture/v2` documents: the v1 keys plus the required
+`codex_project_trust` (`trusted`, `untrusted`, `unknown`) and
+`codex_hooks_feature` (`enabled`, `disabled`, `unknown`). Every M3 profile
+declares `unknown` for both, so no expectation row changes.
 
 Every serialized capability row must be exactly derivable from the scenario's
 closed declaration under [`capabilities/`](capabilities/). Positive profiles
@@ -223,7 +250,29 @@ Guarded rows carry the non-CAS and unavailable-strict-compensation
 acknowledgements; strict-required negative rows remain `unavailable`. Parser
 adversarials cover numeric, first-use bindings and reject byte-wise, gapped,
 out-of-first-use, and unreferenced profiles. Guarded region adversarials cover
-Unicode replacement, insertion, deletion, and a mid-code-point offset.
+Unicode replacement, insertion, deletion, and a mid-code-point offset. The
+`hook_sections` accounting block holds the named hook-section checks: the two
+section round trips, the tier and adoption row rejections including the pinned
+cross-carrier grouping that puts `.claude/settings.json` before
+`.codex/hooks.json`, one accepted line per hook warning token with its
+negative path and detail cases, the per-token carrier scope that keeps
+`hooks-globally-disabled` on a settings file and `hook-format-preserved`,
+`hooks-carrier-unusable` and `undeclared-hooks-key` on a JSON hooks carrier
+while `hook-carrier-absent` and `hook-projection-asymmetric` may still name
+`AGENTS.md`, the hook unit, closure, tier, state and action registries, the
+hook `both-changed` conflict row that may also carry `event-unverified`,
+`opt-in-required` or `awaiting-host-trust`, the five closed hook decision
+shapes bound to `closure/decision/hooks/<entry-id>` with the `class: gate`
+all-or-nothing rule that projects both host carriers or neither while letting
+a blocked carrier stand beside its forced zero-write sibling, the post-write
+`awaiting-host-trust` timing that attaches
+only to a `hooks/<entry-id>/codex` row whose `.codex/hooks.json` carrier was
+written, the warning-class and apply-blocker-scope consistency rule, the
+`activation-fixture/v2` profile keys, and the registered
+`hooks-carrier-composition` validator failure id. Formal plan adversarials
+additionally reject a missing `## Hook tiers` section, a misplaced one, an
+invented hook tier row, an out-of-file-order hook adoption row, and hook
+adoption rows whose carriers are in inverted carrier-path order.
 [`journal_validator.py`](journal_validator.py) is the fixture-bound contract
 validator for the current live-journal contract, not a product runtime
 implementation: `bridge-live-operation-journal/v2` validated by

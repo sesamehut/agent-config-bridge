@@ -37,6 +37,10 @@
 - conditional-write-unavailable: .claude/rules/bridge-covenant.md
 - conditional-write-unavailable: AGENTS.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -46,5 +50,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

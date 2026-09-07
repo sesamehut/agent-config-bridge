@@ -39,6 +39,10 @@
 - conditional-write-unavailable: AGENTS.md
 - untracked-files-included: .claude/rules/new.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -48,5 +52,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

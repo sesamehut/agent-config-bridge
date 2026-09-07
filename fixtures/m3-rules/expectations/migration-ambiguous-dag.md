@@ -37,6 +37,10 @@
 - ambiguous-baseline: .
 - migration-closure-incomplete: .
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 | unit | legacy baseline | current relation | disposition | decision |
@@ -55,5 +59,9 @@
 | skills/fixture-legacy-repair | 3333333333333333333333333333333333333333 |
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

@@ -75,6 +75,10 @@ PLAN_TEXT = """# Bridge Sync Plan
 - strict-compensation-unavailable: AGENTS.md
 - strict-compensation-unavailable: CLAUDE.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -89,6 +93,10 @@ PLAN_TEXT = """# Bridge Sync Plan
 |---|---|---|---|---|
 | segment/1 | 49-51 | shared-entry | entry | confirmed |
 | segment/2 | 53-55 | manual | - | confirmed |
+
+## Hook adoption decisions
+
+- (none)
 """
 FORMAL_SCRATCH_PATTERNS = (
     "bridge-journal-formal-attestation-*",

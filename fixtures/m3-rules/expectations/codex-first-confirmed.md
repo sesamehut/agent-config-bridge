@@ -43,6 +43,10 @@
 - strict-compensation-unavailable: CLAUDE.md
 - untracked-files-included: CLAUDE.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -57,3 +61,7 @@
 |---|---|---|---|---|
 | segment/1 | 49-51 | shared-entry | entry | confirmed |
 | segment/2 | 53-55 | manual | - | confirmed |
+
+## Hook adoption decisions
+
+- (none)

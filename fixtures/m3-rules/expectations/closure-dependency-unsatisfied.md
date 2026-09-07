@@ -51,6 +51,10 @@
 - strict-compensation-unavailable: .agents/skills/fixture-prerequisite/SKILL.md
 - strict-compensation-unavailable: .agents/skills/fixture-prerequisite/bridge-intent.yaml
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -60,5 +64,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

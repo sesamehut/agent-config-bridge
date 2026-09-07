@@ -33,6 +33,10 @@
 
 - (none)
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -42,5 +46,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

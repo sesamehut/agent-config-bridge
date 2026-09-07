@@ -1,6 +1,6 @@
 # Canonical sync-plan cases
 
-This reference contains minimal normative `sync-plan/v2` fragments for
+This reference contains minimal normative `sync-plan/v3` fragments for
 replay and formal-validator implementations. A real document still includes
 every section required by
 [`sync-plan-spec.md`](sync-plan-spec.md). Values such as the all-`a` baseline
@@ -232,20 +232,239 @@ independently bound injected change. The affected closure is exactly
 its exact armed, single-consumption claim, and injected receipts plus the
 confirmed-plan snapshot; a caller-supplied phase label is not evidence.
 
+## Native two-host hook projection
+
+An advisory `SessionStart` reminder projected to both native carriers. The
+source entry is unchanged and unwritten, so no `/source` row is serialized:
+
+```markdown
+## Units
+
+| unit | closure | selection | baseline | state | action | direction | authorization | outcome | tier | annotations |
+|---|---|---|---|---|---|---|---|---|---|---|
+| hooks/reminder-start/claude | closure/hooks/claude | selected | - | no-baseline | create | source-to-projection | confirmed | applied | native | - |
+| hooks/reminder-start/codex | closure/hooks/codex | selected | - | no-baseline | create | source-to-projection | confirmed | applied | native | awaiting-host-trust |
+
+## Closures
+
+| closure | members | depends on | selection | authorization | outcome |
+|---|---|---|---|---|---|
+| closure/hooks/claude | hooks/reminder-start/claude | - | selected | confirmed | applied |
+| closure/hooks/codex | hooks/reminder-start/codex | - | selected | confirmed | applied |
+
+## Write capabilities
+
+| step | closure | path | operation | protocol | binding | inverse protocol | inverse binding |
+|---|---|---|---|---|---|---|---|
+| 1 | closure/hooks/claude | .claude/settings.json | replace | guarded-patch/v1 | capability/1 | unavailable | - |
+| 2 | closure/hooks/codex | .codex/hooks.json | replace | guarded-patch/v1 | capability/1 | unavailable | - |
+
+## Warnings
+
+- claude-hooks-shared-execution: .claude/settings.json
+- guarded-patch-non-cas: .claude/settings.json
+- guarded-patch-non-cas: .codex/hooks.json
+- strict-compensation-unavailable: .claude/settings.json
+- strict-compensation-unavailable: .codex/hooks.json
+
+## Hook tiers
+
+| unit | class | surface | tier | reason |
+|---|---|---|---|---|
+| hooks/reminder-start/claude | reminder | settings-json | native | shared-event-command |
+| hooks/reminder-start/codex | reminder | codex-hooks-json | native | shared-event-command |
+```
+
+The action is `create` because the projection member is missing, while the
+operation is `replace` because the carrier file already exists. That split is
+the same one a new block inside an existing `AGENTS.md` already uses.
+`awaiting-host-trust` appears only in a post-write result and only on the
+Codex row.
+
+## Degraded Codex hook in root AGENTS.md
+
+A Claude-only event with `class: reminder`, first projection, pre-write and
+confirmed. The event is outside the 12 names of `shared-events/2026-09-07`,
+so every row of the entry carries `event-unverified`. Units and Closures
+rows:
+
+```markdown
+| hooks/context-note/claude | closure/hooks/claude | selected | - | no-baseline | create | source-to-projection | confirmed | planned | native | event-unverified |
+| hooks/context-note/codex | closure/agents-md | selected | - | no-baseline | create | source-to-projection | confirmed | planned | semantic | behavior-degraded; event-unverified |
+
+| closure/agents-md | hooks/context-note/codex | - | selected | confirmed | planned |
+| closure/hooks/claude | hooks/context-note/claude | - | selected | confirmed | planned |
+
+| 1 | closure/agents-md | AGENTS.md | replace | guarded-patch/v1 | capability/1 | unavailable | - |
+| 2 | closure/hooks/claude | .claude/settings.json | replace | guarded-patch/v1 | capability/1 | unavailable | - |
+```
+
+Its warning section is exactly:
+
+```text
+- claude-hooks-shared-execution: .claude/settings.json
+- guarded-patch-non-cas: .claude/settings.json
+- guarded-patch-non-cas: AGENTS.md
+- manual-zone-guarded: AGENTS.md
+- strict-compensation-unavailable: .claude/settings.json
+- strict-compensation-unavailable: AGENTS.md
+```
+
+Its Hook tiers rows are:
+
+```markdown
+| hooks/context-note/claude | reminder | settings-json | native | claude-only-event |
+| hooks/context-note/codex | reminder | agents-md | semantic | degraded-standing-instruction |
+```
+
+The degraded row joins the existing `closure/agents-md`; no new closure id is
+invented. The two closures do not depend on each other, and step order alone
+places the explanation before the executable hook. Post-write the Codex row
+additionally carries `live-activation-unknown; restart-may-be-required`,
+because the `AGENTS.md` carrier-touch predicate in `sync-plan/v3` names a
+degraded `hooks/<entry-id>/codex` row whose block was written; its complete
+annotation cell is then
+`behavior-degraded; event-unverified; live-activation-unknown; restart-may-be-required`.
+
+## Declared-unsynced hook decision closure
+
+A `class: gate` entry whose Codex target declares `surface: none`, with the
+Claude side already converged:
+
+```markdown
+| hooks/sandbox-guard/claude | closure/decision/hooks/sandbox-guard | selected | 4e77a1b3c5d7e9f1a3b5c7d9e1f3a5b7c9d1e3f5 | unchanged | unchanged | - | not-applicable | unchanged | native | - |
+| hooks/sandbox-guard/codex | closure/decision/hooks/sandbox-guard | selected | - | declared-unsynced | unchanged | - | not-applicable | unchanged | declared-unsynced | - |
+
+| closure/decision/hooks/sandbox-guard | hooks/sandbox-guard/claude; hooks/sandbox-guard/codex | - | selected | not-applicable | unchanged |
+
+| hooks/sandbox-guard/claude | gate | settings-json | native | shared-event-command |
+| hooks/sandbox-guard/codex | gate | none | declared-unsynced | decision-not-portable |
+```
+
+`Capability profiles` and `Write capabilities` are both `- (none)` and the
+header is `- authorization: not-applicable`. `declared-unsynced` appears as
+both a plan state and a plan tier: the state says this host has no
+counterpart, the tier repeats the entry's own declaration, and the reason
+names the exact obstacle.
+
+## Hook opt-in pending
+
+`class: side-effect` with `enabled: true` and no covering `enabled-by`
+record:
+
+```markdown
+| hooks/deploy-on-stop/claude | closure/decision/hooks/deploy-on-stop | selected | - | no-baseline | opt-in-or-skip | user-decision | required | deferred | native | decision-required; opt-in-required |
+| hooks/deploy-on-stop/codex | closure/decision/hooks/deploy-on-stop | selected | - | no-baseline | opt-in-or-skip | user-decision | required | deferred | native | decision-required; opt-in-required |
+
+| closure/decision/hooks/deploy-on-stop | hooks/deploy-on-stop/claude; hooks/deploy-on-stop/codex | - | selected | required | deferred |
+
+| hooks/deploy-on-stop/claude | side-effect | settings-json | native | opt-in-pending |
+| hooks/deploy-on-stop/codex | side-effect | codex-hooks-json | native | opt-in-pending |
+```
+
+Its warning section is exactly one line:
+
+```text
+- hook-opt-in-required: .claude/rules/hooks.md (entry deploy-on-stop)
+```
+
+Both capability sections are `- (none)`. The header is
+`- authorization: not-applicable` and there is no `authorization-incomplete`
+line: the header derives from selected mutating closures, and a zero-write
+decision closure cannot mutate. Evidence must carry the exact command line
+plus the pinned sentence that the opt-in record is a review checkpoint in Git
+and not an enforcement boundary. Confirming the opt-in produces a
+`hooks/deploy-on-stop/source` row in `closure/hooks/source` that appends the
+dated `enabled-by` record, plus the two carrier rows that depend on it.
+
+## Absent Codex hook carrier
+
+`.codex/hooks.json` does not exist and `strict-create/v1` is unavailable, so
+the Claude closure proceeds while the Codex closure is scoped-blocked:
+
+```markdown
+| hooks/reminder-start/claude | closure/hooks/claude | selected | - | no-baseline | create | source-to-projection | confirmed | planned | native | - |
+| hooks/reminder-start/codex | closure/hooks/codex | selected | - | no-baseline | create | source-to-projection | not-applicable | blocked | native | - |
+
+| closure/hooks/claude | hooks/reminder-start/claude | - | selected | confirmed | planned |
+| closure/hooks/codex | hooks/reminder-start/codex | - | selected | not-applicable | blocked |
+
+| binding | profile | host | host version | tool surface | platform | filesystem assumptions |
+|---|---|---|---|---|---|---|
+| capability/1 | capability-profile/v1 | other | fixture-guarded-v1 | exact-literal-edit/v1 | other | existing-regular-utf8/v1; unique-exact-region/v1 |
+
+| 1 | closure/hooks/claude | .claude/settings.json | replace | guarded-patch/v1 | capability/1 | unavailable | - |
+| 2 | closure/hooks/codex | .codex/hooks.json | create | unavailable | - | unavailable | - |
+```
+
+Its warning section is exactly:
+
+```text
+- claude-hooks-shared-execution: .claude/settings.json
+- conditional-write-unavailable: .codex/hooks.json
+- guarded-patch-non-cas: .claude/settings.json
+- hook-carrier-absent: .codex/hooks.json
+- hook-projection-asymmetric: .codex/hooks.json (hooks/reminder-start/codex)
+- strict-compensation-unavailable: .claude/settings.json
+```
+
+The blocked Codex closure keeps `selected` with authorization
+`not-applicable`: a scoped `write capability` or `hook carrier` failure is
+never relabelled `not-selected`. Evidence prints the exact bytes to paste to
+create the carrier and states that Bridge provides no cross-carrier
+atomicity, so the Claude hook is active while the Codex hook is absent. Had
+`class` been `gate`, the blocked Codex closure would keep `selected` /
+`not-applicable` / `blocked` and the Claude carrier closure would instead be
+forced to `not-selected` with zero writes.
+
+## Hook adoption decisions
+
+Two hand-written Codex handlers, one proposed for adoption into the existing
+entry `reminder-start` and one `[bridge:legacy-guard]`-marked orphan in an
+unrelated `PreToolUse` group already confirmed as unowned occupancy:
+
+```markdown
+## Hook adoption decisions
+
+| handler | location | disposition | destination | decision |
+|---|---|---|---|---|
+| handler/1 | .codex/hooks.json#SessionStart[0][0] | adopt | hooks/reminder-start | pending |
+| handler/2 | .codex/hooks.json#PreToolUse[1][0] | keep | - | confirmed |
+```
+
+The pending row uses the pending hook occupancy shape:
+`closure/decision/hooks/reminder-start` with `not-selected` /
+`not-applicable` / `not-selected` and `decision-required`. The confirmed
+`keep` row uses handler/2's own marked-orphan closure
+`closure/decision/hooks/legacy-guard` with `selected` / `not-applicable` /
+`deferred` and no annotation. Each entry id owns exactly one hook decision
+closure, so an unrelated `PreToolUse` handler never joins the occupancy
+decision of entry `reminder-start`. A `discard` disposition is destructive
+and needs its own explicit confirmation.
+
 ## Warning grammar
 
 Accepted examples:
 
 ```text
 - agents-md-near-budget: AGENTS.md (28672 bytes of 32768)
+- codex-hook-retrust-required: .codex/hooks.json (PreToolUse group=0 handler=1)
+- codex-inline-hooks-conflict: .codex/config.toml (pointer-key)
 - codex-root-unresolved: . (root-marker-excluded)
+- hook-opt-in-required: .claude/rules/hooks.md (entry deploy-on-stop)
+- hook-projection-asymmetric: .codex/hooks.json (hooks/reminder-start/codex)
+- hooks-carrier-unusable: .codex/hooks.json (duplicate-key)
 - marker-anomaly: AGENTS.md (line 7)
+- undeclared-hooks-key: .claude/settings.json (Stop matcher=omitted)
 - untracked-files-included: .claude/rules/style.md
 ```
 
 Rejected examples include `28672/32768`, an unknown unresolved reason,
 `(line seven)`, an absolute path, a unit id in the path field, a directory
-path, or `.` for `untracked-files-included`.
+path, `.` for `untracked-files-included`, `(group 0 handler 1)` without the
+`=` separators, an uppercase or underscored entry id in `(entry <id>)`, a
+`hooks/<id>/<host>` unit id in the path field of a hook warning, and a
+`hook-projection-asymmetric` detail naming a path instead of a unit id.
 
 ## Per-unit migration candidates
 
@@ -343,5 +562,30 @@ document with matching scan/operation context. It must reject at least:
   post-migration member that retains a baseline/transition annotation;
 - a rename destination with a baseline or a state other than `no-baseline`;
 - a warning with a non-canonical path or detail;
-- `onboarding/covenant` in either migration table; or
+- `onboarding/covenant` or any `hooks/*` unit in either migration table;
+- a hook unit id without a `source`, `claude`, or `codex` host segment, or any
+  hook row that widens the eleven-column Units header;
+- a `hooks/<id>/source` row serialized when `.claude/rules/hooks.md` is
+  neither written by the plan nor itself blocked;
+- a hook Units row with no `## Hook tiers` row, a duplicated or extra Hook
+  tiers row, or a Hook tiers `tier` that disagrees with its Units row;
+- a hook row using tier `structural`, a Claude row declaring surface
+  `agents-md`, or a Codex row declaring surface `intent-doc`;
+- a hook `both-changed` conflict or opt-in decision bound to
+  `closure/decision/<unit>` instead of `closure/decision/hooks/<entry-id>`,
+  or an entry whose two host rows split across two decision closures;
+- an opt-in-pending plan whose header authorization is `required` or that
+  emits `authorization-incomplete` for a zero-write decision closure;
+- a scoped-blocked hook carrier closure relabelled `not-selected`, or a
+  `class: gate` entry that applies one carrier while the sibling carrier is
+  blocked or unavailable;
+- `awaiting-host-trust` in a pre-write plan, or attached to any row other
+  than a `hooks/<id>/codex` row whose carrier was or may have been written;
+- a hooks-carrier postimage produced by reserializing the parsed document, or
+  one that differs anywhere outside the located owned spans and insertion
+  points;
+- a `## Hook adoption decisions` table with gapped `handler/<n>` numbering, a
+  location outside the `<file>#<Event>[<i>][<j>]` grammar, an `adopt` row
+  whose destination is `-`, or a `keep`/`discard` row whose destination is
+  not `-`; or
 - expectation comparison offered as proof that the plan grammar is valid.

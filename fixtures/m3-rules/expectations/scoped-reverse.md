@@ -38,6 +38,10 @@
 - guarded-patch-non-cas: .claude/rules/docs.md
 - strict-compensation-unavailable: .claude/rules/docs.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -47,5 +51,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

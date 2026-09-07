@@ -34,6 +34,10 @@
 - surface-shadowed: AGENTS.override.md
 - untracked-files-included: AGENTS.override.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -43,5 +47,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

@@ -41,6 +41,10 @@
 - untracked-files-included: .claude/rules/bridge-covenant.md
 - untracked-files-included: AGENTS.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -50,5 +54,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

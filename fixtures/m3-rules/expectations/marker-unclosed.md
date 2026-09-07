@@ -34,6 +34,10 @@
 - marker-anomaly: AGENTS.md (line 52)
 - untracked-files-included: CLAUDE.md
 
+## Hook tiers
+
+- (none)
+
 ## Migration decisions
 
 - (none)
@@ -43,5 +47,9 @@
 - (none)
 
 ## Adoption decisions
+
+- (none)
+
+## Hook adoption decisions
 
 - (none)

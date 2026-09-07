@@ -21,10 +21,10 @@ adoption 回到 source，再投射到两侧。
 ```mermaid
 flowchart LR
   C["versioned covenant"] --> O["ownership model"]
-  S["bridge-sentinel\ncurrent carrier, read-only"] --> R["report/v4: drift → reconcile"]
+  S["bridge-sentinel\ncurrent carrier, read-only"] --> R["report/v5: drift → reconcile"]
   G["HEAD-reachable Git DAG"] --> B["per-unit provable baseline"]
   O --> B
-  B --> W["bridge-sync\nsync-plan/v2"]
+  B --> W["bridge-sync\nsync-plan/v3"]
   R --> W
   W --> Q{"complete plan confirmed?"}
   Q -->|yes| X["write dependency closures"]
@@ -58,10 +58,12 @@ flowchart LR
 - **M2**：开放技能 complete Git tree，并用 v1 covenant bootstrap。
 - **M3**：升级到单一当前 tuple，开放 entry / rule shards 到 `AGENTS.md` managed
   blocks 的投射与反向采纳。
-- **M4**：才开放 hook intents 到双侧 hooks carrier。
+- **M4**：再升一次 tuple，开放 hook intents 到两个原生 hooks carrier，以及
+  `reminder` / `observation` 意图的常驻指令降级。
 
-M3 仍不安装 `hook-intents.md`、不写 hooks；CLI、package、plugin manifest 与
-distribution payload 也继续受 M5 门禁。
+hook intents 是普通 unit，不是 covenant bootstrap 资产：
+`templates/hook-intents.example.md` 只是示例文档，任何流程都不安装它。CLI、
+package、plugin manifest 与 distribution payload 继续受 M5 门禁。
 
 ## 为什么 source 是现有树
 
@@ -79,13 +81,14 @@ approval / sandbox 等 runtime execution policy 不进入共享 source，避免�
 
 ## versioned covenant
 
-M3 用 tracked、immutable、双 half 的 `covenant/v2` 建立项目级 onboarding anchor：
+Bridge 用 tracked、immutable、双 half 的 `covenant/v3` 建立项目级 onboarding
+anchor：
 
 - `.claude/rules/bridge-covenant.md` exact source template；
 - root `AGENTS.md` 内 exact managed block，区块外是逐字节保留的 manual zone。
 
-两个 half 绑定 `source-tree/v4`、`report/v4`、`reconciliation/v2` 与
-`sync-plan/v2`。二者必须同时 tracked、schema / template / version valid 才算
+两个 half 绑定 `source-tree/v5`、`report/v5`、`reconciliation/v3` 与
+`sync-plan/v3`。二者必须同时 tracked、schema / template / version valid 才算
 onboarded。partial / malformed / untracked / modified / mismatch 是 blocker；旧版本
 进入显式 migration，不能当普通 drift。历史上曾完整 onboard、当前 pair 消失是
 offboarding decision。判定优先级是 safety / trackability、pair coherence、tuple
@@ -95,19 +98,21 @@ exact pair 后才可在新一轮进入 `migrate`。
 covenant 只声明 ownership model，不会把项目里所有 `.agents/skills/<name>/`
 自动据为己有。unit ownership 仍需 Git transition evidence 或本轮明确 annex。
 写侧把 partial / modified pair 作为 `repair`，历史消失作为明确 `restore` /
-`offboard`，tuple barrier 作为 `migrate`；v1/v3 exact bytes 只供一次性显式
-migration 识别，运行时不保留双读。每个动作都以两个 half 与 manual zone
-为同一 closure。Bridge 不 stage，所以新建 half 在用户自行记录前不能虚报
-onboarded。
+`offboard`，tuple barrier 作为 `migrate`；归档的 v1 与 v2 exact bytes 组成封闭
+两成员集合，各自一跳，只供一次性显式 migration 识别，运行时不保留双读。每个动作
+都以两个 half 与 manual zone 为同一 closure。Bridge 不 stage，所以新建 half 在
+用户自行记录前不能虚报 onboarded。
 
-迁移不是只替换两个 covenant bytes。写侧先从 reachable v1 DAG 推导完整 legacy
+迁移不是只替换两个 covenant bytes。写侧先从 reachable legacy DAG 推导完整 legacy
 owned set，并在独立 Migration candidates table 按 unit 列出全部
 ancestry-maximal OID。唯一候选才形成标量 legacy baseline；多个不可比候选保持
-`ambiguous` 并阻断，不能任选一个。当前满足 v4 relation 的唯一候选 unit 必须自动
+`ambiguous` 并阻断，不能任选一个。当前满足 v5 relation 的唯一候选 unit 必须自动
 carry；缺失、不安全或未收敛的 unit 也必须进入闭集决策。最终由一个 reachable Git
-transition commit 同时承载 v2/v4 covenant 与闭合 carried set，该 commit 才为这些
+transition commit 同时承载当前 covenant 与闭合 carried set，该 commit 才为这些
 unit 建立 current baseline。Bridge 不 commit，因此只有 worktree bytes 而没有该
-transition 时仍是 migration pending；runtime 始终只读 v2/v4。
+transition 时仍是 migration pending；runtime 始终只读 v3/v5。legacy set 只含
+`entry`、`rules/<id>` 与 `skills/<name>`：`reconciliation/v2` 禁止一切 hook 写入，
+所以没有 hooks unit 能证明 v2 时代的 baseline，声称拥有的一律阻断。
 
 ## 两层状态：carrier 与 reconciliation
 
@@ -116,12 +121,14 @@ transition 时仍是 migration pending；runtime 始终只读 v2/v4。
 Sentinel 对当前 repo bytes 做只读观察：
 
 - skill paths、bytes 与 modes 是否相同；
-- entry/rule managed block 与未来 hook carrier 的当前结构状态；
+- entry/rule managed block 的当前结构状态；
+- hook 意图与两个 hooks carrier 中受管组的当前结构状态，以及未受管占用；
 - path safety、loadability 与 portability lint；
 - onboarding covenant 是否完整。
 
 Codex activation 另有独立 live-input 域：resolved root markers、fallback names、
-document budget，以及 root override / AGENTS / fallback 的 exact safe-file evidence。
+document budget、项目信任与 hooks feature 开关，以及 root override / AGENTS /
+fallback 的 exact safe-file evidence。
 这些 carrier 即使 untracked / ignored 也要检查，但其 bytes 只用于 loadability /
 shadow / budget，绝不进入 ownership 或 baseline；配置或 carrier 无法确定时默认阻断。
 
@@ -171,7 +178,7 @@ M3 的 entry/rules unit 不要求 source 与 carrier bytes 同形：
   没有默认胜者，直接阻断；
 - rule unit 是 `.claude/rules/**/*.md` 分片，排除 immutable covenant 与
   `hooks.md`；
-- source raw bytes 经 `source-tree/v4` 固定 render 生成一个 root `AGENTS.md`
+- source raw bytes 经 `source-tree/v5` 固定 render 生成一个 root `AGENTS.md`
   block；baseline 是 `(raw source, rendered block)`，而不是二树 byte equality；
 - `paths` 使用严格可逆 `pv2` applicability preamble，invalid、no-op、duplicate 或
   brace expansion 超出 1,000 patterns / 4 MiB 的分片直接阻断，绝不扩大为
@@ -183,6 +190,23 @@ M3 的 entry/rules unit 不要求 source 与 carrier bytes 同形：
 entry/rule intent 采用受控 HTML comment，不把 Bridge 私有键写进 Claude 只文档化
 `paths` 的 YAML frontmatter。自由 semantic managed mode 被删除：歧义 reverse
 adoption 必须展示 source candidate 与确定性 rerender 后取得明确确认。
+
+M4 的 hook unit 是 `.claude/rules/hooks.md` 里的单条意图，一条意图拆成
+`hooks/<id>/source` 与两个 host unit：
+
+- 两个原生 carrier 是 `.claude/settings.json` 与 `.codex/hooks.json` 的 `hooks`
+  键。ownership 只到意图声明的 `(event, effective matcher)` 组，同一文件里其他
+  键与其他组都是未受管字节；
+- 每侧的档位是声明值，取自 `native | semantic | declared-unsynced`。只有
+  `reminder` 与 `observation` 意图、且该 event 在那一侧没有原生承载面时才可降级
+  为常驻指令：Codex 写一个 root `AGENTS.md` 受管区块，Claude 直接以意图文档自身
+  承载（零写入）。`gate` 与 `side-effect` 永不降级；
+- `class` 为 `gate` / `side-effect` 且启用时必须有带日期的 `enabled-by` 记录，
+  首次写 Claude carrier 前必须有文件级确认注释。两者都是可评审的 source diff，
+  都不是执行边界：提交进仓库的 hook 会在每个 clone 上运行，Bridge 的分类是评审
+  元数据而不是沙箱；
+- baseline 在字段层比较，所以重新格式化任一侧都不会使 baseline 失效。逐 unit 的
+  状态机与信任后果见[同步模型](../implementation/sync-model.md)钩子一节。
 
 ## compatibility 是四条正交轴
 
@@ -203,17 +227,20 @@ validator rejection 单独报告，不反向改写合法 source。
 Codex 项目 skills 没有已文档化的 project-trust gate，所以不用
 `awaiting-host-trust`。repo bytes 也不能证明当前 session 已重新发现 skill，故使用
 中性的 `live-activation-unknown` 与 restart hedge。hooks 的 trust annotation 是
-另一条未来 surface 事实，不能外推到 skills。
+另一条 surface 的事实：Codex 的 `.codex/` 层只在项目被信任后加载，且逐 hook 绑定
+一个 normalized identity 哈希，所以 `awaiting-host-trust` 只在写后、只在 Codex
+hook 行出现，不能外推到 skills。
 
 ## ownership 与写入护栏
 
 ownership 分三种粒度：
 
 - 技能：完整 file set / Git tree；
-- M3 的 `AGENTS.md`：managed block，manual zone 不受管；
-- M4 的 hooks：intent 声明的 keys。
+- `AGENTS.md`：managed block，manual zone 不受管；
+- hooks：两个 JSON carrier 中由意图声明的 `(event, effective matcher)` 组，组外
+  与文件内其余键都不受管。
 
-M3 任何写入都遵循：
+任何写入都遵循：
 
 1. relevant tracked、non-ignored untracked、ignored 与 dirty scope 全部进入计划；
 2. ignored / secret / generated payload 不复制，Bridge 不 stage / commit；
@@ -237,6 +264,11 @@ exact-region replacement、完整 postverify。新文件只用 `strict-create/v1
 root override、root marker 无法证明、fallback shadow、budget=0、planned bytes
 超限或没有合格 write protocol 时都阻断；Bridge 不修改 Codex config 来规避宿主
 加载事实。详见[写入协议 ADR](write-protocol.md)。
+
+两个 hooks JSON carrier 同理：它们是共享物理文件而不是整文件 ownership。
+postimage 由 `json-owned-span/v1` 求得，只编辑受管组的 byte span，数组只追加、
+永不重排，其余字节逐字节复制；整文件反序列化重写被显式禁止，因为它会打乱 Codex
+按位置编址的逐 hook 信任并抹掉用户的手写格式。
 
 `keep` 只表示本轮零写且未解决，不创建 ignore manifest、不能报同步成功。conflict
 unit 与其 closure 零写；确认后可执行互不依赖的无歧义 closure。
