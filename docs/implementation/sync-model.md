@@ -25,8 +25,8 @@ AGENTS.md managed block                managed Codex projection
 AGENTS.md hooks/<id> block             semantic degradation only
 ```
 
-写面到此覆盖完整 MVP 的三类配置面。CLI、npm package、plugin manifest 与
-distribution payload 仍由 M5 门控。
+写面到此覆盖完整 MVP 的三类配置面。插件产物与分发由
+[分发模型](distribution-model.md)承担，不属于写面。
 
 ## 两个 skill、两种权限
 

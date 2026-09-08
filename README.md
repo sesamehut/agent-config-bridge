@@ -5,8 +5,9 @@ Code / Codex bridge designed to let a project maintain one canonical source
 for agent skills, hooks, and rules, then project that source into host-native
 layouts.
 
-The development tree has completed M1 through M3. M4 hook-intent modeling and
-dual-host hook projection are in progress.
+The development tree has completed M1 through M4. M5 delivers the installable
+plugin payload under [`plugin/`](plugin/README.md), which is also where the
+installation instructions live.
 
 - [`bridge-sentinel`](skills/bridge-sentinel/SKILL.md) observes repository
   carriers without writing, using `source-tree/v5` and `report/v5`.
@@ -54,6 +55,8 @@ python -B fixtures/m3-rules/journal_validator_tests.py --mode single
 python -B fixtures/m3-rules/journal_validator_tests.py --mode concurrent
 python -B fixtures/m4-hooks/hooks_harness.py self-test
 python -B fixtures/m4-hooks/hooks_harness.py check-hook-fence
+python -B scripts/package_plugin.py self-test
+python -B scripts/package_plugin.py verify
 git diff --check
 ```
 
@@ -92,17 +95,21 @@ values, including the two values inside the deliberately unreadable
 These results prove repository contracts, isolated fixture behavior, and the
 recorded agent workflows; repository bytes do not prove Claude Code or Codex
 live-host discovery or activation, and they never prove that a projected hook
-is trusted or will run. M4 is closing: the contract tuple is raised, the hook
+is trusted or will run. M4 is closed: the contract tuple is raised, the hook
 specs and the hooks subcommands of the sentinel mechanics are in place, and the
 M4 fixture suite and its harness have landed, so the command list above carries
 both M4 commands and the M4 closure counts above are measured, not pending. The
 live journal contract `bridge-live-operation-journal/v2` is bound by reference
 and is not re-proved by the M4 suite. Platform boundary: on Windows, Codex runs
 `commandWindows` under pwsh while Claude runs `command` under bash, so a shared
-command has to hold in both shells or the intent needs a per-host branch. There
-is no CLI, npm package, plugin manifest or payload, or CI release gate:
-packaging remains gated until M5, and CI remains M6 work. Product artifacts
-land milestone by milestone; the [roadmap](docs/phases/roadmap.md) owns that
+command has to hold in both shells or the intent needs a per-host branch. M5 delivers
+`plugin/` and the root `.claude-plugin/marketplace.json` as generated
+artifacts: `scripts/package_plugin.py` assembles them from a tracked-files
+allowlist, secret-scans them, and `verify` fails on any drift; the host-side
+validations and the live install smoke are recorded in the
+[M5 closure record](docs/phases/closure/m5.md). There is still no npm package,
+bundled JavaScript, or CLI, and CI remains M6 work. Product artifacts land
+milestone by milestone; the [roadmap](docs/phases/roadmap.md) owns that
 boundary.
 
 Start with:
@@ -117,9 +124,8 @@ Start with:
 ## Repository role
 
 This is a single repository, modeled on `appstore-connect-skill` and
-`sesamehut-auth`: it is the upstream design/development home and will carry the
-installable plugin payload once the packaging milestone opens. The layout
-layers by role:
+`sesamehut-auth`: it is the upstream design/development home and carries the
+installable plugin payload. The layout layers by role:
 
 - `skills/` — agent-facing skill sources: `SKILL.md`, references, metadata,
   and narrowly scoped read-only mechanics (tracked).
@@ -130,16 +136,19 @@ layers by role:
   (tracked).
 - `fixtures/` — fixture projects with known states and expected reports, used
   to validate the skills (tracked).
-- `src/` — TypeScript sources for the thin wrapper script (tracked; arrives
-  with the packaging milestone).
-- `dist/` — build/bundle intermediates for the wrapper (gitignored; arrives
-  with the packaging milestone).
-- `plugin/` — the installable payload, assembled at the packaging milestone
-  and committed as a checked-in boundary artifact: plugin manifest,
-  agent-facing skills, the host-mapping knowledge base, a thin wrapper, and
-  README. It is assembled from audited upstream
-  sources and keeps its generated-output nature — edit upstream and regenerate,
-  never hand-edit `plugin/`.
+- `scripts/` — `package_plugin.py` (assemble, verify, self-test) and
+  `bridge_doctor.py` (offline preflight), Python 3.9+ standard library only
+  (tracked).
+- `VERSION` — the single version source rendered into both manifests and the
+  payload README (tracked).
+- `.claude-plugin/marketplace.json` — the repository's own single-plugin
+  marketplace manifest, generated, read by both hosts (tracked).
+- `plugin/` — the installable payload, committed as a checked-in boundary
+  artifact: both host manifests, the agent-facing skills, the covenant
+  templates, the host-mapping knowledge base, the doctor, and a README. It is
+  assembled from an allowlist of audited upstream sources and keeps its
+  generated-output nature — edit upstream and rebuild, never hand-edit
+  `plugin/`.
 
 The repository is named by domain plus product noun (`agent-config-bridge`),
 with no `-plugin` distribution-form suffix; the plugin form is carried by the

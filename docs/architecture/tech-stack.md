@@ -29,15 +29,14 @@ Bridge 的能力默认通过 skill 调用目标工具和 LLM 的固有能力，�
 | 文件读写 | 读取现状、执行版本化 path protocol | capability adapter 证明的 strict primitive，或现有文本文件的 `guarded-patch/v1` exact-literal replacement；边界见[写入协议](write-protocol.md) |
 | 输出稳定性 | 减少无意义 diff，保护人工内容 | 受管区块标记 + 落盘前逐字节比对 |
 | 只读机械辅助 | M1 哨兵的字节比较、规范化、期望报告比较 | Python 3.9+ 标准库脚本 |
-| 包装脚本 | 定位自带文件、后续写路径与 doctor | 包装脚本（包装里程碑再引入） |
-| 运行时 | M1 机械辅助；后续包装脚本运行时 | Python 3.9+；Node.js >= 20 LTS（仅包装需要时） |
-| frontmatter / YAML | 解析 skill / 规范条目元数据 | `yaml`（仅在包装脚本确有解析需求时引入） |
+| 打包与 doctor | 从允许清单组装并审计 `plugin/` 产物；离线手工排障 | Python 3.9+ 标准库脚本（`scripts/package_plugin.py`、`scripts/bridge_doctor.py`） |
+| 运行时 | 机械辅助、打包与 doctor | Python 3.9+；不需要 Node.js |
+| frontmatter / YAML | 解析 skill / 规范条目元数据 | 标准库字节级解析；未引入 `yaml` |
 
 ## 依赖边界
 
-- **用户机前置**：git 必装；运行 M1 哨兵需要 Python 3.9+；Node.js 仅在后续
-  包装脚本需要时作为运行时。git 以外的前置须配环境预检：开工前探测并校验版本，
+- **用户机前置**：git 必装；运行哨兵、sync 与 doctor 需要 Python 3.9+；不需要
+  Node.js。git 以外的前置须配环境预检：开工前探测并校验版本，
   缺失时给出安装指引并停下，不静默降级。
-- **开发期**：文档与 skill 以文本为主；如果包装脚本使用 TypeScript，再引入最小 dev
-  工具链（类型、打包、测试）。
-- **运行期依赖**：默认只依赖 git 和目标工具能力；`yaml` 的引入条件见上表。
+- **开发期**：文档与 skill 以文本为主；打包脚本是标准库 Python，没有 dev 工具链。
+- **运行期依赖**：默认只依赖 git、Python 标准库和目标工具能力。

@@ -13,9 +13,13 @@ and the docs inventory is maintained in
 
 ## Scope boundaries
 
-Implementation is open, but packaging stays milestone-gated: do not add a CLI
-implementation, npm package files, plugin manifests, bundled JavaScript, or
-distribution payloads before the roadmap's packaging milestone.
+Packaging is delivered as generated boundary artifacts: `plugin/` and the root
+`.claude-plugin/marketplace.json` are assembled by
+`python -B scripts/package_plugin.py build` from an allowlist and checked by
+`python -B scripts/package_plugin.py verify`. Never hand-edit them; rebuild
+after changing anything under `skills/`, `templates/`, `knowledge/`,
+`scripts/bridge_doctor.py`, or `VERSION`, and keep `verify` green. Do not add
+npm package files, bundled JavaScript, a CLI, or any other manifest.
 Product artifacts land only in the directories declared in
 [`docs/implementation/distribution-model.md`](docs/implementation/distribution-model.md).
 
@@ -39,18 +43,18 @@ both; shared conventions belong here, not in a private agent memory.
 
 ## Development skill entrypoint
 
-Until the packaging milestone installs host-native plugin entrypoints, the
-checked-in `skills/bridge-sentinel/` and `skills/bridge-sync/` directories are
-development source rather than natively discovered project skills. When the
-user explicitly asks to run the bridge sentinel, check bridge state, or
-validate its fixtures, read `skills/bridge-sentinel/SKILL.md` and follow it as
-the active read-only skill. When the user asks to onboard, project, adopt,
+The checked-in `skills/bridge-sentinel/` and `skills/bridge-sync/` directories
+are the development source. They are not natively discovered project skills
+here, and `plugin/skills/` is their generated copy, never a capability to load
+in this repository. When the user explicitly asks to run the bridge sentinel,
+check bridge state, or validate its fixtures, read
+`skills/bridge-sentinel/SKILL.md` and follow it as the active read-only skill. When the user asks to onboard, project, adopt,
 reconcile, delete, rename, or otherwise write Bridge-managed project skills,
 entry instructions, rule shards, or hook intents, read
 `skills/bridge-sync/SKILL.md` and follow it as the active write-side skill. Its
 write scope covers the hook intent document `.claude/rules/hooks.md`, the
 `hooks` keys of a project `.claude/settings.json`, and `.codex/hooks.json`.
-Never load skills under `fixtures/` as capabilities.
+Never load skills under `fixtures/` or `plugin/` as capabilities.
 
 ## Implementation constraints
 
@@ -69,10 +73,14 @@ Never load skills under `fixtures/` as capabilities.
   operation while its bound journal remains open. Any later reverse operation
   needs a new confirmed plan reconstructed from current bytes and reachable
   Git; never reuse an old temporary journal or erase a user change.
-- Keep the Claude entrypoint and Codex entrypoint separate. Claude interpolates
-  `${CLAUDE_PLUGIN_ROOT}` in skill content; Codex documents plugin-root env vars
-  for plugin hook processes only, so Codex skill entrypoints go through a
-  skill-local wrapper.
+- Ship one skill body to both hosts: no `${CLAUDE_*}` placeholder in skill
+  content, every bundled path resolved relative to its own `SKILL.md`, and
+  `allowed-tools: Read` so an installed skill can read its bundled references,
+  templates, and knowledge. The skill-local `scripts/sentinel_mechanics.py` is
+  the mechanical entry on both hosts; never add a second, host-specific wrapper
+  layer. Codex injects plugin-root env vars into plugin hook commands only, and
+  this plugin ships no hooks. Only the two manifests and `agents/openai.yaml`
+  are host-specific.
 - Do not overwrite unmanaged or hand-written host-native files. Confirm a plan
   first, write only inside managed regions, and ask for an adoption or
   replacement decision.

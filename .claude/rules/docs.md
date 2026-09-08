@@ -30,6 +30,9 @@ This file is the docs entry point and inventory.
   - `codex-capability-surface.md` - Verified Codex-side mechanisms: hooks,
     skills, rules, and the project-level config surface
   - `write-primitives.md` - Verified host and filesystem write primitives
+  - `plugin-distribution-surface.md` - Verified Claude Code / Codex plugin
+    manifest, skill-runtime, and marketplace mechanics behind the packaging
+    design
 - `phases/` - Phase planning and milestone tracking
   - `roadmap.md` - Milestone roadmap and phase planning
   - `closure/` - Per-milestone closure records: the evidence and check
@@ -39,6 +42,7 @@ This file is the docs entry point and inventory.
     - `m2.md` - M2 closure record
     - `m3.md` - M3 closure record
     - `m4.md` - M4 closure record
+    - `m5.md` - M5 closure record
 
 ## Rules
 
@@ -68,9 +72,11 @@ This file is the docs entry point and inventory.
   and links the standing prose checklists, so the newest record plus what it
   links is the complete procedure. Edit the roadmap only when the plan itself
   changes or new scope is added, never to record status or evidence.
-- **Generated artifacts** - plugin manifests, bundled CLIs, package lockfiles,
-  and distribution payloads should not be introduced until the roadmap reaches
-  the packaging milestone.
+- **Generated artifacts** - `plugin/` and the root
+  `.claude-plugin/marketplace.json` are the only generated artifacts:
+  `python -B scripts/package_plugin.py build` assembles them from the allowlist
+  and `verify` must pass before they are committed. Never hand-edit them, and
+  do not introduce other manifests, bundled CLIs, package files, or lockfiles.
 - **Research freshness** - Claude Code and Codex plugin / skill behavior is
   time-sensitive. Preserve collection dates in research notes and re-check
   official host docs before turning stale research into implementation.

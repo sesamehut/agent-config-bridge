@@ -62,8 +62,9 @@ flowchart LR
   `reminder` / `observation` 意图的常驻指令降级。
 
 hook intents 是普通 unit，不是 covenant bootstrap 资产：
-`templates/hook-intents.example.md` 只是示例文档，任何流程都不安装它。CLI、
-package、plugin manifest 与 distribution payload 继续受 M5 门禁。
+`templates/hook-intents.example.md` 只是示例文档，任何流程都不安装它。M5 打开了
+packaging：`plugin/` 与根市场清单是生成的边界产物；npm package、bundled
+JavaScript 与 CLI 仍不引入。
 
 ## 为什么 source 是现有树
 
@@ -320,6 +321,6 @@ Git 的作用是事实与损失边界，不是 Bridge 获得无限写权限的�
 
 ## 仓库与分发
 
-开发态 skill、templates、knowledge 与 fixtures 和未来 plugin boundary 同仓库存放，
-但 packaging 仍由 milestone gate 控制。目录职责与 Claude / Codex 入口差异见
-[分发模型](../implementation/distribution-model.md)。
+开发态 skill、templates、knowledge、fixtures 与生成的 `plugin/` 边界产物同仓库
+存放；产物由允许清单组装并经密钥扫描，只能重新生成、不能手工编辑。目录职责与
+Claude / Codex 入口差异见[分发模型](../implementation/distribution-model.md)。
