@@ -32,6 +32,13 @@ This file is the docs entry point and inventory.
   - `write-primitives.md` - Verified host and filesystem write primitives
 - `phases/` - Phase planning and milestone tracking
   - `roadmap.md` - Milestone roadmap and phase planning
+  - `closure/` - Per-milestone closure records: the evidence and check
+    procedure frozen when a milestone closes; the newest record owns the
+    standing procedure
+    - `m1.md` - M1 closure record
+    - `m2.md` - M2 closure record
+    - `m3.md` - M3 closure record
+    - `m4.md` - M4 closure record
 
 ## Rules
 
@@ -53,6 +60,14 @@ This file is the docs entry point and inventory.
   directories (`skills/`, `knowledge/`, `fixtures/`); design docs link to them
   instead of inlining them. Mechanism enumerations and host-behavior specifics
   live in `research/` entries; design docs state the conclusion and link.
+- **Roadmap is plan only** - `phases/roadmap.md` holds each milestone's goal,
+  work items, completion criteria, and deferrals, nothing else. Milestone
+  status, delivered lists, check commands, evidence counts, and evidence
+  boundaries belong to the per-milestone `phases/closure/<m>.md` record linked
+  from the roadmap; each new record repeats every still-valid runnable command
+  and links the standing prose checklists, so the newest record plus what it
+  links is the complete procedure. Edit the roadmap only when the plan itself
+  changes or new scope is added, never to record status or evidence.
 - **Generated artifacts** - plugin manifests, bundled CLIs, package lockfiles,
   and distribution payloads should not be introduced until the roadmap reaches
   the packaging milestone.

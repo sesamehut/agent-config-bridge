@@ -100,9 +100,10 @@ Never load skills under `fixtures/` as capabilities.
   product / architecture / implementation claims aligned.
 - **Research claims**: record the collection date and re-check official host
   docs before turning research into implementation.
-- **Code and product-artifact changes**: run the check procedure defined in the
-  roadmap, validate every formal skill, and keep the checks aligned with CI as
-  milestones open.
+- **Code and product-artifact changes**: run the check procedure defined by the
+  newest milestone closure record under `docs/phases/closure/` (its command
+  block is cumulative and it links the standing checklists), validate every
+  formal skill, and keep the checks aligned with CI as milestones open.
 
 ## Debug output
 
