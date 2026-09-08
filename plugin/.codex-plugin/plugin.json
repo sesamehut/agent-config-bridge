@@ -1,0 +1,37 @@
+{
+  "name": "agent-config-bridge",
+  "version": "0.1.0",
+  "description": "Bridge project-level agent configuration between Claude Code and Codex: a read-only drift sentinel and a plan-confirm-write sync for project skills, entry instructions, rule shards, and hook intents.",
+  "author": {
+    "name": "Zehua Hu",
+    "email": "zehua.hu.cs@outlook.com"
+  },
+  "homepage": "https://github.com/sesamehut/agent-config-bridge",
+  "repository": "https://github.com/sesamehut/agent-config-bridge",
+  "keywords": [
+    "claude-code",
+    "codex",
+    "agent-config",
+    "skills",
+    "rules",
+    "hooks"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agent Config Bridge",
+    "shortDescription": "Keep Claude Code and Codex project config in sync",
+    "longDescription": "Agent Config Bridge keeps one canonical source for a project's agent skills, entry instructions, rule shards, and hook intents, then projects it into the host-native Claude Code and Codex layouts. bridge-sentinel reports drift without writing; bridge-sync plans, confirms, and reconciles writes with Git-proven baselines.",
+    "developerName": "Zehua Hu",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use $agent-config-bridge:bridge-sentinel to check this repository for agent-configuration drift without modifying files.",
+      "Use $agent-config-bridge:bridge-sync to plan, confirm, and reconcile Bridge-managed writes in this repository."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

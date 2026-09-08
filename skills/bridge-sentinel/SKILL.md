@@ -1,6 +1,7 @@
 ---
 name: bridge-sentinel
 description: Checks a Git repository for drift between canonical project agent configuration and its Claude Code/Codex projections, then emits a read-only report. Use after agent-configuration changes, for an explicit bridge-state check, or to validate bridge fixtures.
+allowed-tools: Read
 ---
 
 # Bridge sentinel
@@ -12,6 +13,8 @@ state from the normative decision tables and return the prescribed report.
 
 - Requires a Git worktree, Git on `PATH`, and Python 3.9+.
 - Resolve support files relative to this `SKILL.md`.
+- The dated host fact base is `../../knowledge/` relative to this `SKILL.md`;
+  consult it when a host behavior is not settled by the references.
 - Put renders, normalized copies, and produced expectation reports in a
   unique OS-temporary directory outside the scan root.
 

@@ -11,3 +11,4 @@
 *.yaml text eol=lf
 *.yml text eol=lf
 fixtures/**/gitignore text eol=lf
+VERSION text eol=lf

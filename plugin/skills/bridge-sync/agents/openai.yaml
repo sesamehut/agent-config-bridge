@@ -1,0 +1,7 @@
+interface:
+  display_name: "Bridge Sync"
+  short_description: "Plan versioned project skill and rule writes"
+  default_prompt: "Use $agent-config-bridge:bridge-sync to select, confirm, and reconcile this Git repository's managed project skills, entry instructions, and rule projections with explicit strict or guarded write protocols."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,6 +1,7 @@
 ---
 name: bridge-sync
 description: Plans, selects, confirms, and reconciles versioned Bridge-managed project skills, Claude entry instructions, rule shards, root AGENTS.md blocks, hook intents, and both native hook carriers using Git-proven unit baselines, deterministic rendering, per-closure authorization, and explicit strict or guarded write protocols. Use to onboard an empty, Claude-native, or Codex-native project; migrate, project, adopt, repair, delete, rename, or inspect proposed Bridge writes.
+allowed-tools: Read
 ---
 
 # Bridge sync
@@ -16,6 +17,8 @@ classification is review metadata, not a sandbox.
 - Run only in a Git worktree with Git on `PATH` and Python 3.9+.
 - Resolve this skill, its references, the sibling `bridge-sentinel` skill, and
   `../../templates/covenant/` from this `SKILL.md`.
+- The dated host fact base is `../../knowledge/` relative to this `SKILL.md`;
+  consult it when a host behavior is not settled by the references.
 - Use the sibling read-only helper for deterministic tree inspection and byte
   comparison:
 

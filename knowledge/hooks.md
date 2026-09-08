@@ -335,7 +335,8 @@ invalid; the intent document keeps them valid and annotates them
   `--json` stream carried no "needs review" notice; the same hook ran with
   `--dangerously-bypass-hook-trust`, which also emits two `error` items
   warning that enabled hooks may run without review. That flag never appears
-  in fixtures or CI and is reserved for a dated manual evidence procedure.
+  in fixtures or CI, Bridge never invokes it, and it is reserved for a dated
+  manual evidence procedure.
 - TUI vocabulary in 0.153.4: "New hook - review required", "Modified since
   last trusted - review required", "1 hook needs review before it can run.".
 - Consequence: a written and byte-verified Codex hook is not a running hook.

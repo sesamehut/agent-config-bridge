@@ -1,0 +1,7 @@
+interface:
+  display_name: "Bridge Sentinel"
+  short_description: "Check agent configuration drift safely"
+  default_prompt: "Use $agent-config-bridge:bridge-sentinel to check this Git repository for agent-configuration drift without modifying files."
+
+policy:
+  allow_implicit_invocation: true
