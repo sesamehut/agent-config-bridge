@@ -88,7 +88,11 @@ serializes; this table is the fact base behind that registry.
 Codex documents 12 events. Eleven are shared with Claude and one, `Interrupt`,
 is the first Codex-only event (openai/codex PR #40511, rust-v0.150.0,
 2026-08-26). The 2026-07-25 claim that there are zero Codex-only events is
-refuted; see `## Refuted facts`.
+refuted; see `## Refuted facts`. Re-checked 2026-10-19 against codex-cli
+0.163.0: still 12. openai/codex `main` carries `PreModelRequest` and
+`PostModelRequest` (PR #55144, observation-only), unreleased and kept out of
+the registry. Codex `SessionStart.source` is now `startup`, `resume`, `clear`,
+`compact`, or `fork` (0.155.0).
 
 | Event | Shared | Notes |
 |---|---|---|
@@ -142,9 +146,12 @@ invalid; the intent document keeps them valid and annotates them
 
 - Handler variants parse as `command`, `mcp_tool`, `prompt`, `agent`. `prompt`
   and `agent` are rejected at discovery ("prompt hooks are not supported yet",
-  "agent hooks are not supported yet"). `mcp_tool` is recognized and executes.
-  Bridge projects `command` handlers only; `http`, `mcp_tool`, `prompt`, and
-  `agent` are never written to either carrier.
+  "agent hooks are not supported yet"). `mcp_tool` is recognized and executes,
+  and the 2026-10-19 re-check found it documented as supported with the
+  fields `server`, `tool`, `input` (`${field.nested}` templates), `timeout`,
+  and `statusMessage`, rejected on `SessionEnd`. Bridge projects `command`
+  handlers only; `http`, `mcp_tool`, `prompt`, and `agent` are never written
+  to either carrier.
 - `async: true` command hooks now run in the background, capped at 8
   concurrent, and `SessionEnd` is always synchronous. The earlier "async is
   skipped" reading is refuted.
@@ -263,7 +270,7 @@ invalid; the intent document keeps them valid and annotates them
 
 ## Per-hook trust identity
 
-- collected: 2026-09-07
+- collected: 2026-09-07; command selection re-checked 2026-10-19
 - source: `codex-rs/hooks/src/engine/discovery.rs` in openai/codex `main`
   (there is no `hooks/src/trust.rs`)
 - status: settled (implementation observation)
@@ -282,13 +289,21 @@ invalid; the intent document keeps them valid and annotates them
   `additionalContextLimit`. `${VAR}` substitution is applied to `command`
   after the hashed config is cloned, so the identity hashes the
   pre-substitution command text.
-- Not in the identity: `commandWindows`. The rebuilt config hardcodes
-  `command_windows: None`, so replacing only the Windows branch keeps an
-  existing trusted hash valid and the new Windows command runs under old
-  trust. This asymmetry is security-relevant, so a Windows-branch-only
-  replacement is disclosed as the informational `codex-trust-blind-change`
-  while a change to an identity field is disclosed as
-  `codex-hook-retrust-required`.
+- The hashed `command` is the platform-effective one (re-checked 2026-10-19;
+  identical at 0.153.4 and on `main`, correcting the 2026-09-07 reading):
+  discovery runs `if cfg!(windows) { command_windows.unwrap_or(command) }
+  else { command }` before it builds the hashed config, and that config
+  hardcodes `command_windows: None`. So the branch the trusting machine does
+  not select is outside the identity: on a Windows machine a
+  `commandWindows`-only replacement changes the hash and forces re-trust,
+  while a `command`-only replacement with `commandWindows` present runs
+  under old trust; on POSIX it is the reverse. This asymmetry is
+  security-relevant. Bridge currently discloses a `commandWindows`-only
+  replacement as the informational `codex-trust-blind-change` (exact for a
+  POSIX trusting machine; on a Windows one the handler instead goes dark
+  until re-trusted, which the plan does not yet say) and a change to any
+  other identity field as `codex-hook-retrust-required`; the mirror case is
+  not yet disclosed.
 - Consequences: reformatting or reordering unrelated groups does not
   invalidate trust, but editing `command`, `matcher`, `timeout`,
   `statusMessage`, `async`, or `additionalContextLimit` does. Omitting
@@ -406,7 +421,8 @@ invalid; the intent document keeps them valid and annotates them
 
 ## Windows shells
 
-- collected: 2026-09-07 (live), source-confirmed the same day
+- collected: 2026-09-07 (live), source-confirmed the same day; Claude shell
+  fallback re-checked 2026-10-19
 - source: `codex-rs/hooks/src/engine/command_runner.rs`,
   `codex-rs/shell-command/src/shell_detect.rs`, and `codex-rs/core/src/shell.rs`
   in openai/codex `main`;
@@ -429,7 +445,13 @@ invalid; the intent document keeps them valid and annotates them
   `$BASH_VERSION` as `5.2.37(1)-release`, and PowerShell syntax produced no
   file at all. A Claude command handler may opt into PowerShell with
   `"shell": "powershell"`, which auto-detects `pwsh.exe` and falls back to
-  `powershell.exe`.
+  `powershell.exe`. Re-checked 2026-10-19: the hooks reference now states
+  that shell form runs under "Git Bash on Windows, or PowerShell when Git
+  Bash isn't installed" (`shell` defaults to `powershell` on such machines),
+  so "Claude = Git Bash" holds only where Git for Windows is present; a
+  `PreToolUse` or `PermissionRequest` hook that fails there without `shell`
+  set blocks the call, and `CLAUDE_CODE_GIT_BASH_PATH` points Claude at a
+  Git Bash it did not find.
 - Binding consequence: on one Windows machine Claude executes `command` under
   bash while Codex executes `commandWindows` under pwsh, so a single shared
   command string must be a plain program invocation with simple arguments that
@@ -634,18 +656,19 @@ invalid; the intent document keeps them valid and annotates them
   undeclared, and `commandWindows` is compared on the Codex surface only.
 - A `commandWindows` that differs from the effective `command` means Windows
   and POSIX run different code, which the plan discloses per handler.
-- `commandWindows` is outside the Codex trust identity, so a Windows-only
-  replacement is invisible to per-hook trust (see
-  `## Per-hook trust identity`).
+- The Codex trust identity hashes the platform-effective command, so a
+  `commandWindows`-only replacement is invisible to per-hook trust on a POSIX
+  trusting machine and forces re-trust on a Windows one (re-checked
+  2026-10-19; see `## Per-hook trust identity`).
 
 ## Refuted facts
 
-- collected: 2026-09-07
+- collected: 2026-09-07; extended 2026-10-19
 - source: named per item below
 - status: settled
 
-Every correction below was collected on 2026-09-07 and supersedes the dated
-claim it names.
+Every correction below supersedes the dated claim it names; items 1 to 8 were
+collected on 2026-09-07, items 9 to 11 on 2026-10-19.
 
 1. Old claim (this file, 2026-07-07): "Claude project-settings hooks are gated
    by the workspace trust dialog." Now: the gate does not cover the `-p` or
@@ -700,6 +723,31 @@ claim it names.
    this repository promises no take-effect-without-restart behavior on either
    host. Source:
    [Claude Code hooks reference](https://code.claude.com/docs/en/hooks).
+9. Old claim (this file and `docs/research/codex-capability-surface.md`,
+   2026-09-07): "`commandWindows` is not in the Codex trust identity, so a
+   Windows-only replacement keeps running under old trust." Now: the identity
+   hashes the platform-effective command, selected with
+   `command_windows.unwrap_or(command)` on Windows before hashing, so the
+   blind branch is the one the trusting machine does not select; the old
+   sentence holds only for a POSIX trusting machine. The code was the same at
+   0.153.4; the 2026-09-07 reading was wrong. Source:
+   `codex-rs/hooks/src/engine/discovery.rs` in openai/codex `main`.
+10. Old claim (this file, 2026-09-07): "Claude runs a Windows hook `command`
+    under bash (Git Bash)", stated without qualification. Now: that is the
+    behavior when Git for Windows is installed; the hooks reference documents
+    PowerShell as the shell-form interpreter when Git Bash is absent, and
+    2.1.299 fixed such hooks failing open. Source:
+    [Claude Code hooks reference](https://code.claude.com/docs/en/hooks)
+    `### Exec form and shell form` and the CHANGELOG.
+11. Old claim (`execution-semantics.md`, 2026-09-07): the executable handler
+    types other than `command` "have no shared field shape". Now: Codex
+    documents `mcp_tool` as supported with `server`, `tool`, `input`
+    (`${field.nested}` templates), `timeout`, and `statusMessage`, the same
+    shape as Claude's MCP tool handler; `SessionEnd` MCP hooks are rejected.
+    Bridge still projects `command` only, for lack of fixtures and trust
+    evidence rather than for lack of a shared shape. Source:
+    [Codex Hooks](https://learn.chatgpt.com/docs/hooks) and
+    `codex-rs/hooks/src/engine/discovery.rs`.
 
 ## Live verification record
 
@@ -755,7 +803,7 @@ guarantee that a hook ran or will run.
 
 ## Still open
 
-- collected: 2026-09-07
+- collected: 2026-09-07; extended 2026-10-19
 - source: this machine's live evidence gap
 - status: watch
 
@@ -766,3 +814,12 @@ guarantee that a hook ran or will run.
   user's `config.toml`. This needs a manual TUI session and cannot be driven
   non-interactively. Until it is done, the three trust entries above rest on
   source and binary reading, and Bridge reads project trust only.
+- Re-check items from 2026-10-19 that no fixture covers yet: Codex 0.163.0
+  `plugins._default.enabled` as an activation input; the mirror trust-blind
+  case (a `command`-only change with `commandWindows` present, blind on a
+  Windows trusting machine); the 0.158.0 explicit project-trust lookup paths
+  (re-run live cases B to F for the `projects.<path>` key spelling); the
+  0.161.0 rule that an invalid matcher is a load failure when its group has
+  hooks; Claude's `onFailure: "block"` (2.1.295), which Bridge neither
+  compares nor writes; and the `main`-only Codex events `PreModelRequest` /
+  `PostModelRequest`, which stay out of the shared registry until released.

@@ -509,7 +509,7 @@ this field.
 | `codex-inline-hooks-conflict` | The same Codex layer also declares hooks inline in `.codex/config.toml`, or their absence cannot be proven |
 | `codex-project-untrusted` | Resolved Codex project trust for the scan root is `untrusted` while a hook row targets `.codex/hooks.json` |
 | `codex-root-unresolved` | Root-marker evidence does not prove the intended Codex project root |
-| `codex-trust-blind-change` | A selected Codex write replaces only `commandWindows` of an existing handler, which the trust identity does not cover |
+| `codex-trust-blind-change` | A selected Codex write replaces only `commandWindows` of an existing handler; the trust identity hashes the platform-effective command, so this change is invisible to trust on a POSIX trusting machine and forces re-trust on a Windows one (re-checked 2026-10-19) |
 | `codex-trust-reindex` | A Codex deletion removes a non-final element and shifts the positional trust keys of later elements in that event |
 | `conditional-write-unavailable` | A forward or mandatory rename/rollback/compensation operation whose policy requires strict semantics has no attested strict protocol |
 | `covenant-anchor-anomaly` | Covenant path/type/tracking, pair coherence, template, or version safety is unresolved |

@@ -113,9 +113,13 @@ hook：前两者会触发 Claude 严格校验失败与本仓库的 twin 规则�
 不入）加固定的生成集合：
 
 - 目标工具清单：`.claude-plugin/plugin.json` 只含 Claude 识别的字段；
-  `.codex-plugin/plugin.json` 满足 Codex 官方 `validate_plugin.py` 的必填集
-  （含 `interface` 与 `"skills": "./skills/"`）。两份 `name` 与 `version` 相同，
-  也与市场条目名、目录名一致。
+  `.codex-plugin/plugin.json` 满足 Codex 官方脚手架 `validate_plugin.py` 在 0.1.0
+  对齐时要求的必填集（含 `interface` 与 `"skills": "./skills/"`）。该校验器已随
+  codex-cli 0.159.0 移除，Codex 开发指南转而把根 `plugin.json`（Agent Plugins
+  schema）定为可移植入口、`.codex-plugin/plugin.json` 定为兼容回退（2026-10-19
+  复核，见[插件分发面](../research/plugin-distribution-surface.md)）；本产物继续
+  使用仍受支持的 `.codex-plugin/plugin.json`，是否增加根清单是 M6 的发布决定。
+  两份 `name` 与 `version` 相同，也与市场条目名、目录名一致。
 - 技能：权限分离的 `bridge-sentinel` 与 `bridge-sync`，正文逐字节拷贝。
 - covenant templates：当前 tuple（`covenant/v3`）的 exact source / managed
   block，以及只作显式 migration evidence 的归档 v1 / v2 exact bytes；
@@ -139,20 +143,30 @@ hook：前两者会触发 Claude 严格校验失败与本仓库的 twin 规则�
 `VERSION` 是唯一版本来源，`build` 把它渲染进两份 manifest 与产物 README，
 `verify` 断言三者相等且为严格 semver。市场条目不写 `version`：Claude 会在条目
 版本与 manifest 版本不一致时让 `plugin tag` 与严格校验失败，Codex 的市场条目
-没有版本字段。发布 tag（`claude plugin tag` 生成 `agent-config-bridge--v<版本>`）
-属于 M6 的发布流程，M5 不打 tag。
+没有版本字段。发布 tag 由 `claude plugin tag` 生成（`agent-config-bridge--v<版本>`，
+首个 `agent-config-bridge--v0.1.0` 于 2026-10-19 打出并推送），外部市场条目按 tag
+加 commit sha 钉住；tag 流程的自动化与 CI 门禁仍属 M6。
 
 两个 host 都以声明的版本作为更新信号：版本不变则用户停留在缓存副本；第三方与
 本地市场默认不自动更新，README 因此给出显式的更新命令。
 
 ## 市场发布
 
-仓库根的 `.claude-plugin/marketplace.json` 让用户直接从仓库安装：Claude Code
-可用 `--plugin-dir ./plugin` 免安装试用，或先 `marketplace add` 再 `install`；
-Codex 没有 `--plugin-dir` 等价物，必须先 `codex plugin marketplace add`，再
-`codex plugin add agent-config-bridge@agent-config-bridge`。两侧的 git 形式都会
-克隆整个上游仓库（含 `docs/` 与惰性的 `fixtures/`），只把 `plugin/` 复制进插件
-缓存；README 提醒用户不要在市场克隆目录里启动会话。
+对外的安装路径是用户自己的市场仓库 `sesamehut/plugins-marketplace`（市场名
+`sesamehut-plugins`，2026-10-19 决定并登记）：条目以 `git-subdir` 指向本仓库的
+`plugin/` 目录，按发布 tag 加 commit sha 钉住，版本升级时在该市场重新钉住。两侧
+命令分别是 `claude plugin marketplace add sesamehut/plugins-marketplace` 加
+`claude plugin install agent-config-bridge@sesamehut-plugins`，以及
+`codex plugin marketplace add sesamehut/plugins-marketplace` 加
+`codex plugin add agent-config-bridge@sesamehut-plugins`。市场仓库只克隆它自己，
+再按条目拉取本仓库的 `plugin/` 子目录进缓存。
 
-登记到类似 `sesamehut/plugins-marketplace` 的外部市场仍放在插件产物可安装、
-doctor 可用、版本策略稳定之后，届时再决定。
+仓库根的 `.claude-plugin/marketplace.json` 保留为开发与本地试用路径：Claude Code
+可用 `--plugin-dir ./plugin` 免安装试用，或先 `marketplace add ./` 再 `install`；
+Codex 没有 `--plugin-dir` 等价物，必须先 `codex plugin marketplace add`，再
+`codex plugin add agent-config-bridge@agent-config-bridge`。这条路径的 git 形式会
+克隆整个上游仓库（含 `docs/` 与惰性的 `fixtures/`），只把 `plugin/` 复制进插件
+缓存；README 提醒用户不要在市场克隆目录里启动会话。Codex 开发指南已把
+`.claude-plugin/marketplace.json` 称为 legacy 兼容形式并建议条目带 `policy` 与
+`category`（2026-10-19 复核；`category` 已在 Claude `--strict` 下验证可用，
+`policy` 未重测），本仓库的单插件清单仍停留在两侧 schema 的交集。

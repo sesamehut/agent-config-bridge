@@ -59,7 +59,7 @@ key is preserved the same way.
 | Surface | Host | Reason (collected 2026-09-07) |
 |---|---|---|
 | `async: true` and `asyncRewake` command handlers | both | Both hosts fire and forget: Codex runs them in the background (max 8 concurrent) and Claude honors neither their stdout nor their JSON decisions and does not enforce the timeout |
-| Handler types `http`, `mcp_tool`, `prompt`, `agent` | both | Codex rejects `prompt` and `agent` at discovery and the executable remainder has no shared field shape, so no handler type but `command` is projectable |
+| Handler types `http`, `mcp_tool`, `prompt`, `agent` | both | Codex rejects `prompt` and `agent` at discovery and `http` is Claude-only. `mcp_tool` is documented on both hosts with the same `server` / `tool` / `input` shape (Codex re-checked 2026-10-19; Codex rejects it on `SessionEnd`), but Bridge has no fixture, comparison rule, or trust evidence for MCP handlers, so `command` stays the only projectable handler type |
 | Claude `once` | Claude | Claude honors `once` only in skill frontmatter and explicitly ignores it in settings files, so projecting it would write an inert key |
 | Claude `if` | Claude | Host-side conditional execution that Bridge does not model; Codex's own importer drops any group carrying it |
 | Claude `args` | Claude | It switches the handler to exec form, changes placeholder quoting, cannot spawn `.cmd` or `.bat` shims on Windows, and has no Codex analogue |

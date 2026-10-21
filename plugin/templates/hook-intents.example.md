@@ -32,8 +32,9 @@ section below.
 
 ## Portable commands and per-host branches
 
-On the same Windows machine Claude runs `command` under Git Bash while Codex
-runs `commandWindows` under `pwsh -NoProfile -Command` (collected 2026-09-07),
+On the same Windows machine Claude runs `command` under Git Bash (PowerShell
+where Git Bash is absent) while Codex runs `commandWindows` under
+`pwsh -NoProfile -Command` (collected 2026-09-07, re-checked 2026-10-19),
 so a shared `command` has to be a plain program invocation valid in both
 shells. `bridge-reminder-session-start` meets that bar: `echo` plus one
 double-quoted argument behaves the same way in bash and in PowerShell.

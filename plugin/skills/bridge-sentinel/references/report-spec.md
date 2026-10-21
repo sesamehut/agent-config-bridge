@@ -604,9 +604,12 @@ Evidence and notes when a Codex hook row is present (collected 2026-09-07):
   is positional and lives outside the repository, so `report/v5` never reads it
   and Bridge treats resolved project trust as its only Codex trust input.
 - The trusted hash covers the normalized `timeout`, `statusMessage`, the
-  normalized `additionalContextLimit`, `matcher`, `command`, and `async`, but
-  not `commandWindows`. A Windows-only command change therefore keeps running
-  under an older trust decision.
+  normalized `additionalContextLimit`, `matcher`, `async`, and the
+  platform-effective `command` (`commandWindows` on a Windows machine,
+  `command` elsewhere; re-checked 2026-10-19). A change to the branch the
+  trusting machine does not select therefore keeps running under an older
+  trust decision: a `commandWindows`-only change on a POSIX machine, a
+  `command`-only change with `commandWindows` present on a Windows machine.
 - Codex denies unknown fields only at the top level of `.codex/hooks.json`. An
   unknown key inside a matcher group or a handler object is silently ignored, so
   `codex-handler-unknown-key` reports the key without claiming a load failure.

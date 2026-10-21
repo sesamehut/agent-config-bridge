@@ -1053,8 +1053,11 @@ defaulting and clamping. The identity contains the normalized `timeout`,
   detail, one line per changed handler, so the user sees before confirmation
   exactly which hooks go dark; and
 - a replacement that touches only `commandWindows` of a handler that already
-  exists in `.codex/hooks.json` keeps the old trusted hash valid, so the
-  changed Windows command runs under the previous approval. That asymmetry is
+  exists in `.codex/hooks.json` keeps the old trusted hash valid on a POSIX
+  trusting machine, so the changed Windows command runs there under the
+  previous approval, while a Windows trusting machine re-hashes it and the
+  handler goes dark until re-trusted (the identity hashes the
+  platform-effective command; re-checked 2026-10-19). That asymmetry is
   security-relevant, so Bridge emits the informational
   `codex-trust-blind-change` for it and never `codex-hook-retrust-required`.
 

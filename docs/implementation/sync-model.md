@@ -314,8 +314,13 @@ manual-zone 保护与 `project_doc_max_bytes` 预算。
 降级只在两个条件同时成立时合法：`class` ∈ {`reminder`, `observation`}，且该
 event 由 dated registry `shared-events/2026-09-07` 证明在该 host 上没有原生承载
 面。`gate` 与 `side-effect` 的效果是运行期否决或真实副作用，散文不能假装它；违反
-是 `degradation-ineligible`。Claude 不读 `AGENTS.md`，所以 `agents-md` 只在 Codex
-target 合法，`intent-doc` 只在 Claude target 合法。
+是 `degradation-ineligible`。`agents-md` 只在 Codex target 合法，`intent-doc` 只在
+Claude target 合法。前者的前提自 2026-10-19 起不再是「Claude 不读 `AGENTS.md`」：
+Claude Code 2.1.277 起在没有 `CLAUDE.md` 时原生读取 `AGENTS.md`，用户级设置还能
+切到两者都读（见 [Host 上下文加载行为核验](../research/host-context-loading.md)）。
+前提收窄为「已 onboard 的项目带 `CLAUDE.md`，Claude 处于默认模式」；两者都读的
+模式在仓库字节里不可见，Bridge 只能在报告与计划里提示 `AGENTS.md` 区块可能在
+Claude 侧重复加载，不能消除它，也不得据此改写投射方向。
 
 `.codex/hooks.json` 是 Codex 唯一写目标。若同层 `.codex/config.toml` 还声明了
 inline `[hooks]` 表或 legacy `hooks =` 指针键，两种形态会在同一层合并成两个不同
@@ -400,9 +405,12 @@ Codex 把逐 hook 信任写进用户 `config.toml` 的 `[hooks.state."<key>"]`�
   `additionalContextLimit` 都在其中。任一项变化都会把该 hook 变成 Modified 并停止
   运行，所以计划必须在确认前用 `codex-hook-retrust-required` 指名哪个
   `(<Event> group=<i> handler=<j>)` 会变暗。
-- `commandWindows` 不在 identity 里，这是一个盲区：只替换 `commandWindows` 时旧的
-  trusted hash 依然有效，Windows 分支已经换了代码却不需要重新信任。Bridge 对这类
-  计划发信息性 `codex-trust-blind-change`。
+- identity 里的 `command` 是平台生效后的那条命令（2026-10-19 更正 2026-09-07 的
+  读法）：Windows 上先取 `commandWindows`，POSIX 上取 `command`，再做哈希。盲区因此
+  按平台分布：POSIX 信任机器看不到只替换 `commandWindows` 的改动，Windows 信任机器
+  看不到只替换 `command`（且存在 `commandWindows`）的改动。Bridge 目前只对只替换
+  `commandWindows` 的计划发信息性 `codex-trust-blind-change`，另一半盲区与按平台
+  判定的改法留待 M6 连同夹具一起调整。
 - 因为 `statusMessage` 在 identity 内，`[bridge:<id>]` 标记在 Claude 侧总是写，在
   Codex 侧只在创建 handler 时写；Bridge 不在已收敛的 Codex handler 上增删改它。
 
@@ -416,8 +424,10 @@ Codex 中运行 `/hooks` 复核信任。项目信任本身是 live activation in
 
 2026-09-07 在同一台 Windows 机器上实测：Claude 用 bash（Git Bash）执行
 `command`，Codex 用 pwsh（7.6.5）执行 `commandWindows`，且 Windows 上只有
-`commandWindows` 分支会跑。因此共享的 `command` 必须在 bash 与 PowerShell 下都
-成立（普通程序调用加简单参数），否则条目必须带 per-host 分支。
+`commandWindows` 分支会跑。2026-10-19 复核官方 hooks 文档：Claude 在没有安装 Git
+Bash 的 Windows 机器上改用 PowerShell 执行 shell-form 命令，所以「Claude = Git
+Bash」只对装有 Git for Windows 的机器成立。因此共享的 `command` 必须在 bash 与
+PowerShell 下都成立（普通程序调用加简单参数），否则条目必须带 per-host 分支。
 `targets.codex.commandWindows` 选的是命令文本，`targets.claude.shell` 选的是
 解释器，二者不是映射对，Bridge 不从一个派生另一个。`commandWindows` 与 effective
 `command` 不同的 handler 必须发需确认的 `platform-branch-divergence`：Windows 与

@@ -1,7 +1,10 @@
 # Codex 能力面核验
 
 采集日期：2026-07-24；Hooks 一节已于 2026-09-07 整体复核并重写，其余章节仍沿用
-2026-07-24 的采集边界。主要来源为 Codex 官方文档
+2026-07-24 的采集边界。2026-10-19 对照 codex-cli 0.163.0（`rust-v0.163.0`，
+2026-10-15 发布；本机仍为 0.153.4）的官方文档、release notes 与 openai/codex main
+源码再次复核 Hooks、技能校验器与实现前复核清单，改动处以「2026-10-19 复核」标注，
+新增事实集中在下文「2026-10-19 的复核增补」一节。主要来源为 Codex 官方文档
 （learn.chatgpt.com/docs）、Agent Skills 官方规范与 openai/codex 官方仓库。
 `developers.openai.com/codex/*` 已被上游重定向到 `learn.chatgpt.com/docs/*`：
 hooks 一节的引用已改指新地址，其余章节保留旧链接，需在各自复核时逐条改指。
@@ -41,7 +44,16 @@ main 分支的
   「command 默认 timeout 1 秒、最大 3 秒」只对这两个事件成立。
 - **handler 类型（复核）**：`command`、`mcp_tool`、`prompt`、`agent` 四种可解析；
   `prompt` 与 `agent` 在 discovery 阶段被拒（"not supported yet"），`mcp_tool`
-  已可执行。`async: true` 的 command handler 现在后台执行（最多 8 个并发，
+  已可执行。2026-10-19 复核：官方文档已明文 "`command` and `mcp_tool` handlers
+  are supported. `prompt` and `agent` handlers are parsed but skipped"，并给出
+  `mcp_tool` 字段 `server`（必填，已连接的 MCP server 名）、`tool`（必填）、
+  `input`（可选 JSON 对象，默认 `{}`，`${field.nested}` 从事件取值，占满整个值时
+  保留 JSON 类型）、`timeout`（默认 600）、`statusMessage`，与 Claude 的
+  `server` / `tool` / `input` 同形；`SessionEnd` 的 MCP hook 在 discovery 被拒。
+  文档另有一句 "Configure `mcp_tool` handlers in Global `requirements.toml`"，
+  但同页列出的 hook 位置仍是四处 `hooks.json` / `config.toml`，`mcp_tool` 能否
+  从项目 `.codex/hooks.json` 加载需实测后才能作为实现依据。
+  `async: true` 的 command handler 现在后台执行（最多 8 个并发，
   `SessionEnd` 始终同步），不再整体跳过。旧结论「只有 command 会执行、`async`
   被跳过」作废。
 - **配置形式**：`hooks.json` 顶层是带 `hooks` 键的包装对象（可选顶层
@@ -61,7 +73,13 @@ main 分支的
   信任绑定一个 normalized identity 哈希，且该哈希在 timeout 取默认值与钳制
   **之后**计算。进入 identity 的是 event 名、`matcher`、`command`、归一化
   `timeout`、`statusMessage`、`async` 与归一化 `additionalContextLimit`；
-  `commandWindows` **不在** identity 内，所以只改 Windows 分支不会使既有信任失效。
+  其中 `command` 取的是**平台生效后的那条命令**（2026-10-19 复核推翻 2026-09-07
+  的读法，0.153.4 源码已如此）：discovery 先执行
+  `if cfg!(windows) { command_windows.unwrap_or(command) } else { command }`，
+  再把 `command_windows: None` 的归一化配置做哈希。因此在 Windows 机器上只改
+  `commandWindows` **会**使既有信任失效，只改 POSIX `command`（且存在
+  `commandWindows`）才逃过信任；POSIX 机器上正好相反。准确的表述是「信任机器上
+  未被选中的那个分支在 identity 之外」，而不是「`commandWindows` 不在 identity 内」。
   持久状态是 `[hooks.state."<key>"] {enabled, trusted_hash}`，由 `/hooks` 经
   `ConfigBatchWrite`（`file_path: None`）写入**用户的 `config.toml`**；key 形如
   `<source>:<Event>:<groupIndex>:<handlerIndex>`，按位置编址，重排分组或 handler
@@ -140,6 +158,46 @@ main 分支的
 也能运行、改动 identity 字段后变为 Modified），以及状态记录落盘位置的现场确认。
 装机的用户 `config.toml` 当前没有任何 `hooks` 行，`~/.codex` 下也没有 hook 命名的
 文件，因此这一项必须由一次人工 TUI 会话补齐。
+
+### 2026-10-19 的复核增补
+
+对照 codex-cli 0.163.0 的文档与 release notes（`rust-v0.154.0` 到 `rust-v0.163.0`）
+及 openai/codex main 源码，未在本机运行新版本：
+
+- 事件仍是 12 个；main 上新增 `PreModelRequest` / `PostModelRequest`（PR #55144，
+  2026-10-18 合入，只观察不否决），0.163.0 与文档都还没有，文档也声明 main 分支
+  schema 可能含未发布字段。`shared-events/2026-09-07` 维持 12 个不动。
+- `SessionStart.source` 取值扩为 `startup`、`resume`、`clear`、`compact`、`fork`
+  （0.155.0）；本仓库此前只记录了 `startup` 与 `compact`。
+- 文档把 `commandWindows` 定义为 "an optional Windows-only command override"，
+  TOML 写法 `command_windows` 或 `commandWindows`；`additionalContextLimit` 默认
+  2500 token，写 `0` 则整段透传。
+- 运行期：0.155.0 起 command hook 不再因 stdin 阻塞而挂起，Unix 上与控制终端分离；
+  0.158.0 改用原生 POSIX spawn，并把项目信任查找路径显式化（`projects.<path>`
+  的键拼写需要重测 2026-09-07 的 live 用例 B 到 F）；0.161.0 起 matcher 在
+  discovery 阶段编译，分组内有 hook 时非法 matcher 变成加载失败而不是运行期忽略；
+  0.162.0 起 `/hooks` 浏览器把 `statusMessage` 作为标题显示。
+- `[hooks.state."<key>"]` 的写入路径与形状未变（批量写入多带一个
+  `expected_version: None`），config reference 仍未文档化它；M4 的推迟项维持。
+- 0.163.0 新增 `plugins._default.enabled`（#52220）作为插件默认激活策略，同时作用
+  于插件 skill 与插件 hook，是 doctor 与分发检查应读取的激活输入。
+- 技能根（main 源码）：`.agents/skills` 从仓库根到 cwd 逐级发现，项目层
+  `.codex/skills` 仍接受，用户级 `$CODEX_HOME/skills` 标为弃用，新增内置
+  `$skill-installer`。提及语法上 `@` 是插件、`$` 是技能；0.163.0 起只有 `$` 绑定
+  会抑制自动选技能（#51865）。限定名仍是 `<namespace>:<base>`。
+- 官方脚手架 `plugin-creator`（含 `validate_plugin.py`）已随 0.159.0 移除
+  （#48604，2026-09-29）；`skill-creator/scripts/quick_validate.py` 仍随发行。
+- 文档地址：hooks 为 `learn.chatgpt.com/docs/hooks`，skills 为
+  `learn.chatgpt.com/docs/build-skills`（`developers.openai.com/codex/skills`
+  308 跳转），rules 为 `learn.chatgpt.com/docs/agent-configuration/rules`，
+  plugins 为 `learn.chatgpt.com/docs/plugins` 与
+  `developers.openai.com/plugins/build/plugins`。
+- 复核仍准确：12 个事件与 9 / 12 的 matcher 适用面、超时默认与钳制、`prompt` /
+  `agent` 被跳过、`deny_unknown_fields` 只在顶层、四种信任状态与静默跳过、
+  项目 `.codex/` 层受项目信任门控、hooks.json 与内联 `[hooks]` 合并并告警、
+  Windows shell 为 PowerShell、`tool_name` 词汇表、`PermissionRequest` 决策为对象、
+  `Stop` 必须返回 JSON、`AGENTS.md` 发现链与 32 KiB 合并预算、
+  openai/codex#17532 仍 open。
 
 ## notify：被 hooks 取代的窄机制
 
@@ -241,7 +299,9 @@ openai/codex 固定提交 `44d76c6` 中的
 ### Codex bundled validator
 
 Codex 当前捆绑的 `skill-creator/scripts/quick_validate.py` 是独立的 authoring
-gate，行为与开放规范及 runtime loader 都不完全相同：
+gate，行为与开放规范及 runtime loader 都不完全相同（2026-10-19 复核：该脚本仍随
+0.163.0 发行；同属脚手架的 `plugin-creator/scripts/validate_plugin.py` 已于 0.159.0
+随 plugin-creator skill 一并移除，见[插件分发面](plugin-distribution-surface.md)）：
 
 - 顶层只允许 `name`、`description`、`license`、`allowed-tools` 与 `metadata`；
   因此会拒绝 Agent Skills 标准合法的 `compatibility`，也会拒绝 Claude-only
@@ -400,16 +460,19 @@ auth / notify 等机器本地键）、`hooks.json`、`rules/*.rules`、`agents/*
 - 交互式 `/hooks` 的完整信任流程与 `[hooks.state."<key>"]` 的实际落盘位置：源码
   层已定位到用户 `config.toml`，但装机上尚未观察到真实写入，需要一次人工 TUI
   会话确认。这是 hooks 知识条目上唯一未闭合的阻塞项。
-- `.agents/skills` 路径是否仍是官方项目级技能目录。
+- `.agents/skills` 路径是否仍是官方项目级技能目录（2026-10-19 main 源码仍是，并
+  从仓库根到 cwd 逐级发现）。
 - Codex bundled validator、Agent Skills specification 与 runtime loader
   是否仍有字段差异；runtime 的宽松接受仍不得反向扩张公共格式。
 - 分别 smoke test skill list 发现、显式调用与隐式调用；若用户级
   `[[skills.config]]` 覆盖影响结果，只记录环境事实，不改写该配置。
-- hooks 的 `prompt` / `agent` 处理器是否已实装（2026-09-07 仍在 discovery 阶段
-  被拒；`mcp_tool` 与 `async` 已实装，见上文）。
+- hooks 的 `prompt` / `agent` 处理器是否已实装（2026-10-19 复核：0.163.0 文档仍为
+  parsed but skipped；`mcp_tool` 已文档化为受支持，字段见上文）。
 - hooks 信任流程的实际交互成本（首次信任、identity 变更重信任）对快路径体验的
-  影响；`commandWindows` 不进 identity 这一盲区是否在后续版本收敛。
-- Codex 事件清单是否继续增长（12 个为 2026-09-07 快照），以及 9 / 12 的 matcher
+  影响；identity 只含平台生效命令这一盲区（2026-10-19 更正读法）是否在后续版本
+  收敛，以及 Windows 机器上只改 `commandWindows` 确实触发 Modified 的实测。
+- Codex 事件清单是否继续增长（12 个为 2026-09-07 快照，2026-10-19 发行版仍为 12；
+  main 已有 `PreModelRequest` / `PostModelRequest` 待发布），以及 9 / 12 的 matcher
   适用面是否变化。
 - 受管区块与投射内容对 `project_doc_max_bytes` 合并预算的占用；警戒阈值的
   标定与“区块不完整即阻断”的 contract-owner 决策。

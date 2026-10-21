@@ -139,6 +139,11 @@ not relax the open standard's non-empty requirement. Likewise, accepting
 `allowed-tools` proves only that the key passes this script, not that Codex
 implements Claude's permission behavior.
 
+Re-checked 2026-10-19: `quick_validate.py` still ships with codex-cli 0.163.0.
+The sibling `plugin-creator/scripts/validate_plugin.py` was removed in 0.159.0
+(openai/codex #48604, 2026-09-29) and no `codex plugin validate` subcommand
+replaces it.
+
 ## Fidelity mapping (skills unit class)
 
 - collected: 2026-07-23
@@ -184,8 +189,10 @@ implements Claude's permission behavior.
   placeholder with command output. Codex leaves the same source text
   unchanged at its injection boundary.
 - `allowed-tools` grants no-prompt permission for the invocation turn; it does
-  not restrict other tools. Its effect for project skills is gated by Claude
-  workspace trust.
+  not restrict other tools. Re-checked 2026-10-19: neither the skills nor the
+  permissions documentation gates `allowed-tools` on workspace trust, and the
+  2026-09-08 live probe saw no such effect, so the earlier "gated by Claude
+  workspace trust" sentence is withdrawn.
 - Nested `.claude/skills/` directories are discovered on demand.
   `skillOverrides` can change non-plugin skill visibility without modifying
   `SKILL.md`.

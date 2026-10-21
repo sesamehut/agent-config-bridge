@@ -163,7 +163,8 @@ observation above.
 
 ## Claude project entry locations
 
-- collected: 2026-07-08; reconfirmed 2026-07-24
+- collected: 2026-07-08; reconfirmed 2026-07-24; `AGENTS.md` reading re-checked
+  2026-10-19 against Claude Code 2.1.303
 - source: official Claude Code docs; dated notes in [`docs/research/host-context-loading.md`](https://github.com/sesamehut/agent-config-bridge/blob/main/docs/research/host-context-loading.md)
 - status: settled for supported locations and imports; precedence for two
   simultaneous project-entry locations is undocumented
@@ -178,7 +179,18 @@ observation above.
 - `@path` imports expand at session launch; at most 4 hops; imports inside
   code spans and fenced code blocks are skipped; relative paths resolve from
   the containing file; paths outside the project require one-time approval.
-- Claude reads `CLAUDE.md`, not `AGENTS.md`.
+- Since Claude Code 2.1.277 (re-checked 2026-10-19 on 2.1.303) Claude also
+  reads `AGENTS.md` natively, conditionally. The default mode
+  `claude-md-or-agents-md` reads `AGENTS.md` only when no `CLAUDE.md`,
+  `.claude/CLAUDE.md`, or `CLAUDE.local.md` exists at the cwd or any parent.
+  The mode `claude-md-and-agents-md` reads both and can be set only in
+  user-level settings, `--settings`, or managed settings (ignored in project
+  and local settings), so repository bytes cannot show whether it is on; it
+  deduplicates only an `AGENTS.md` that the `CLAUDE.md` already imports or
+  symlinks. `.claude/rules/` keep loading in both modes, nothing under
+  `.agents/` is read as instructions, and a subdirectory `AGENTS.md` loads on
+  demand when Claude reads a file there. The 2026-07-24 claim "Claude reads
+  `CLAUDE.md`, not `AGENTS.md`" is withdrawn.
 - After v5 control comments and Claude-only regions are subtracted, any active
   shared `@path` import blocks M3 projection: Claude expands it, while Codex
   has no equivalent preprocessing, and Bridge does not inline another file
@@ -307,3 +319,9 @@ behavior:
   claims. After an actual root `AGENTS.md` write, v5 attaches
   `restart-may-be-required` and requires a new Codex run/session before testing
   activation.
+- The Codex projection into root `AGENTS.md` assumes a project with a
+  `CLAUDE.md` whose Claude runs in the default `claude-md-or-agents-md` mode.
+  v5 cannot see the `claude-md-and-agents-md` mode from repository bytes and
+  no longer claims that Claude ignores `AGENTS.md`; the report does not yet
+  carry a hedge for managed `AGENTS.md` blocks loading twice on Claude under
+  that mode.

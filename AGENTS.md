@@ -89,10 +89,11 @@ Never load skills under `fixtures/` or `plugin/` as capabilities.
   dated `enabled-by` opt-in are review checkpoints in Git, never an enforcement
   boundary. Bridge never edits host configuration outside the repository,
   including the Codex project trust state in the user's `config.toml`.
-- On Windows, Claude runs a hook `command` under Git Bash while Codex runs
-  `commandWindows` under PowerShell (collected 2026-09-07), so a shared command
-  must be a plain program invocation valid in both shells; otherwise declare a
-  per-host override or a Codex `commandWindows` branch.
+- On Windows, Claude runs a hook `command` under Git Bash (PowerShell only where
+  Git Bash is absent, re-checked 2026-10-19) while Codex runs `commandWindows`
+  under PowerShell (collected 2026-09-07), so a shared command must be a plain
+  program invocation valid in both shells; otherwise declare a per-host override
+  or a Codex `commandWindows` branch.
 - Never run a fixture hook. Every `command` and `commandWindows` value a change
   writes under `fixtures/` must match `^bridge-fixture-noop( [a-z0-9-]+)?$`, and
   `--dangerously-bypass-hook-trust` never appears in a fixture or in any CI

@@ -1,7 +1,9 @@
 # 插件分发面
 
 采集日期 2026-09-08。对象：Claude Code 2.1.263、codex-cli 0.153.4（openai/codex
-tag `rust-v0.153.4`），Windows 11 本机；Codex 侧结论以官方文档与该 tag 源码为准，
+tag `rust-v0.153.4`），Windows 11 本机；2026-10-19 对照 Claude Code 2.1.303（本机）
+与 codex-cli 0.163.0（文档、release notes 与 main 源码，本机仍 0.153.4）复核，改动处
+以「2026-10-19 复核」标注；Codex 侧结论以官方文档与该 tag 源码为准，
 Claude 侧以官方文档与本机探测为准。本文只记录 host 机制，设计结论见
 [分发模型](../implementation/distribution-model.md)。
 
@@ -22,8 +24,9 @@ Claude 侧以官方文档与本机探测为准。本文只记录 host 机制，�
 - 插件根目录的 `CLAUDE.md` 触发警告（`--strict` 失败），且不作为项目上下文
   加载；`README.md`、`LICENSE`、`CHANGELOG.md` 无警告；顶层 `bin/` 被 claude.ai
   组织分发拒绝。
-- `plugin details <name>` 会列出组件清单与常驻 token 估算，但对不存在的插件也
-  以退出码 0 返回；`validate --strict --json` 对健康插件返回空 `contents`，
+- `plugin details <name>` 会列出组件清单与常驻 token 估算；2.1.263 时对不存在的
+  插件也以退出码 0 返回，2026-10-19 在 2.1.303 实测已改为退出码 1，字面断言仍
+  保留；`validate --strict --json` 对健康插件返回空 `contents`，
   不能证明 skill 数量。自动化检查应把退出码非 0 视为失败，并用
   `Skills (2)  bridge-sentinel, bridge-sync` 一行做字面断言。
 
@@ -56,12 +59,23 @@ Claude 侧以官方文档与本机探测为准。本文只记录 host 机制，�
   `.codex-plugin/plugin.json` → `.claude-plugin/plugin.json` →
   `.cursor-plugin/plugin.json`，取第一个常规非 symlink 命中。`.codex-plugin/`
   存在时静默遮蔽 Claude 清单；只有 `.claude-plugin/` 的目录也能装进 Codex。
-- 根 `plugin.json` 是陷阱：它把清单降为 10 键白名单、强制 `skills` 为
-  `./skills`、只发现直接子目录、跳过 hook 加载并把 skill 正文截断到 8000 字节。
+- 根 `plugin.json`（agent-plugins.org 格式）在 0.153.4 源码里把清单降为 10 键
+  白名单（含 `extensions`）、强制 `skills` 为 `./skills`、只发现直接子目录并把
+  skill 正文截断到 8000 字节。2026-10-19 复核：官方开发指南已把它定为 "the
+  portable entry point"，要求声明
+  `"$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"`，
+  OpenAI 专有的 `interface` / `hooks` / `apps` 放在 `extensions.com.openai` 下，
+  而 `.codex-plugin/plugin.json` 降为 "optional ... a compatibility fallback"；
+  hook 会从该 extension 或 `.codex-plugin` 覆盖层加载，原「跳过 hook 加载」作废。
+  8000 字节截断与只发现直接子目录两条未能在 main 源码中重新定位，保留为 0.153.4
+  的观察。
 - 运行期只要求文件可解析：`name` 为空回退到目录名，`version` 缺失时缓存目录
   名为字面 `local` 并永久优先于任何 semver 目录。实践上 `name` 必须与市场条目
   名一致（否则安装硬失败），`version` 必须是严格 semver。
-- 官方脚手架的 `validate_plugin.py`（codex-cli 安装或加载时并不运行它）要求：
+- 官方脚手架的 `validate_plugin.py`（codex-cli 安装或加载时并不运行它；2026-10-19
+  复核：已随 plugin-creator skill 于 0.159.0 移除，#48604，下列要求只记录 0.1.0
+  产物当初对齐的必填集，现行可运行的检查改为 `codex plugin list --available --json`）
+  要求：
   `name` 匹配 `[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*`、`version` 严格 semver、非空
   `description`、`author` 对象含非空 `name`、`interface` 含非空 `displayName`
   / `shortDescription` / `longDescription` / `developerName` / `category`、
@@ -75,7 +89,8 @@ Claude 侧以官方文档与本机探测为准。本文只记录 host 机制，�
   （必须 `./` 开头）的唯一写法；声明值替换默认值而不是追加。
 - `<skill>/agents/openai.yaml` 逐技能生效且 fail open：未知键忽略，损坏文件
   整体忽略；`policy.allow_implicit_invocation: false` 是 Codex 侧关闭隐式调用
-  的机制，`disable-model-invocation` 会被 `validate_plugin.py` 拒绝。
+  的机制，`disable-model-invocation` 会被 `validate_plugin.py` 拒绝
+  （`quick_validate.py` 的键白名单同样拒绝它）。
 
 ## Codex 插件 skill 运行期
 
@@ -102,7 +117,8 @@ Claude 侧以官方文档与本机探测为准。本文只记录 host 机制，�
   Windows 命令经 `pwsh -NoProfile -Command` 执行。本机 `python3`（pyenv
   3.12.9）与 `python`（3.14.5）是不同解释器，文档不能硬编码任一名字。
 - 插件自带 hook 属非托管，需用户在 `/hooks` 逐条信任，编辑后重新信任；插件
-  skill 不经信任审查，也不受项目信任门控。
+  skill 不经信任审查，也不受项目信任门控。0.163.0 新增 `plugins._default.enabled`
+  默认激活策略，同时作用于插件 skill 与插件 hook（2026-10-19 复核）。
 
 ## 市场
 
@@ -115,6 +131,13 @@ Claude 侧以官方文档与本机探测为准。本文只记录 host 机制，�
   停留在两侧 schema 的交集：`name`、`owner`、顶层 `description`、
   `plugins[{name, description, source}]`；加入 Codex 的 `policy` / `interface`
   会让 Claude `--strict` 失败，Claude 侧缺少顶层 `description` 也会失败。
+- 2026-10-19 复核：Codex 开发指南把 `.claude-plugin/marketplace.json` 称为 "a
+  legacy-compatible marketplace"，并要求条目 "Always include `policy.installation`,
+  `policy.authentication`, and `category`"；但解析器里 `policy` 与 `category` 仍是
+  `#[serde(default)]`，交集 schema 照常加载。新增取值 `INSTALLED_BY_DEFAULT`、
+  `NOT_AVAILABLE`、`ON_USE`，以及 `policy.products` 与顶层 `interface.displayName`。
+  `category` 在 Claude `--strict` 下可用（同日在 `sesamehut/plugins-marketplace`
+  验证），`policy` 未重测。
 - 条目 `source` 相对**市场根**（去掉清单相对路径后的目录）解析，必须以 `./`
   开头且不得 `..`；`"."` 在 Codex 合法、在 Claude 报不支持，`"./plugin"` 两侧
   都合法。`local` 源不能离开市场根；`url` / `git-subdir` / `npm` 可以。
@@ -125,11 +148,15 @@ Claude 侧以官方文档与本机探测为准。本文只记录 host 机制，�
   <name>`，Codex 到 `~/.codex/.tmp/marketplaces/<name>`），再只复制插件目录进
   缓存；`--sparse`（Codex）只对 git 源生效，需要同时包含清单目录与插件目录，
   未实测。`owner/repo` 简写解析到默认分支；Claude 简写走 SSH，除非设置
-  `CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1`。
+  `CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1`（2026-10-19 复核：2.1.296 起没有 GitHub SSH
+  key 的机器会在 SSH 失败后改用 HTTPS 重试）。
 - 目录级校验不打开插件内的 skill / agent / hook 文件，所以市场根与 `./plugin`
   要分别 `validate --strict`，再对 `./plugin/skills` 校验 frontmatter。
-- Codex 没有 `--plugin-dir`；`codex plugin add` 只接受 `PLUGIN@MARKETPLACE`，
-  CLI 子命令不自动发现仓库根市场，必须先 `codex plugin marketplace add`。
+- Codex 没有 `--plugin-dir`；`codex plugin add` 接受 `PLUGIN@MARKETPLACE` 或
+  `PLUGIN -m <MARKETPLACE>`（2026-10-19 更正），CLI 子命令不自动发现仓库根市场，
+  必须先 `codex plugin marketplace add`。Claude 侧 2.1.303 的
+  `plugin install <plugin> --marketplace <source>` 会先按 `marketplace add` 的
+  检查加入市场再安装，一步完成。
   格式错误的 Codex 条目被警告后跳过而不报错，验证要断言条目出现在
   `codex plugin list --available --json` 里；`-c marketplaces.<key>.*` 覆盖
   只对该次调用生效，每条命令都要重复。同名市场不能改指向不同来源，需先

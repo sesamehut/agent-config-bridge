@@ -1,6 +1,8 @@
 # Host 上下文加载行为核验
 
-采集日期：2026-07-24。Claude Code 的公开契约以
+采集日期：2026-07-24；2026-10-19 对照 Claude Code 2.1.303 复核了 `AGENTS.md` 与
+`allowed-tools` 两条，推翻处在原条目以「2026-10-19 复核」标注，其余条目沿用
+2026-07-24 的采集边界。Claude Code 的公开契约以
 [How Claude remembers your project](https://code.claude.com/docs/en/memory)
 与 [Extend Claude with skills](https://code.claude.com/docs/en/slash-commands)
 为准；Codex 对照以官方文档和 openai/codex 固定提交的实现为准。本文区分三种
@@ -13,11 +15,22 @@ observation；本仓库的 live smoke test 是 empirical observation。后两者
 
 ## Claude Code 端结论
 
-- **Claude Code 只读 `CLAUDE.md`，不读 `AGENTS.md`**。官方文档明确表述
-  "Claude Code reads `CLAUDE.md`, not `AGENTS.md`"；请求原生支持 `AGENTS.md` 的
-  issue（[anthropics/claude-code#34235](https://github.com/anthropics/claude-code/issues/34235)）
-  截至采集日仍处 open、无路线图承诺。官方给出的桥接方式是在 `CLAUDE.md` 中写
-  `@AGENTS.md` import。
+- **Claude Code 自 2.1.277 起原生读取 `AGENTS.md`，但默认有条件**（2026-10-19
+  复核，推翻 2026-07-24 的「只读 `CLAUDE.md`，不读 `AGENTS.md`」）。官方 memory
+  文档的 `## AGENTS.md` 一节与 CHANGELOG 2.1.277（"in a project with no
+  `CLAUDE.md`, Claude Code reads `AGENTS.md` instead"）是公开契约：默认模式
+  `claude-md-or-agents-md` 只在 cwd 及其上层目录都没有 `CLAUDE.md`、
+  `.claude/CLAUDE.md`、`CLAUDE.local.md` 时才读 `AGENTS.md`；模式
+  `claude-md-and-agents-md` 两者都读，只能在用户级 `~/.claude/settings.json`、
+  `--settings` 或 managed settings 的
+  `pluginConfigs."cc-plugin-agents-md@builtin".options.instructionFiles` 里设置，
+  项目级与 local 设置里被忽略，因此仓库字节看不出它是否开启；两者都读时只对
+  `CLAUDE.md` 已 `@import` 或 symlink 的那份 `AGENTS.md` 去重。两种模式下
+  `.claude/rules/` 照常加载；`.agents/` 目录下的任何内容都不作为指令读取；子目录
+  `AGENTS.md` 在 Claude 读取该目录文件时按需加载；`/import` 可把 `AGENTS.md`
+  一次性追加进 `CLAUDE.md`。旧结论依据的 issue
+  [anthropics/claude-code#34235](https://github.com/anthropics/claude-code/issues/34235)
+  已由此实现；在 `CLAUDE.md` 中写 `@AGENTS.md` import 仍是官方桥接方式之一。
 - **项目入口有两个官方位置**（2026-07-24 复核）：官方写法是项目入口可位于
   `CLAUDE.md` **或** `.claude/CLAUDE.md`，但没有规定二者同时存在时的加载顺序
   或 precedence。Bridge 对双入口采用 fail-closed policy：二者都不胜出，必须报告
@@ -61,8 +74,10 @@ observation；本仓库的 live smoke test 是 empirical observation。后两者
   `${CLAUDE_PROJECT_DIR}`。它还会在注入前执行行内 `` !`command` `` 与
   以 `!` 标记的 fenced shell block，用输出替换原占位；随后将渲染
   结果作为一条消息加入会话。`allowed-tools` 另行只授予调用当回合的免询问权限，
-  并非正文转换，也不限制其他工具；项目 skill 的该权限效果受 workspace trust
-  约束。
+  并非正文转换，也不限制其他工具。2026-10-19 复核：官方 skills 与 permissions
+  文档都没有把 `allowed-tools` 列入 workspace trust 门控的范围，2026-09-08 的
+  本机探测也未见影响（见[插件分发面](plugin-distribution-surface.md)），原句
+  「项目 skill 的该权限效果受 workspace trust 约束」撤回。
 - **Windows 上 symlink 需要管理员权限或开发者模式**：跨工具共享文件不宜依赖
   symlink；投射选择 copy 与受管区块。
 - **`/init` 读取 `AGENTS.md` 有条件**：默认 `/init` 读取 Cursor rules 与
@@ -128,11 +143,18 @@ Codex 侧机制细节见 [codex-capability-surface.md](codex-capability-surface.
 
 ## 对设计的影响
 
-- `AGENTS.md` 不被 Claude 读取，因此可以安全地作为面向 Codex 的投射面，承载规则
-  分片的结构降级注入，不会造成 Claude 侧内容重复。
-- 替代方案"`AGENTS.md` 作共享入口、`CLAUDE.md` 写 `@AGENTS.md` 垫片"不采用：
+- `AGENTS.md` 作为面向 Codex 的投射面，其「Claude 侧不重复」的前提自 2026-10-19
+  起收窄为：项目存在 `CLAUDE.md` 且 Claude 处于默认模式。已 onboard 的项目默认
+  不受影响；用户级开启 `claude-md-and-agents-md` 时，`AGENTS.md` 里的规则分片
+  降级注入与 hook 提醒区块会在 Claude 侧与 `.claude/rules/` 重复加载，而且仓库
+  字节无法察觉；只有 `AGENTS.md` 的 Codex 起点项目在 onboard 之前也会被 Claude
+  直接读取。`.agents/` 不被读取，技能投射不受影响。投射方向不变，但同步模型与
+  报告必须把这条写成有条件前提并提示重复加载的可能，不能再断言 Claude 不读。
+- 替代方案"`AGENTS.md` 作共享入口、`CLAUDE.md` 写 `@AGENTS.md` 垫片"仍不采用：
   在"规则分片必须注入 `AGENTS.md`"的前提下，它会让 Claude 经 import 与
-  `.claude/rules/` 原生发现重复读取分片内容。
+  `.claude/rules/` 原生发现重复读取分片内容；官方新增的「已 import 的
+  `AGENTS.md` 不再重复读取」去重只消除 import 与原生读取之间的重复，消除不了
+  分片本身的重复。
 - 双入口时 `neither wins` 的 fail-closed 仲裁、root managed-block carrier 与
   适用性前言都是 Bridge policy；host 事实只说明可用入口和加载机制。实现与报告
   不得把这些策略写成官方 precedence、机械路径约束或 enforcement。
@@ -146,7 +168,9 @@ Codex 侧机制细节见 [codex-capability-surface.md](codex-capability-surface.
 
 ## 实现前需要复核
 
-- Claude Code 是否新增了 `AGENTS.md` 原生支持（issue #34235 状态）。
+- Claude Code 原生读取 `AGENTS.md` 的两种模式是否变化（2.1.277 新增，2026-10-19
+  复核），尤其是 `claude-md-and-agents-md` 能否从项目级设置开启、默认模式的判定
+  条件是否仍是「cwd 及上层没有任何 `CLAUDE.md`」。
 - `.claude/rules/*.md` 的块级 HTML 注释剥离 observation 是否仍然成立；官方
   `CLAUDE.md` 保证本身已于 2026-07-24 复核。
 - rules frontmatter `bridge` 键的实测结论是否已按

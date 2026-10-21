@@ -620,7 +620,9 @@ Codex `shell` key both remain undeclared.
 
 A shared `command` must survive both Windows shells: on the same machine Claude
 runs `command` under bash (Git Bash) while Codex runs `commandWindows` under
-`pwsh -NoProfile -Command` (collected 2026-09-07). Project-scoped Codex hooks
+`pwsh -NoProfile -Command` (collected 2026-09-07; Claude falls back to
+PowerShell only where Git Bash is not installed, re-checked 2026-10-19).
+Project-scoped Codex hooks
 receive no injected environment variables at all, while Claude exports
 `${CLAUDE_PROJECT_DIR}`, `${CLAUDE_PLUGIN_ROOT}`, and `${CLAUDE_PLUGIN_DATA}`,
 so a command referencing any path placeholder cannot be one shared string and
@@ -804,15 +806,19 @@ surface only when creating the handler. Bridge never adds, changes, or removes a
 Codex `statusMessage` on an otherwise converged handler, because Codex binds
 per-hook trust to a normalized identity that includes it.
 
-**Codex per-hook trust identity (collected 2026-09-07).** Codex hashes a
-normalized handler identity built after timeout defaulting and clamping. In the
-identity: the normalized `timeout`, `statusMessage`, the normalized
-`additionalContextLimit`, `matcher`, `command`, and `async`. Not in the
-identity: `commandWindows`. Replacing only a handler's `commandWindows`
-therefore keeps the previously trusted hash valid, so changed Windows code runs
-with no review prompt; the write side discloses that with the informational
-`codex-trust-blind-change` and emits `codex-hook-retrust-required` only when an
-identity field changes.
+**Codex per-hook trust identity (collected 2026-09-07; command selection
+re-checked 2026-10-19).** Codex hashes a normalized handler identity built after
+timeout defaulting and clamping. In the identity: the normalized `timeout`,
+`statusMessage`, the normalized `additionalContextLimit`, `matcher`, `async`, and
+the platform-effective `command`: Codex selects `commandWindows` on Windows and
+`command` elsewhere before hashing, and the rebuilt config carries no
+`commandWindows` of its own. The branch the trusting machine does not select is
+therefore outside the identity: replacing only a handler's `commandWindows`
+keeps the previously trusted hash valid on a POSIX machine (and forces re-trust
+on a Windows one), and the mirror holds for a `command`-only replacement when
+`commandWindows` is present. The write side discloses the `commandWindows`-only
+case with the informational `codex-trust-blind-change` and emits
+`codex-hook-retrust-required` only when an identity field changes.
 
 Codex persists per-hook trust in the user's `config.toml` as
 `[hooks.state."<key>"]`, keyed
